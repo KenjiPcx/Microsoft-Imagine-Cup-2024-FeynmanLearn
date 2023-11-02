@@ -19,6 +19,15 @@ Feynman’s Agent aims to help you
 
 ChatGpt can already sort of do it for you but we can definitely make it better
 
+## Dev stack
+
+Frontend 
+- React Typescript
+
+Backend is fully Azure
+- Serverless functions
+- Cosmos DB
+
 ## Starting the frontend
 
 To start the frontend
