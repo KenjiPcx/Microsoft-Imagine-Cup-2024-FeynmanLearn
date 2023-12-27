@@ -1,13 +1,8 @@
 import azure.functions as func
+import langchain
 import logging
-import semantic_kernel as sk
-from semantic_kernel.connectors.ai.open_ai import OpenAIChatCompletion
-
-api_key, org_id = sk.openai_settings_from_dot_env()
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
-kernel = sk.Kernel()
-
 
 @app.route(route="send_message")
 def send_message(req: func.HttpRequest) -> func.HttpResponse:
