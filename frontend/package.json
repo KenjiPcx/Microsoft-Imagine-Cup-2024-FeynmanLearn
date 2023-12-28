@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@types/lodash": "^4.14.202",
+    "axios": "^1.6.3",
+    "lodash": "^4.17.21",
     "microsoft-cognitiveservices-speech-sdk": "^1.34.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

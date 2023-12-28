@@ -6,6 +6,7 @@ import {
   ResultReason,
 } from "microsoft-cognitiveservices-speech-sdk";
 import { useDebounce } from "./hooks";
+import axios from "axios";
 import duck from "./assets/duck-gpt-trans.png";
 import "./App.css";
 
@@ -13,6 +14,10 @@ const speechConfig = SpeechConfig.fromSubscription(
   import.meta.env.VITE_AZURE_SPEECH_KEY,
   import.meta.env.VITE_AZURE_SPEECH_REGION
 );
+
+const sendMessageEndpoint = `${
+  import.meta.env.VITE_REACT_APP_FUNCTION_BASE_URL
+}/api/send_message`;
 
 function App() {
   const [message, setMessage] = useState("Hello world");
@@ -39,11 +44,24 @@ function App() {
     }
   };
 
-  const debouncedSendMessages = useDebounce(() => {
+  const debouncedSendMessages = useDebounce(async () => {
     if (messages.length === 0) return;
     console.log("Message idx", messageIdx);
     console.log("Send messages", messages.slice(messageIdx));
+
+    const data = {
+      user_id: "test_user",
+      message: messages.slice(messageIdx).join(" "),
+    };
+
     setMessageIdx(messages.length);
+
+    try {
+      const res = await axios.post(sendMessageEndpoint, data);
+      console.log("Response", res);
+    } catch (err) {
+      console.log("Error", err);
+    }
   }, 10000);
 
   const initRecognizer = () => {
