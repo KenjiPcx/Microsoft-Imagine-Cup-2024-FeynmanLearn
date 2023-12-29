@@ -12,6 +12,17 @@ import axios from "axios";
 import duck from "./assets/duck-gpt-trans.png";
 import "./App.css";
 
+import ReactDOM from "react-dom/client";
+import {
+  Outlet,
+  RouterProvider,
+  Link,
+  Router,
+  Route,
+  RootRoute,
+} from "@tanstack/react-router";
+import { TanStackRouterDevtools } from "@tanstack/router-devtools";
+
 const speechConfig = SpeechConfig.fromSubscription(
   import.meta.env.VITE_AZURE_SPEECH_KEY,
   import.meta.env.VITE_AZURE_SPEECH_REGION
