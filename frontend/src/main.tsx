@@ -2,10 +2,16 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 // import App from "./App.tsx";
 import "./index.css";
+import "@mantine/core/styles.css";
 import { RouterProvider, Router, ErrorComponent } from "@tanstack/react-router";
 import { auth } from "./utils/auth";
 import { routeTree } from "./routeTree.gen";
 import { Spinner } from "./components/Spinner";
+import { createTheme, MantineProvider } from "@mantine/core";
+
+const theme = createTheme({
+  /** Put your mantine theme override here */
+});
 
 // Set up a Router instance
 const router = new Router({
@@ -51,12 +57,14 @@ function App() {
   );
 }
 
-const rootElement = document.getElementById("app")!;
+const rootElement = document.getElementById("root")!;
 if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <React.StrictMode>
-      <App />
+      <MantineProvider theme={theme} defaultColorScheme="dark">
+        <App />
+      </MantineProvider>
     </React.StrictMode>
   );
 }

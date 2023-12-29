@@ -5,16 +5,25 @@ import { FileRoute, Link, Outlet } from "@tanstack/react-router";
 import { fetchSessions } from "../sessions";
 
 export const Route = new FileRoute("/sessions").createRoute({
-  loader: fetchSessions,
+  // loader: fetchSessions,
   component: SessionsComponent,
 });
 
 function SessionsComponent() {
-  const sessions = Route.useLoaderData();
+  // const sessions = Route.useLoaderData();
 
   return (
     <div className="p-2 flex gap-2">
-      <ul className="list-disc pl-4">
+      Sessions
+      <div>
+        We could have a new session button here, clicking it will redirect to
+        session/new
+      </div>
+      <div>
+        Other than that, a grid of user previous sessions would be here,
+        clicking on any of them will redirect to /sessions/$sessionId
+      </div>
+      {/* <ul className="list-disc pl-4">
         {[...sessions, { id: "i-do-not-exist", title: "Non-existent Session" }]?.map(
           (session) => {
             return (
@@ -33,8 +42,7 @@ function SessionsComponent() {
             );
           }
         )}
-      </ul>
-      <hr />
+      </ul> */}
     </div>
   );
 }

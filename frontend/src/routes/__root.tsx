@@ -37,6 +37,7 @@ function RootComponent() {
             {(
               [
                 ["/", "Home"],
+                ["/sessions", "Sessions"],
                 // ["/dashboard", "Dashboard"],
                 // ["/profile", "Profile"],
                 // ["/login", "Login"],
@@ -64,10 +65,12 @@ function RootComponent() {
               );
             })}
           </div>
+          <hr />
           <div className={`flex-1 border-l border-gray-200`}>
             {/* Render our first route match */}
             <Outlet />
           </div>
+          <hr />
         </div>
       </div>
       <TanStackRouterDevtools position="bottom-right" />
