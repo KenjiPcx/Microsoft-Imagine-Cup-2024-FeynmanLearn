@@ -3,6 +3,7 @@
 import * as React from "react";
 import { FileRoute, Link, Outlet } from "@tanstack/react-router";
 import { fetchSessions } from "../sessions";
+import { Button, NavLink } from "@mantine/core";
 
 export const Route = new FileRoute("/sessions").createRoute({
   // loader: fetchSessions,
@@ -18,11 +19,16 @@ function SessionsComponent() {
       <div>
         We could have a new session button here, clicking it will redirect to
         session/new
+        {/* <NavLink component={Link} to="/sessions/new" label="New Session" /> */}
       </div>
+      <Button component={Link} to="/sessions/new">
+        New Session
+      </Button>
       <div>
         Other than that, a grid of user previous sessions would be here,
         clicking on any of them will redirect to /sessions/$sessionId
       </div>
+      <Outlet />
       {/* <ul className="list-disc pl-4">
         {[...sessions, { id: "i-do-not-exist", title: "Non-existent Session" }]?.map(
           (session) => {

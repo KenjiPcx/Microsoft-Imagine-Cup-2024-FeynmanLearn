@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 // import App from "./App.tsx";
-import "./index.css";
+// import "./index.css";
 import "@mantine/core/styles.css";
 import { RouterProvider, Router, ErrorComponent } from "@tanstack/react-router";
 import { auth } from "./utils/auth";

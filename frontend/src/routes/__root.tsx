@@ -3,12 +3,12 @@ import {
   Link,
   Outlet,
   rootRouteWithContext,
-  useRouter,
   useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 import { Auth } from "../utils/auth";
 import { Spinner } from "../components/Spinner";
+import { Container } from "@mantine/core";
 
 function RouterSpinner() {
   const isLoading = useRouterState({ select: (s) => s.status === "pending" });
@@ -23,10 +23,10 @@ export const Route = rootRouteWithContext<{
 
 function RootComponent() {
   return (
-    <>
+    <Container>
       <div className={`min-h-screen flex flex-col`}>
         <div className={`flex items-center border-b gap-2`}>
-          <h1 className={`text-3xl p-2`}>Kitchen Sink</h1>
+          <h1 className={`text-3xl p-2`}>Learn with Feynman</h1>
           {/* Show a global spinner when the router is transitioning */}
           <div className={`text-3xl`}>
             <RouterSpinner />
@@ -38,6 +38,7 @@ function RootComponent() {
               [
                 ["/", "Home"],
                 ["/sessions", "Sessions"],
+                ["/sessions/new", "New Session"],
                 // ["/dashboard", "Dashboard"],
                 // ["/profile", "Profile"],
                 // ["/login", "Login"],
@@ -74,6 +75,6 @@ function RootComponent() {
         </div>
       </div>
       <TanStackRouterDevtools position="bottom-right" />
-    </>
+    </Container>
   );
 }

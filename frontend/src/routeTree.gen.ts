@@ -3,6 +3,7 @@ import { Route as SessionsRoute } from "./routes/sessions";
 // import { Route as LayoutRoute } from "./routes/_layout";
 import { Route as IndexRoute } from "./routes/index";
 import { Route as SessionsSessionIdRoute } from "./routes/sessions.$sessionId";
+import { Route as SessionsNewSessionRoute } from "./routes/sessions.new";
 // import { Route as LayoutLayoutBRoute } from "./routes/_layout/layout-b";
 // import { Route as LayoutLayoutARoute } from "./routes/_layout/layout-a";
 // import { Route as PostsIndexRoute } from "./routes/posts.index";
@@ -23,6 +24,9 @@ declare module "@tanstack/react-router" {
       parentRoute: typeof SessionsRoute;
     };
     "/sessions/$sessionId": {
+      parentRoute: typeof SessionsRoute;
+    };
+    "/sessions/new": {
       parentRoute: typeof SessionsRoute;
     };
   }
@@ -53,8 +57,14 @@ Object.assign(SessionsSessionIdRoute.options, {
   getParentRoute: () => SessionsRoute,
 });
 
+Object.assign(SessionsNewSessionRoute.options, {
+  path: "/sessions/new",
+  getParentRoute: () => rootRoute,
+});
+
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
   SessionsRoute,
   SessionsSessionIdRoute,
+  SessionsNewSessionRoute,
 ]);
