@@ -34,7 +34,12 @@ Backend is fully Azure
 
 - For frontend, rename the .env.local file to .env
 - For backend, rename the local.settings.json.local file to local.settings.json
-  
+
+### Connecting to Azure DB
+If you work on a feature involving the db, you might need to set this up, alternatively **just mock the data in the frontend**
+- Replace your own Azure Cosmos DB connection string (endpoint and key) to the local.settings.json file, we each need our own accounts if we want to see the database on the cloud
+- Run the `api/init_db.py` script to initialize your own database so you can see it
+   
 ## Start the backend locally
 
 - Use vscode
