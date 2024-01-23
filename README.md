@@ -21,16 +21,31 @@ ChatGpt can already sort of do it for you but we can definitely make it better
 
 ## Dev stack
 
-Frontend 
+Frontend
+
 - React Typescript
 
 Backend is fully Azure
+
 - Serverless functions
 - Cosmos DB
+
+## Local environment setup
+
+- For frontend, rename the .env.local file to .env
+- For backend, rename the local.settings.json.local file to local.settings.json
+  
+## Start the backend locally
+
+- Use vscode
+- Install Azure Functions extension
+- Install Azurite Service extension
+- Go to Azure extensions and double click on function, it will launch
 
 ## Starting the frontend
 
 To start the frontend
+
 ```bash
 cd feynman-agent-frontend
 bun dev

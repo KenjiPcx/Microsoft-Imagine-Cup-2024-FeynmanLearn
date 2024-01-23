@@ -1,0 +1,15 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
+    "OPENAI_API_KEY": "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",
+    "COSMOS_ENDPOINT": "https://feynman-db.documents.azure.com:443/",
+    "COSMOS_KEY": "Qm9U0KWw54eZBixV7jQxQvDjQXbcOTMlcYEdHAdBbELQngOkk1JOU0To6q1ZdJvIOpc8pcePGvrkACDbr9c6Lw=="
+  },
+  "Host": {
+    "LocalHttpPort": 7071,
+    "CORS": "*"
+  }
+}
