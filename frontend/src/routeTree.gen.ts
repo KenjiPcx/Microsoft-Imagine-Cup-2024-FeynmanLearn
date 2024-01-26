@@ -2,19 +2,13 @@ import { Route as rootRoute } from "./routes/__root";
 import { Route as SessionsRoute } from "./routes/sessions";
 // import { Route as LayoutRoute } from "./routes/_layout";
 import { Route as IndexRoute } from "./routes/index";
-import { Route as SessionsSessionIdRoute } from "./routes/sessions.$sessionId";
-import { Route as SessionsNewSessionRoute } from "./routes/sessions.new";
-// import { Route as LayoutLayoutBRoute } from "./routes/_layout/layout-b";
-// import { Route as LayoutLayoutARoute } from "./routes/_layout/layout-a";
-// import { Route as PostsIndexRoute } from "./routes/posts.index";
-// import { Route as PostsPostIdDeepRoute } from "./routes/posts_.$postId.deep";
+import { Route as Sessions_SessionIdRoute } from "./routes/sessions.$sessionId";
+import { Route as Sessions_NewSessionRoute } from "./routes/sessions.new";
+import { Route as Session_PostSessionRoute } from "./routes/sessions.analysis.$sessionId";
 
 declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
     "/": {
-      parentRoute: typeof rootRoute;
-    };
-    "/_layout": {
       parentRoute: typeof rootRoute;
     };
     "/sessions": {
@@ -23,7 +17,10 @@ declare module "@tanstack/react-router" {
     "/sessions/": {
       parentRoute: typeof SessionsRoute;
     };
-    "/sessions/$sessionId": {
+    "/sessions/run/$sessionId": {
+      parentRoute: typeof SessionsRoute;
+    };
+    "/sessions/analysis/$sessionId/": {
       parentRoute: typeof SessionsRoute;
     };
     "/sessions/new": {
@@ -37,34 +34,30 @@ Object.assign(IndexRoute.options, {
   getParentRoute: () => rootRoute,
 });
 
-// Object.assign(LayoutRoute.options, {
-//   id: "/_layout",
-//   getParentRoute: () => rootRoute,
-// });
-
 Object.assign(SessionsRoute.options, {
   path: "/sessions",
   getParentRoute: () => rootRoute,
 });
 
-// Object.assign(PostsIndexRoute.options, {
-//   path: "/",
-//   getParentRoute: () => PostsRoute,
-// });
-
-Object.assign(SessionsSessionIdRoute.options, {
-  path: "/$sessionId",
-  getParentRoute: () => SessionsRoute,
+Object.assign(Sessions_SessionIdRoute.options, {
+  path: "/sessions/run/$sessionId",
+  getParentRoute: () => rootRoute,
 });
 
-Object.assign(SessionsNewSessionRoute.options, {
+Object.assign(Sessions_NewSessionRoute.options, {
   path: "/sessions/new",
+  getParentRoute: () => rootRoute,
+});
+
+Object.assign(Session_PostSessionRoute.options, {
+  path: "/sessions/analysis/$sessionId",
   getParentRoute: () => rootRoute,
 });
 
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
   SessionsRoute,
-  SessionsSessionIdRoute,
-  SessionsNewSessionRoute,
+  Sessions_SessionIdRoute,
+  Sessions_NewSessionRoute,
+  Session_PostSessionRoute,
 ]);

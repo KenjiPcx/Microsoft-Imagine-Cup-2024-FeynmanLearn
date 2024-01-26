@@ -26,8 +26,8 @@ export const Route = new FileRoute("/sessions/new").createRoute({
 
 export type AgentSessionConfig = {
   gameMode: string;
-  depth: number;
-  studentPersona: string;
+  depth: string;
+  persona: string;
 };
 
 export type NewSessionConfigurationForm = {
@@ -60,8 +60,8 @@ function NewSessionConfigurationComponent() {
       //   customDataFiles: [],
       agentConfig: {
         gameMode: "",
-        depth: 1,
-        studentPersona: "",
+        depth: "",
+        persona: "",
       },
     },
 
@@ -81,6 +81,17 @@ function NewSessionConfigurationComponent() {
 
   return (
     <>
+      <div>
+        <li>
+          We can provide a piece of text describing the concept (simple copy
+          paste), an article url, video url, or a pdf link here
+        </li>
+        <li>
+          This info will be used to form a high level plan to guide the session
+        </li>
+        <li>Files can be attached to the agent's memory</li>
+        <br></br>
+      </div>
       <Stepper
         active={active}
         onStepClick={setActive}
@@ -91,17 +102,6 @@ function NewSessionConfigurationComponent() {
           description="Select a topic"
           disabled={active === 3}
         >
-          Step 1 content: Select topic
-          <li>
-            We can provide a piece of text describing the concept (simple copy
-            paste), an article url, video url, or a pdf link here
-          </li>
-          <li>
-            This info will be used to form a high level plan to guide the
-            session
-          </li>
-          <li>Files can be attached to the agent's memory</li>
-          <br></br>
           <Fieldset legend="Session configuration">
             <TextInput
               label="Concept to explain"
@@ -142,7 +142,45 @@ function NewSessionConfigurationComponent() {
           disabled={active === 3}
         >
           Step 2 content: Select agent configuration
+          <div>
+            We should just hardcode some modes, then let user customize or
+            overrride them below these prebuilt modes
+          </div>
+          <div>
+            In the future, we can aim to have a grid of prebuilt modes, then we
+            can browse for personas and select them
+          </div>
+          <Fieldset legend="Learner agent configuration">
+            <Select
+              label="Explanation depth"
+              description="How deep you are expected to explain the concept"
+              placeholder="Select explanation depth"
+              data={[
+                "Beginner (Awareness) - Understands and communicates basic definitions and core principles. Answers straightforward questions and applies the concept in familiar contexts.",
+                "Intermediate (Application) - Explains how the concept works and applies it in problem-solving. Handles moderately challenging questions and connects different parts of the concept.",
+                "Advanced (Analysis) - Discusses subtle or complex aspects. Analyzes, critiques, and draws connections to other concepts. Answers complex questions with detailed explanation.",
+                "Expert (Mastery) - Possesses comprehensive knowledge. Teaches, debates, and creates new insights. Handles any question with in-depth, nuanced explanations and diverse examples.",
+              ]}
+              required
+              {...form.getInputProps("agentConfig.depth")}
+            />
+            <br />
+            <Textarea
+              label="Learner persona"
+              description="The personality of the learner agent"
+              placeholder="Richard Feynman (Theoretical physicist) - Will jump straight for deep end questions, playfully pokes holes in arguments, always hunting for the 'why' behind the 'what.'"
+              {...form.getInputProps("agentConfig.persona")}
+            />
+            <br />
+            <Textarea
+              label="Game mode"
+              description="Some fun challenges to make the session more engaging"
+              placeholder="Must provide an analogy as an explanation for each question asked by the learner agent"
+              {...form.getInputProps("agentConfig.gameMode")}
+            />
+          </Fieldset>
         </Stepper.Step>
+
         <Stepper.Step
           label="Final step"
           description="Review"
