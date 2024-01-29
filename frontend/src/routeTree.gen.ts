@@ -7,10 +7,10 @@ import { Route as SessionsImport } from './routes/sessions'
 import { Route as LoginImport } from './routes/login'
 import { Route as AuthImport } from './routes/_auth'
 import { Route as IndexImport } from './routes/index'
-import { Route as SessionsNewImport } from './routes/sessions.new'
-import { Route as SessionsSessionIdImport } from './routes/sessions.$sessionId'
+import { Route as SessionsNewImport } from './routes/sessions_.new'
 import { Route as AuthProfileImport } from './routes/_auth.profile'
-import { Route as SessionsAnalysisSessionIdImport } from './routes/sessions.analysis.$sessionId'
+import { Route as SessionsRunSessionIdImport } from './routes/sessions_.run.$sessionId'
+import { Route as SessionsAnalysisSessionIdImport } from './routes/sessions_.analysis.$sessionId'
 
 // Create/Update Routes
 
@@ -35,13 +35,8 @@ const IndexRoute = IndexImport.update({
 } as any)
 
 const SessionsNewRoute = SessionsNewImport.update({
-  path: '/new',
-  getParentRoute: () => SessionsRoute,
-} as any)
-
-const SessionsSessionIdRoute = SessionsSessionIdImport.update({
-  path: '/$sessionId',
-  getParentRoute: () => SessionsRoute,
+  path: '/sessions/new',
+  getParentRoute: () => rootRoute,
 } as any)
 
 const AuthProfileRoute = AuthProfileImport.update({
@@ -49,9 +44,14 @@ const AuthProfileRoute = AuthProfileImport.update({
   getParentRoute: () => AuthRoute,
 } as any)
 
+const SessionsRunSessionIdRoute = SessionsRunSessionIdImport.update({
+  path: '/sessions/run/$sessionId',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const SessionsAnalysisSessionIdRoute = SessionsAnalysisSessionIdImport.update({
-  path: '/analysis/$sessionId',
-  getParentRoute: () => SessionsRoute,
+  path: '/sessions/analysis/$sessionId',
+  getParentRoute: () => rootRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
@@ -78,17 +78,17 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthProfileImport
       parentRoute: typeof AuthImport
     }
-    '/sessions/$sessionId': {
-      preLoaderRoute: typeof SessionsSessionIdImport
-      parentRoute: typeof SessionsImport
-    }
     '/sessions/new': {
       preLoaderRoute: typeof SessionsNewImport
-      parentRoute: typeof SessionsImport
+      parentRoute: typeof rootRoute
     }
     '/sessions/analysis/$sessionId': {
       preLoaderRoute: typeof SessionsAnalysisSessionIdImport
-      parentRoute: typeof SessionsImport
+      parentRoute: typeof rootRoute
+    }
+    '/sessions/run/$sessionId': {
+      preLoaderRoute: typeof SessionsRunSessionIdImport
+      parentRoute: typeof rootRoute
     }
   }
 }
@@ -99,9 +99,8 @@ export const routeTree = rootRoute.addChildren([
   IndexRoute,
   AuthRoute.addChildren([AuthProfileRoute]),
   LoginRoute,
-  SessionsRoute.addChildren([
-    SessionsSessionIdRoute,
-    SessionsNewRoute,
-    SessionsAnalysisSessionIdRoute,
-  ]),
+  SessionsRoute,
+  SessionsNewRoute,
+  SessionsAnalysisSessionIdRoute,
+  SessionsRunSessionIdRoute,
 ])

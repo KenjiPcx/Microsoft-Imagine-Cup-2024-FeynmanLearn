@@ -80,14 +80,14 @@ export function NavbarMinimal({
           For dev purposes
           {(
             [
-              ["/", "Home (Kenji - landing page)"],
-              ["/sessions", "Sessions (Ventus - session history)"],
-              ["/sessions/new", "New Session (Nicolo - session creation)"],
+              ["/", "Home (Kenji)"],
+              ["/sessions", "Sessions (Ventus)"],
+              ["/sessions/new", "New Session (Nicolo)"],
               [
                 "/sessions/run/some-id",
-                "Feynman Session (Kenji - session run)",
+                "Feynman Session (Kenji)",
               ],
-              ["/sessions/analysis/some-id", "Post Session Analysis (Joshua)"],
+              ["/sessions/analysis/some-id", "Post Analysis (Joshua)"],
               // ["/dashboard", "Dashboard"],
               // ["/profile", "Profile"],
               // ["/login", "Login"],

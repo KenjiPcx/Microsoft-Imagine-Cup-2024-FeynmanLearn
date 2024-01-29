@@ -11,7 +11,7 @@ import {
 } from "@tanstack/react-router";
 import { fetchSession, SessionNotFoundError } from "../sessions";
 
-export const Route = new FileRoute("/sessions/$sessionId").createRoute({
+export const Route = new FileRoute("/sessions/run/$sessionId").createRoute({
   loader: async ({ params: { sessionId } }) => fetchSession(sessionId),
   errorComponent: SessionErrorComponent as any,
   component: SessionComponent,
