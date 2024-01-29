@@ -6,3 +6,4 @@ azure-functions
 azure-cosmos
 openai
 langchain
+langchain_openai
