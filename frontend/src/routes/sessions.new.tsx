@@ -12,11 +12,11 @@ import {
   Stepper,
   Button,
   Group,
-  Fieldset,
   TextInput,
   Textarea,
   Select,
-  Code,
+  Title,
+  Text,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 
@@ -81,17 +81,6 @@ function NewSessionConfigurationComponent() {
 
   return (
     <>
-      <div>
-        <li>
-          We can provide a piece of text describing the concept (simple copy
-          paste), an article url, video url, or a pdf link here
-        </li>
-        <li>
-          This info will be used to form a high level plan to guide the session
-        </li>
-        <li>Files can be attached to the agent's memory</li>
-        <br></br>
-      </div>
       <Stepper
         active={active}
         onStepClick={setActive}
@@ -102,38 +91,36 @@ function NewSessionConfigurationComponent() {
           description="Select a topic"
           disabled={active === 3}
         >
-          <Fieldset legend="Session configuration">
+          <TextInput
+            label="Concept to explain"
+            description="Define the concept you want to teach in this session"
+            placeholder="The Feynman method"
+            required
+            {...form.getInputProps("conceptToExplain")}
+          />
+          <br />
+          <Textarea
+            label="Goal of the lesson"
+            description="(Optional) Define detailed key objectives of your lesson, this helps you scope the lesson and keep it focused"
+            placeholder="In this lesson, I want to explain specifically how the Feynman method can be used to learn new concepts, and what makes it so effective."
+            {...form.getInputProps("additionalInformation")}
+          />
+          <br />
+          <Group>
             <TextInput
-              label="Concept to explain"
-              description="The concept you want to teach in this session"
-              placeholder="The Feynman method"
-              required
-              {...form.getInputProps("conceptToExplain")}
+              label="Online references"
+              description="If contents of your lesson are not widely available on the Internet, provide a link to an online resources that explains the concept."
+              placeholder="https://en.wikipedia.org/wiki/Feynman_technique"
+              {...form.getInputProps("referenceUrl")}
             />
-            <br />
-            <Textarea
-              label="Additional information on concept"
-              description="Optional additional information on what exactly you want to teach, useful to define for broad and abstract concepts"
-              placeholder="I want to explain specifically how the Feynman method can be used to learn new concepts"
-              {...form.getInputProps("additionalInformation")}
+            <Select
+              label="Reference type"
+              description="Format of the online reference"
+              placeholder="Article"
+              data={["Article", "Video", "PDF"]}
+              {...form.getInputProps("referenceType")}
             />
-            <br />
-            <Group justify="space-between">
-              <TextInput
-                label="Online references"
-                description="Provide a link to an online resources that explain the concept, useful if concept is very niche, new or not well known"
-                placeholder="https://en.wikipedia.org/wiki/Feynman_technique"
-                {...form.getInputProps("referenceUrl")}
-              />
-              <Select
-                label="Reference type"
-                description="Format of the online reference"
-                placeholder="Article"
-                data={["Article", "Video", "PDF"]}
-                {...form.getInputProps("referenceType")}
-              />
-            </Group>
-          </Fieldset>
+          </Group>
         </Stepper.Step>
 
         <Stepper.Step
@@ -141,44 +128,41 @@ function NewSessionConfigurationComponent() {
           description="Configure learner agent"
           disabled={active === 3}
         >
-          Step 2 content: Select agent configuration
-          <div>
-            We should just hardcode some modes, then let user customize or
-            overrride them below these prebuilt modes
-          </div>
-          <div>
-            In the future, we can aim to have a grid of prebuilt modes, then we
-            can browse for personas and select them
-          </div>
-          <Fieldset legend="Learner agent configuration">
-            <Select
-              label="Explanation depth"
-              description="How deep you are expected to explain the concept"
-              placeholder="Select explanation depth"
-              data={[
-                "Beginner (Awareness) - Understands and communicates basic definitions and core principles. Answers straightforward questions and applies the concept in familiar contexts.",
-                "Intermediate (Application) - Explains how the concept works and applies it in problem-solving. Handles moderately challenging questions and connects different parts of the concept.",
-                "Advanced (Analysis) - Discusses subtle or complex aspects. Analyzes, critiques, and draws connections to other concepts. Answers complex questions with detailed explanation.",
-                "Expert (Mastery) - Possesses comprehensive knowledge. Teaches, debates, and creates new insights. Handles any question with in-depth, nuanced explanations and diverse examples.",
-              ]}
-              required
-              {...form.getInputProps("agentConfig.depth")}
-            />
-            <br />
-            <Textarea
-              label="Learner persona"
-              description="The personality of the learner agent"
-              placeholder="Richard Feynman (Theoretical physicist) - Will jump straight for deep end questions, playfully pokes holes in arguments, always hunting for the 'why' behind the 'what.'"
-              {...form.getInputProps("agentConfig.persona")}
-            />
-            <br />
-            <Textarea
-              label="Game mode"
-              description="Some fun challenges to make the session more engaging"
-              placeholder="Must provide an analogy as an explanation for each question asked by the learner agent"
-              {...form.getInputProps("agentConfig.gameMode")}
-            />
-          </Fieldset>
+          <Select
+            label="Lesson depth"
+            description="What kind of lesson will this be for your learner?"
+            placeholder="Select explanation depth"
+            data={[
+              "Beginner (Awareness) - Understands and communicates basic definitions and core principles. Answers straightforward questions and applies the concept in familiar contexts.",
+              "Intermediate (Application) - Explains how the concept works and applies it in problem-solving. Handles moderately challenging questions and connects different parts of the concept.",
+              "Advanced (Analysis) - Discusses subtle or complex aspects. Analyzes, critiques, and draws connections to other concepts. Answers complex questions with detailed explanation.",
+              "Expert (Mastery) - Possesses comprehensive knowledge. Teaches, debates, and creates new insights. Handles any question with in-depth, nuanced explanations and diverse examples.",
+            ]}
+            required
+            {...form.getInputProps("agentConfig.depth")}
+          />
+          <br />
+          <Textarea
+            label="Learner persona"
+            description="(Optional) Give your learner agent a personality to make the session more engaging."
+            placeholder="sassy, curious, friendly, etc."
+            {...form.getInputProps("agentConfig.persona")}
+          />
+          <br />
+          <Select
+            label="Game mode"
+            description="Some fun challenges to make the session more engaging"
+            placeholder="Playground"
+            defaultValue={"Playground"}
+            data={[
+              "Playground",
+              "Explain to a 5 year old",
+              "5 levels",
+              "Expert (Mastery) - Possesses comprehensive knowledge. Teaches, debates, and creates new insights. Handles any question with in-depth, nuanced explanations and diverse examples.",
+            ]}
+            required
+            {...form.getInputProps("agentConfig.gameMode")}
+          />
         </Stepper.Step>
 
         <Stepper.Step
@@ -186,18 +170,42 @@ function NewSessionConfigurationComponent() {
           description="Review"
           disabled={active === 3}
         >
-          Step 3 content: Confirm and start
+          <Title order={2}>Review your session configuration</Title>
+          <Text size="xl">
+            <Text fw={"bold"}>Concept to explain: </Text>{" "}
+            {form.values.conceptToExplain}
+          </Text>
+          {form.values.additionalInformation && (
+            <Text size="xl">
+              Lesson objective: {form.values.additionalInformation}
+            </Text>
+          )}
+          {form.values.referenceUrl && (
+            <Text size="xl">
+              Reference: {form.values.referenceUrl} ({form.values.referenceType}
+              )
+            </Text>
+          )}
+
+          <Text size="xl">
+            <Text fw={"bold"}>Lesson depth: </Text>{" "}
+            {form.values.agentConfig.depth}
+          </Text>
+          {form.values.agentConfig.persona && (
+            <Text size="xl">
+              Learner persona: {form.values.agentConfig.persona}
+            </Text>
+          )}
+          <Text size="xl">
+            <Text fw={"bold"}>Game mode: </Text>{" "}
+            {form.values.agentConfig.gameMode}
+          </Text>
         </Stepper.Step>
-        <Stepper.Completed>
-          Redirecting Completed! Form values:
-          <Code block mt="xl">
-            {JSON.stringify(form.values, null, 2)}
-          </Code>
-        </Stepper.Completed>
+        <Stepper.Completed>Session created! Redirecting...</Stepper.Completed>
       </Stepper>
 
       {active < 3 && (
-        <Group justify="center" mt="xl">
+        <Group mt="xl">
           <Button variant="default" onClick={prevStep}>
             Back
           </Button>
