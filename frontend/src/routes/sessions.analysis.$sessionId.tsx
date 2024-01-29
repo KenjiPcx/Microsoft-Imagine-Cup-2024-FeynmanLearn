@@ -8,7 +8,7 @@
 import { FileRoute } from "@tanstack/react-router";
 
 export const Route = new FileRoute(
-  "/sessions/analysis/$sessionId/"
+  "/sessions/analysis/$sessionId"
 ).createRoute({
   component: PostSessionAnalysisComponent,
 });
