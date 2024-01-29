@@ -17,8 +17,12 @@ import {
   createPolymorphicComponent,
   createStyles,
   Image,
+  Center,
 } from "@mantine/core";
 import { motion } from "framer-motion";
+import Sidebar from "../components/Sidebar";
+import { useDisclosure } from "@mantine/hooks";
+import SettingsModal from "../components/SettingsModal";
 
 function RouterSpinner() {
   const isLoading = useRouterState({ select: (s) => s.status === "pending" });
@@ -56,9 +60,21 @@ const useStyles = createStyles({
 function RootComponent() {
   const { classes } = useStyles();
 
+  const [opened, { open: openSettings, close: closeSettings }] =
+    useDisclosure(false);
+
+  const toggleSettings = () => {
+    if (opened) {
+      closeSettings();
+    } else {
+      openSettings();
+    }
+  };
+
   return (
     <>
       <PFlex component={motion.div} className={classes.root} layout>
+        <Sidebar settingsOpened={opened} toggleSettings={toggleSettings} />
         <PContainer
           component={motion.div}
           layout
@@ -77,8 +93,10 @@ function RootComponent() {
           >
             <Image src={"/blobs.gif"} fit="cover" />
           </Box>
-          <Box
+          <Center
             style={{
+              width: "100vw",
+              height: "100vh",
               position: "absolute",
               top: "50%",
               left: "50%",
@@ -86,10 +104,12 @@ function RootComponent() {
             }}
           >
             <Outlet />
-          </Box>
+          </Center>
         </PContainer>
         <TanStackRouterDevtools position="bottom-right" />
       </PFlex>
+
+      <SettingsModal opened={opened} closeSettings={closeSettings} />
     </>
   );
 }

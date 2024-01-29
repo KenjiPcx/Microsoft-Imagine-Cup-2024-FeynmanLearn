@@ -24,7 +24,8 @@
     "lodash": "^4.17.21",
     "microsoft-cognitiveservices-speech-sdk": "^1.34.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-speech-recognition": "^3.10.0"
   },
   "devDependencies": {
     "@types/react": "^18.2.15",
