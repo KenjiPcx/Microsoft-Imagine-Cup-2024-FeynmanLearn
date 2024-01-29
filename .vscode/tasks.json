@@ -15,73 +15,7 @@
       },
       "problemMatcher": [],
       "options": {
-        "cwd": "${workspaceFolder}/backend"
-      }
-    },
-    {
-      "label": "clean (functions)",
-      "command": "dotnet",
-      "args": [
-        "clean",
-        "/property:GenerateFullPaths=true",
-        "/consoleloggerparameters:NoSummary"
-      ],
-      "type": "process",
-      "problemMatcher": "$msCompile",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      }
-    },
-    {
-      "label": "build (functions)",
-      "command": "dotnet",
-      "args": [
-        "build",
-        "/property:GenerateFullPaths=true",
-        "/consoleloggerparameters:NoSummary"
-      ],
-      "type": "process",
-      "dependsOn": "clean (functions)",
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "problemMatcher": "$msCompile",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      }
-    },
-    {
-      "label": "clean release (functions)",
-      "command": "dotnet",
-      "args": [
-        "clean",
-        "--configuration",
-        "Release",
-        "/property:GenerateFullPaths=true",
-        "/consoleloggerparameters:NoSummary"
-      ],
-      "type": "process",
-      "problemMatcher": "$msCompile",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      }
-    },
-    {
-      "label": "publish (functions)",
-      "command": "dotnet",
-      "args": [
-        "publish",
-        "--configuration",
-        "Release",
-        "/property:GenerateFullPaths=true",
-        "/consoleloggerparameters:NoSummary"
-      ],
-      "type": "process",
-      "dependsOn": "clean release (functions)",
-      "problemMatcher": "$msCompile",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
+        "cwd": "${workspaceFolder}/api"
       }
     },
     {
@@ -92,7 +26,7 @@
       "isBackground": true,
       "dependsOn": "pip install (functions)",
       "options": {
-        "cwd": "${workspaceFolder}/backend"
+        "cwd": "${workspaceFolder}/api"
       }
     }
   ]
