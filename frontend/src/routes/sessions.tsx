@@ -4,7 +4,7 @@ import * as React from "react";
 import { FileRoute, Link, Outlet } from "@tanstack/react-router";
 import { fetchSessions } from "../sessions";
 import { Button, NavLink } from "@mantine/core";
-import { SimpleGrid, Skeleton, Container, Stack, useMantineTheme, px } from '@mantine/core';
+import { Box,Grid,SimpleGrid, Skeleton, Container, Stack, useMantineTheme, px } from '@mantine/core';
 
 export const Route = new FileRoute("/sessions").createRoute({
   // loader: fetchSessions,
@@ -15,31 +15,34 @@ export const Route = new FileRoute("/sessions").createRoute({
 // display in grid format
 // put image in the grid
 // on-click link to sessions post analysis
-// TODO : add types
+// TODO : add types (TYPESCRIPT STUFFS)
 
 function Subgrid({ sessions }) {
   const theme = useMantineTheme();
 
-  const getChild = (height) => <Skeleton height={height} radius="md" animate={false} />;
-  const BASE_HEIGHT = 360;
-  const getSubHeight = (children, spacing) => BASE_HEIGHT / children - spacing * ((children - 1) / children);
-
   return (
     <Container my="md">
-      <Stack direction="row" spacing={2}>
-        {sessions.map((session) => (
-          <Stack key={session.id}>
-            <Link to={`/sessions/${session.id}`}>
-            <div>{session.concept}</div>
+      {sessions.map((session) => (
+          <Link to={`/sessions/${session.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+        <Box key={session.id} style={{ display: 'flex', border: '1px solid #ccc', padding: '10px', borderRadius: '8px'}}>
+            <Box style={{flex: 8}}>
+            <div> <strong style={{fontSize: '18px'}}>{session.concept} </strong> </div>
             <div>{session.student_persona}</div>
-            </Link>
-            {/* Placeholder for image (TODO:) */}
-            {getChild(getSubHeight(3, px(theme.spacing.md) as number))}
-          </Stack>
-        ))}
-      </Stack>
+            </Box>
+          <Box style={{ flex: 4 }}>
+            {/* placeholder for image */}
+            <img
+              src={session.generated_image?.image_url || 'placeholder_image_url'}
+              alt="Dall-E Generated Image"
+              style={{ width: '100%', marginTop: '10px' }}
+            />
+          </Box>
+        </Box>
+        </Link>
+      ))}
     </Container>
   );
+  
 }
 
 function SessionsComponent() {
