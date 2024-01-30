@@ -7,6 +7,10 @@ import logging
 import openai
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
 from langchain.agents import AgentExecutor
+
+from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
+from langchain_openai import OpenAI
+
 import azure.functions as func
 from azure.core.exceptions import AzureError
 from azure.cosmos import CosmosClient, PartitionKey
@@ -386,5 +390,72 @@ def get_session_data(req: func.HttpRequest) -> func.HttpResponse:
     else:
         return func.HttpResponse(
             "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
+            status_code=200,
+        )
+
+
+@app.route(route="get_all_sessions_by_user")
+def get_all_sessions_by_user(req: func.HttpRequest) -> func.HttpResponse:
+
+    def fetch_sessions_by_user(user_id: str) -> list:
+        # Get the container (collection)
+        # Query sessions for the given user_id
+        query = f"SELECT c.id,c.concept,c.student_persona FROM c WHERE c.user_id = '{user_id}'"
+        sessions = list(sessions_container.query_items(query, enable_cross_partition_query=True))
+
+        # Return the sessions
+        logging.info("log sessions update %s", sessions)
+
+        return sessions
+
+    logging.info("get_session_data HTTP trigger function processed a request.")
+
+    # request body only takes user_id
+    user_id = req.params.get("user_id")
+    if not user_id:
+        try:
+            req_body = req.get_json()
+        except ValueError:
+            pass
+        else:
+            user_id = req_body.get("user_id")
+
+    # Fetch sessions for the given user_id
+    sessions = fetch_sessions_by_user(user_id)
+
+    # # TODO: move generating image to post_analysis 
+    # dalle_api_wrapper = DallEAPIWrapper()
+
+    # # # loop through sessions and generate image based on each sessions
+    # for session in sessions:
+    #     student_persona = session.get("student_persona", "")
+    #     concept = session.get("concept","")
+
+    #     # Create a prompt for the current session
+    #     dall_e_prompt = f"Can you create an image to illustrate a student having the following persona: {student_persona}, while teaching: {concept}"
+
+    #     # Run the prompt through the DALL·E API
+    #     image_url = dalle_api_wrapper.run(dall_e_prompt)
+
+    #     # Add the generated image information to the current session dictionary
+    #     session["generated_image"] = {"image_url":image_url}
+
+    # Prepare the response and count number of sessions (pagination?)
+    response_data = {
+        "user_id": user_id,
+        "sessions": sessions,
+        "sessions_count": len(sessions),
+        "success": True
+    }
+
+    # Convert the response data to JSON
+    response_json = json.dumps(response_data)
+
+    if user_id:
+        logging.info(response_json)
+        return func.HttpResponse(response_json, status_code=200)
+    else:
+        return func.HttpResponse(
+            "This HTTP triggered function executed successfully. Pass a user_id in the query string or in the request body for a personalized response.",
             status_code=200,
         )
