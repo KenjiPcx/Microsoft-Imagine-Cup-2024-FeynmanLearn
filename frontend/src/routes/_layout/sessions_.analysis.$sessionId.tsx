@@ -8,7 +8,7 @@
 import { FileRoute } from "@tanstack/react-router";
 import { Card, Text, Group, Title, Button, Flex, Box } from "@mantine/core";
 
-export const Route = new FileRoute("/sessions/analysis/$sessionId").createRoute(
+export const Route = new FileRoute("/_layout/sessions/analysis/$sessionId").createRoute(
   {
     component: PostSessionAnalysisComponent,
   }

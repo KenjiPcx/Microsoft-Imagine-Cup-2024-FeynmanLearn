@@ -3,24 +3,25 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
-import { Route as SessionsImport } from './routes/sessions'
 import { Route as LoginImport } from './routes/login'
+import { Route as LayoutImport } from './routes/_layout'
 import { Route as AuthImport } from './routes/_auth'
-import { Route as IndexImport } from './routes/index'
-import { Route as SessionsNewImport } from './routes/sessions_.new'
+import { Route as LayoutIndexImport } from './routes/_layout/index'
+import { Route as LayoutSessionsImport } from './routes/_layout/sessions'
 import { Route as AuthProfileImport } from './routes/_auth.profile'
 import { Route as SessionsRunSessionIdImport } from './routes/sessions_.run.$sessionId'
-import { Route as SessionsAnalysisSessionIdImport } from './routes/sessions_.analysis.$sessionId'
+import { Route as LayoutSessionsNewImport } from './routes/_layout/sessions_.new'
+import { Route as LayoutSessionsAnalysisSessionIdImport } from './routes/_layout/sessions_.analysis.$sessionId'
 
 // Create/Update Routes
 
-const SessionsRoute = SessionsImport.update({
-  path: '/sessions',
+const LoginRoute = LoginImport.update({
+  path: '/login',
   getParentRoute: () => rootRoute,
 } as any)
 
-const LoginRoute = LoginImport.update({
-  path: '/login',
+const LayoutRoute = LayoutImport.update({
+  id: '/_layout',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -29,14 +30,14 @@ const AuthRoute = AuthImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const IndexRoute = IndexImport.update({
+const LayoutIndexRoute = LayoutIndexImport.update({
   path: '/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => LayoutRoute,
 } as any)
 
-const SessionsNewRoute = SessionsNewImport.update({
-  path: '/sessions/new',
-  getParentRoute: () => rootRoute,
+const LayoutSessionsRoute = LayoutSessionsImport.update({
+  path: '/sessions',
+  getParentRoute: () => LayoutRoute,
 } as any)
 
 const AuthProfileRoute = AuthProfileImport.update({
@@ -49,46 +50,56 @@ const SessionsRunSessionIdRoute = SessionsRunSessionIdImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
-const SessionsAnalysisSessionIdRoute = SessionsAnalysisSessionIdImport.update({
-  path: '/sessions/analysis/$sessionId',
-  getParentRoute: () => rootRoute,
+const LayoutSessionsNewRoute = LayoutSessionsNewImport.update({
+  path: '/sessions/new',
+  getParentRoute: () => LayoutRoute,
 } as any)
+
+const LayoutSessionsAnalysisSessionIdRoute =
+  LayoutSessionsAnalysisSessionIdImport.update({
+    path: '/sessions/analysis/$sessionId',
+    getParentRoute: () => LayoutRoute,
+  } as any)
 
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
     '/_auth': {
       preLoaderRoute: typeof AuthImport
+      parentRoute: typeof rootRoute
+    }
+    '/_layout': {
+      preLoaderRoute: typeof LayoutImport
       parentRoute: typeof rootRoute
     }
     '/login': {
       preLoaderRoute: typeof LoginImport
       parentRoute: typeof rootRoute
     }
-    '/sessions': {
-      preLoaderRoute: typeof SessionsImport
-      parentRoute: typeof rootRoute
-    }
     '/_auth/profile': {
       preLoaderRoute: typeof AuthProfileImport
       parentRoute: typeof AuthImport
     }
-    '/sessions/new': {
-      preLoaderRoute: typeof SessionsNewImport
-      parentRoute: typeof rootRoute
+    '/_layout/sessions': {
+      preLoaderRoute: typeof LayoutSessionsImport
+      parentRoute: typeof LayoutImport
     }
-    '/sessions/analysis/$sessionId': {
-      preLoaderRoute: typeof SessionsAnalysisSessionIdImport
-      parentRoute: typeof rootRoute
+    '/_layout/': {
+      preLoaderRoute: typeof LayoutIndexImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/sessions/new': {
+      preLoaderRoute: typeof LayoutSessionsNewImport
+      parentRoute: typeof LayoutImport
     }
     '/sessions/run/$sessionId': {
       preLoaderRoute: typeof SessionsRunSessionIdImport
       parentRoute: typeof rootRoute
+    }
+    '/_layout/sessions/analysis/$sessionId': {
+      preLoaderRoute: typeof LayoutSessionsAnalysisSessionIdImport
+      parentRoute: typeof LayoutImport
     }
   }
 }
@@ -96,11 +107,13 @@ declare module '@tanstack/react-router' {
 // Create and export the route tree
 
 export const routeTree = rootRoute.addChildren([
-  IndexRoute,
   AuthRoute.addChildren([AuthProfileRoute]),
+  LayoutRoute.addChildren([
+    LayoutSessionsRoute,
+    LayoutIndexRoute,
+    LayoutSessionsNewRoute,
+    LayoutSessionsAnalysisSessionIdRoute,
+  ]),
   LoginRoute,
-  SessionsRoute,
-  SessionsNewRoute,
-  SessionsAnalysisSessionIdRoute,
   SessionsRunSessionIdRoute,
 ])
