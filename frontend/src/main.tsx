@@ -8,6 +8,7 @@ import { routeTree } from "./routeTree.gen";
 import { Spinner } from "./components/Spinner";
 import { MantineProvider } from "@mantine/core";
 import { theme } from "./theme";
+import { RecoilRoot } from "recoil";
 
 // Set up a Router instance
 const router = new Router({
@@ -41,15 +42,17 @@ function App() {
   // );
 
   return (
-    <RouterProvider
-      router={router}
-      defaultPreload="intent"
-      // defaultPendingMs={pendingMs}
-      // defaultPendingMinMs={pendingMinMs}
-      context={{
-        auth,
-      }}
-    />
+    <RecoilRoot>
+      <RouterProvider
+        router={router}
+        defaultPreload="intent"
+        // defaultPendingMs={pendingMs}
+        // defaultPendingMinMs={pendingMinMs}
+        context={{
+          auth,
+        }}
+      />
+    </RecoilRoot>
   );
 }
 

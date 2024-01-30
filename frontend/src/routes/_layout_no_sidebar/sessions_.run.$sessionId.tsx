@@ -13,10 +13,15 @@ import {
   createPolymorphicComponent,
   createStyles,
   Image,
+  Navbar,
+  Stack,
 } from "@mantine/core";
 import { SessionErrorComponent } from "../../components/SessionErrorComponent";
 import { motion } from "framer-motion";
 import NavbarMinimal from "../../components/Sidebar";
+import TranscriptButton from "../../components/TranscriptButton";
+import { NavbarLink } from "../../components/NavbarLink";
+import { IconSettings } from "@tabler/icons-react";
 
 const useStyles = createStyles({
   container: {
@@ -42,7 +47,21 @@ function SessionComponent() {
   return (
     <>
       <Box sx={{ position: "absolute", left: 0 }}>
-        <NavbarMinimal />
+        <Navbar w={"8rem"} p="xl" bg={"rgba(0, 0, 0, 0)"} withBorder={false}>
+          <Navbar.Section>
+            <TranscriptButton />
+          </Navbar.Section>
+          <Navbar.Section mt={"auto"}>
+            <Stack m="auto" w="min-content">
+              <NavbarLink
+                icon={IconSettings}
+                label={"Settings"}
+                active={false}
+                onClick={() => {}}
+              />
+            </Stack>
+          </Navbar.Section>
+        </Navbar>
       </Box>
       <div>Hl</div>
     </>
