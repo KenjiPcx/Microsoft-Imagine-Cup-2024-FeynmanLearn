@@ -4,7 +4,8 @@ import * as React from "react";
 import { FileRoute, Link, Outlet } from "@tanstack/react-router";
 import { fetchSessions } from "../sessions";
 import { Button, NavLink } from "@mantine/core";
-import { Box,Grid,SimpleGrid, Skeleton, Container, Stack, useMantineTheme, px } from '@mantine/core';
+import { Image, Card, Box, Grid, SimpleGrid, Skeleton, Container, Text, useMantineTheme, px } from '@mantine/core';
+import classes from '../components/ArticleCard.module.css';
 
 export const Route = new FileRoute("/sessions").createRoute({
   // loader: fetchSessions,
@@ -16,34 +17,50 @@ export const Route = new FileRoute("/sessions").createRoute({
 // put image in the grid
 // on-click link to sessions post analysis
 // TODO : add types (TYPESCRIPT STUFFS)
-
-function Subgrid({ sessions }) {
+function SessionGrid({ sessions }) {
   const theme = useMantineTheme();
+
+
+  const cards = sessions.map((session) => (
+    <Link to={`/sessions/${session.id}`} style={{ textDecoration: 'none', color: 'inherit' }} key={session.id}>
+      <Box
+        styles={{
+          width: 'calc(33.33% - 16px)', // Each item takes up 33.33% of the container width with some margin
+          margin: '8px',
+        }}
+      >
+        <Card withBorder radius="md" className={classes.card}>
+          <Card.Section>
+            <a>
+              <Image src={session.generated_image?.image_url} />
+            </a>
+            <Text className={classes.title} fw={500}>
+              {session.concept}
+            </Text>
+            <Text fz="sm" c="dimmed" lineClamp={4}>
+              {session.student_persona}
+            </Text>
+          </Card.Section>
+        </Card>
+      </Box>
+    </Link>
+  ));
 
   return (
     <Container my="md">
-      {sessions.map((session) => (
-          <Link to={`/sessions/${session.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-        <Box key={session.id} style={{ display: 'flex', border: '1px solid #ccc', padding: '10px', borderRadius: '8px'}}>
-            <Box style={{flex: 8}}>
-            <div> <strong style={{fontSize: '18px'}}>{session.concept} </strong> </div>
-            <div>{session.student_persona}</div>
-            </Box>
-          <Box style={{ flex: 4 }}>
-            {/* placeholder for image */}
-            <img
-              src={session.generated_image?.image_url || 'placeholder_image_url'}
-              alt="Dall-E Generated Image"
-              style={{ width: '100%', marginTop: '10px' }}
-            />
-          </Box>
-        </Box>
-        </Link>
-      ))}
+      <Box
+        styles={{
+          width: '66px',
+          display: 'flex',
+          flexWrap: 'wrap', // Explicitly set the flexWrap property
+        }}
+      >
+        {cards}
+      </Box>
     </Container>
   );
-  
-}
+};
+
 
 function SessionsComponent() {
   const [sessions, setSessions] = React.useState([]);
@@ -91,43 +108,10 @@ function SessionsComponent() {
           New Session
         </Button>
       </div>
-      <Subgrid sessions={sessions} />
+      <SessionGrid sessions={sessions} />
       <Outlet />
     </div>
       <Outlet />
-      {/* <ul className="list-disc pl-4">
-        {sessions.map((session) => (
-          <li key={session.id} className="whitespace-nowrap">
-            <Link
-              to={`/sessions/${session.id}`}
-              className="block py-1 text-blue-800 hover:text-blue-600"
-              activeProps={{ className: "text-black font-bold" }}
-            >
-              <div>{session.title.substring(0, 20)}</div>
-            </Link>
-          </li>
-        ))}
-      </ul> */}
-      {/* <ul className="list-disc pl-4">
-        {[...sessions, { id: "i-do-not-exist", title: "Non-existent Session" }]?.map(
-          (session) => {
-            return (
-              <li key={session.id} className="whitespace-nowrap">
-                <Link
-                  to="/sessions/$sessionId"
-                  params={{
-                    sessionId: session.id,
-                  }}
-                  className="block py-1 text-blue-800 hover:text-blue-600"
-                  activeProps={{ className: "text-black font-bold" }}
-                >
-                  <div>{session.title.substring(0, 20)}</div>
-                </Link>
-              </li>
-            );
-          }
-        )}
-      </ul> */}
     </div>
   );
 }
