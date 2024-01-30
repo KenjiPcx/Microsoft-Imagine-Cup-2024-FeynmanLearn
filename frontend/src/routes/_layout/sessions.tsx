@@ -2,11 +2,18 @@
 
 import * as React from "react";
 import { FileRoute, Link, Outlet } from "@tanstack/react-router";
-import { fetchSessions } from "../sessions";
+import { fetchSessions } from "../../sessionsService";
 import { Button, NavLink } from "@mantine/core";
-import { SimpleGrid, Skeleton, Container, Stack, useMantineTheme, px } from '@mantine/core';
+import {
+  SimpleGrid,
+  Skeleton,
+  Container,
+  Stack,
+  useMantineTheme,
+  px,
+} from "@mantine/core";
 
-export const Route = new FileRoute("/sessions").createRoute({
+export const Route = new FileRoute("/_layout/sessions").createRoute({
   // loader: fetchSessions,
   component: SessionsComponent,
 });
@@ -20,9 +27,12 @@ export const Route = new FileRoute("/sessions").createRoute({
 function Subgrid({ sessions }) {
   const theme = useMantineTheme();
 
-  const getChild = (height) => <Skeleton height={height} radius="md" animate={false} />;
+  const getChild = (height) => (
+    <Skeleton height={height} radius="md" animate={false} />
+  );
   const BASE_HEIGHT = 360;
-  const getSubHeight = (children, spacing) => BASE_HEIGHT / children - spacing * ((children - 1) / children);
+  const getSubHeight = (children, spacing) =>
+    BASE_HEIGHT / children - spacing * ((children - 1) / children);
 
   return (
     <Container my="md">
@@ -30,8 +40,8 @@ function Subgrid({ sessions }) {
         {sessions.map((session) => (
           <Stack key={session.id}>
             <Link to={`/sessions/${session.id}`}>
-            <div>{session.concept}</div>
-            <div>{session.student_persona}</div>
+              <div>{session.concept}</div>
+              <div>{session.student_persona}</div>
             </Link>
             {/* Placeholder for image (TODO:) */}
             {getChild(getSubHeight(3, px(theme.spacing.md) as number))}
@@ -53,7 +63,9 @@ function SessionsComponent() {
   const fetchSessionsData = async () => {
     try {
       //TODO: change this to a proper hook
-      const response = await fetch("http://localhost:7071/api/get_all_sessions_by_user?user_id=02");
+      const response = await fetch(
+        "http://localhost:7071/api/get_all_sessions_by_user?user_id=02"
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch sessions");
@@ -61,7 +73,7 @@ function SessionsComponent() {
 
       const data = await response.json();
       setSessions(data.sessions); // Assuming the API returns an object with a 'sessions' property
-      console.log(sessions,'sessionsconsolelog')
+      console.log(sessions, "sessionsconsolelog");
     } catch (error) {
       console.error("Error fetching sessions:", error.message);
     }
@@ -83,14 +95,14 @@ function SessionsComponent() {
         clicking on any of them will redirect to /sessions/$sessionId
       </div>
       <div className="p-2 flex flex-col gap-2">
-      <div className="flex items-center">
-        <Button component={Link} to="/sessions/new">
-          New Session
-        </Button>
+        <div className="flex items-center">
+          <Button component={Link} to="/sessions/new">
+            New Session
+          </Button>
+        </div>
+        <Subgrid sessions={sessions} />
+        <Outlet />
       </div>
-      <Subgrid sessions={sessions} />
-      <Outlet />
-    </div>
       <Outlet />
       {/* <ul className="list-disc pl-4">
         {sessions.map((session) => (

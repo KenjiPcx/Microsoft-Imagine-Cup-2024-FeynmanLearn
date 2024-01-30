@@ -20,7 +20,7 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 
-export const Route = new FileRoute("/sessions/new").createRoute({
+export const Route = new FileRoute("/_layout/sessions/new").createRoute({
   component: NewSessionConfigurationComponent,
 });
 

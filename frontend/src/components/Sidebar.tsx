@@ -1,62 +1,13 @@
-import { JSX } from "react";
+import { Navbar, Stack, rem, Box, Badge, Menu } from "@mantine/core";
 import {
-  Navbar,
-  Tooltip,
-  createStyles,
-  Stack,
-  UnstyledButton,
-  rem,
-  Box,
-  Badge,
-} from "@mantine/core";
-import { IconSettings, TablerIconsProps } from "@tabler/icons-react";
+  IconHome,
+  IconNewSection,
+  IconPhoto,
+  IconSettings,
+} from "@tabler/icons-react";
 import { Link } from "@tanstack/react-router";
-
-const useStyles = createStyles((theme) => ({
-  link: {
-    width: rem(66),
-    height: rem(66),
-    borderRadius: 999,
-    borderWidth: 1.5,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: theme.colors.iconColor,
-    border: `3px solid ${theme.colors.cardStroke}`,
-    backgroundColor: theme.colors.cardFill,
-    ":active": { translate: "0 1px" },
-    ":hover": { borderColor: theme.colors.convoscopeBlue },
-    transition: "0.1s",
-  },
-}));
-
-interface NavbarLinkProps {
-  icon: (props: TablerIconsProps) => JSX.Element;
-  label: string;
-  active?: boolean;
-  onClick?(): void;
-}
-
-export function NavbarLink({
-  icon: Icon,
-  label,
-  // active,
-  onClick,
-}: NavbarLinkProps) {
-  const { classes, cx } = useStyles();
-
-  return (
-    <Tooltip label={label} position="right" transitionProps={{ duration: 0 }}>
-      <UnstyledButton
-        variant={"outline"}
-        onClick={onClick}
-        className={cx(classes.link)}
-      >
-        <Icon size="2rem" stroke={1.5} />
-      </UnstyledButton>
-    </Tooltip>
-  );
-}
+import { NavbarLink } from "./NavbarLink";
+import { NavButton } from "./NavButton";
 
 interface NavbarMinimalProps {
   settingsOpened: boolean;
@@ -71,8 +22,37 @@ export function NavbarMinimal({
     <Navbar w={"8rem"} p="xl" bg={"rgba(0, 0, 0, 0)"} withBorder={false}>
       <Navbar.Section>
         <Stack m="auto" w="min-content">
-          {/* <TranscriptButton /> */}
-          FeynmanLearn Home
+          <Menu withArrow>
+            <Menu.Target>
+              <NavButton />
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Label>Navigation</Menu.Label>
+              <Menu.Item
+                component={Link}
+                to={"/"}
+                icon={<IconHome style={{ width: rem(14), height: rem(14) }} />}
+              >
+                Home
+              </Menu.Item>
+              <Menu.Item
+                component={Link}
+                to={"/sessions/new"}
+                icon={
+                  <IconNewSection style={{ width: rem(14), height: rem(14) }} />
+                }
+              >
+                New Session
+              </Menu.Item>
+              <Menu.Item
+                component={Link}
+                to={"/sessions"}
+                icon={<IconPhoto style={{ width: rem(14), height: rem(14) }} />}
+              >
+                Past Sessions
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
         </Stack>
       </Navbar.Section>
       <Navbar.Section mt={"auto"}>
@@ -83,11 +63,8 @@ export function NavbarMinimal({
               ["/", "Home (Kenji)"],
               ["/sessions", "Sessions (Ventus)"],
               ["/sessions/new", "New Session (Nicolo)"],
-              [
-                "/sessions/run/some-id",
-                "Feynman Session (Kenji)",
-              ],
-              ["/sessions/analysis/some-id", "Post Analysis (Joshua)"],
+              ["/sessions/run/$sessionId", "Feynman Session (Kenji)"],
+              ["/sessions/analysis/$sessionId", "Post Analysis (Joshua)"],
               // ["/dashboard", "Dashboard"],
               // ["/profile", "Profile"],
               // ["/login", "Login"],
