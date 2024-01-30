@@ -1,4 +1,4 @@
-import { JSX } from "react";
+import { JSX, forwardRef } from "react";
 import {
   Navbar,
   Tooltip,
@@ -8,8 +8,17 @@ import {
   rem,
   Box,
   Badge,
+  Menu,
+  keyframes,
+  Text,
 } from "@mantine/core";
-import { IconSettings, TablerIconsProps } from "@tabler/icons-react";
+import {
+  IconHome,
+  IconNewSection,
+  IconPhoto,
+  IconSettings,
+  TablerIconsProps,
+} from "@tabler/icons-react";
 import { Link } from "@tanstack/react-router";
 
 const useStyles = createStyles((theme) => ({
@@ -29,6 +38,12 @@ const useStyles = createStyles((theme) => ({
     transition: "0.1s",
   },
 }));
+
+const breathe = keyframes`
+  0% { transform: translate(0); filter: brightness(1); }
+  50% { transform: translate(0, -6px); filter: brightness(1.2); }
+  100% { transform: translate(0); filter: brightness(1); }
+`;
 
 interface NavbarLinkProps {
   icon: (props: TablerIconsProps) => JSX.Element;
@@ -58,6 +73,37 @@ export function NavbarLink({
   );
 }
 
+export const NavButton = forwardRef<HTMLButtonElement>((others, ref) => {
+  return (
+    <UnstyledButton
+      ref={ref}
+      sx={(theme) => ({
+        display: "block",
+        width: "100%",
+        border: `3px solid ${theme.colors.cardStroke}`,
+        padding: theme.spacing.xs,
+        paddingLeft: theme.spacing.xl,
+        paddingRight: theme.spacing.xl,
+        color: theme.colors.cardFill,
+        backgroundColor: theme.colors.convoscopeBlue,
+        borderRadius: theme.spacing.md,
+        // animation: `${breathe} 6s ease-in-out infinite`,
+
+        ":active": { translate: "0 1px" },
+        ":hover": { borderColor: theme.colors.convoscopeBlue },
+      })}
+      {...others}
+    >
+      <Stack spacing={0}>
+        <Text size="xl" weight={700}>
+          {"Feynman"}
+        </Text>
+        <Text size="xl">{"Learn"}</Text>
+      </Stack>
+    </UnstyledButton>
+  );
+});
+
 interface NavbarMinimalProps {
   settingsOpened: boolean;
   toggleSettings: () => void;
@@ -67,12 +113,43 @@ export function NavbarMinimal({
   settingsOpened,
   toggleSettings,
 }: NavbarMinimalProps) {
+  const { classes } = useStyles();
+
   return (
     <Navbar w={"8rem"} p="xl" bg={"rgba(0, 0, 0, 0)"} withBorder={false}>
       <Navbar.Section>
         <Stack m="auto" w="min-content">
-          {/* <TranscriptButton /> */}
-          FeynmanLearn Home
+          <Menu withArrow>
+            <Menu.Target>
+              <NavButton />
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Label>Navigation</Menu.Label>
+              <Menu.Item
+                component={Link}
+                to={"/"}
+                icon={<IconHome style={{ width: rem(14), height: rem(14) }} />}
+              >
+                Home
+              </Menu.Item>
+              <Menu.Item
+                component={Link}
+                to={"/sessions/new"}
+                icon={
+                  <IconNewSection style={{ width: rem(14), height: rem(14) }} />
+                }
+              >
+                New Session
+              </Menu.Item>
+              <Menu.Item
+                component={Link}
+                to={"/sessions"}
+                icon={<IconPhoto style={{ width: rem(14), height: rem(14) }} />}
+              >
+                Past Sessions
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
         </Stack>
       </Navbar.Section>
       <Navbar.Section mt={"auto"}>
@@ -83,11 +160,8 @@ export function NavbarMinimal({
               ["/", "Home (Kenji)"],
               ["/sessions", "Sessions (Ventus)"],
               ["/sessions/new", "New Session (Nicolo)"],
-              [
-                "/sessions/run/some-id",
-                "Feynman Session (Kenji)",
-              ],
-              ["/sessions/analysis/some-id", "Post Analysis (Joshua)"],
+              ["/sessions/run/$sessionId", "Feynman Session (Kenji)"],
+              ["/sessions/analysis/$sessionId", "Post Analysis (Joshua)"],
               // ["/dashboard", "Dashboard"],
               // ["/profile", "Profile"],
               // ["/login", "Login"],
