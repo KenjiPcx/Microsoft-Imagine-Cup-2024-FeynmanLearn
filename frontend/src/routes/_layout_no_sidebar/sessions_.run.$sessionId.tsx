@@ -4,7 +4,7 @@
 
 import * as React from "react";
 import { FileRoute, Link, Outlet } from "@tanstack/react-router";
-import { fetchSession } from "../../sessions";
+import { fetchSession } from "../../sessionsService";
 import {
   Box,
   Center,
@@ -16,6 +16,7 @@ import {
 } from "@mantine/core";
 import { SessionErrorComponent } from "../../components/SessionErrorComponent";
 import { motion } from "framer-motion";
+import NavbarMinimal from "../../components/Sidebar";
 
 const useStyles = createStyles({
   container: {
@@ -29,8 +30,8 @@ const useStyles = createStyles({
 const PContainer = createPolymorphicComponent<"div", ContainerProps>(Container);
 
 export const Route = new FileRoute("/_layout_no_sidebar/sessions/run/$sessionId").createRoute({
-  loader: async ({ params: { sessionId } }) => fetchSession(sessionId),
-  errorComponent: SessionErrorComponent as any,
+  // loader: async ({ params: { sessionId } }) => fetchSession(sessionId),
+  // errorComponent: SessionErrorComponent as any,
   component: SessionComponent,
 });
 
@@ -39,36 +40,11 @@ function SessionComponent() {
   const { classes } = useStyles();
 
   return (
-    <PContainer
-      component={motion.div}
-      layout
-      fluid
-      className={classes.container}
-      transition={{ bounce: 0 }}
-    >
-      <Box
-        w="50%"
-        style={{
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-        }}
-      >
-        <Image src={"/blobs.gif"} fit="cover" />
+    <>
+      <Box sx={{ position: "absolute", left: 0 }}>
+        <NavbarMinimal />
       </Box>
-      <Center
-        style={{
-          width: "100vw",
-          height: "100vh",
-          position: "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-        }}
-      >
-        Hello
-      </Center>
-    </PContainer>
+      <div>Hl</div>
+    </>
   );
 }
