@@ -44,6 +44,7 @@ export default function LayoutContainer({ children }: LayoutContainerProps) {
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
+          opacity: 0.4,
         }}
       >
         <Image src={"/blobs.gif"} fit="cover" />
