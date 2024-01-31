@@ -24,7 +24,7 @@ function LayoutComponent() {
   return (
     <>
       <Sidebar settingsOpened={opened} toggleSettings={toggleSettings} />
-      <LayoutContainer>
+      <LayoutContainer opacity={0.4}>
         <Outlet />
       </LayoutContainer>
       <SettingsModal opened={opened} closeSettings={closeSettings} />

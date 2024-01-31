@@ -9,10 +9,10 @@ import {
   Image,
 } from "@mantine/core";
 import { motion } from "framer-motion";
-import { Outlet } from "@tanstack/react-router";
 
 interface LayoutContainerProps {
   children?: React.ReactNode;
+  opacity?: number;
 }
 
 const useStyles = createStyles({
@@ -26,7 +26,7 @@ const useStyles = createStyles({
 
 const PContainer = createPolymorphicComponent<"div", ContainerProps>(Container);
 
-export default function LayoutContainer({ children }: LayoutContainerProps) {
+export default function LayoutContainer({ children, opacity }: LayoutContainerProps) {
   const { classes } = useStyles();
 
   return (
@@ -44,7 +44,7 @@ export default function LayoutContainer({ children }: LayoutContainerProps) {
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
-          opacity: 0.4,
+          opacity: opacity || 0.5,
         }}
       >
         <Image src={"/blobs.gif"} fit="cover" />
