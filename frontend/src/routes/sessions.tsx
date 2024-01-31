@@ -49,17 +49,23 @@ function SessionGrid({ sessions }) {
               overflow: "hidden",
             }}
           >
-            <Card.Section>
-              <a>
-                <Image src={session.generated_image?.image_url} />
-              </a>
-              <Text className={classes.title} fw={700}>
-                {session.concept}
-              </Text>
-              <Text fz="sm" c="dimmed">
-                {session.student_persona}
-              </Text>
-            </Card.Section>
+            <Link
+              to={`/sessions/${session.id}`}
+              style={{ textDecoration: "none", color: "inherit" }}
+              key={session.id}
+            >
+              <Card.Section>
+                <a>
+                  <Image src={session.generated_image?.image_url} />
+                </a>
+                <Text className={classes.title} fw={700}>
+                  {session.concept}
+                </Text>
+                <Text fz="sm" c="dimmed">
+                  {session.student_persona}
+                </Text>
+              </Card.Section>
+            </Link>
           </Card>
         ))}
       </Flex>
