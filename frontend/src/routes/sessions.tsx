@@ -2,10 +2,22 @@
 
 import * as React from "react";
 import { FileRoute, Link, Outlet } from "@tanstack/react-router";
-import { fetchSessions } from "../sessions";
+import { fetchSessions, getAllSessionsByUser } from "../sessions";
 import { Button, NavLink } from "@mantine/core";
-import { Image, Card, Box, Grid, SimpleGrid, Skeleton, Container, Text, useMantineTheme, px } from '@mantine/core';
-import classes from '../components/ArticleCard.module.css';
+import {
+  Flex,
+  Image,
+  Card,
+  Box,
+  Grid,
+  SimpleGrid,
+  Skeleton,
+  Container,
+  Text,
+  useMantineTheme,
+  px,
+} from "@mantine/core";
+import classes from "../components/ArticleCard.module.css";
 
 export const Route = new FileRoute("/sessions").createRoute({
   // loader: fetchSessions,
@@ -20,47 +32,40 @@ export const Route = new FileRoute("/sessions").createRoute({
 function SessionGrid({ sessions }) {
   const theme = useMantineTheme();
 
-
-  const cards = sessions.map((session) => (
-    <Link to={`/sessions/${session.id}`} style={{ textDecoration: 'none', color: 'inherit' }} key={session.id}>
-      <Box
-        styles={{
-          width: 'calc(33.33% - 16px)', // Each item takes up 33.33% of the container width with some margin
-          margin: '8px',
-        }}
-      >
-        <Card withBorder radius="md" className={classes.card}>
-          <Card.Section>
-            <a>
-              <Image src={session.generated_image?.image_url} />
-            </a>
-            <Text className={classes.title} fw={500}>
-              {session.concept}
-            </Text>
-            <Text fz="sm" c="dimmed" lineClamp={4}>
-              {session.student_persona}
-            </Text>
-          </Card.Section>
-        </Card>
-      </Box>
-    </Link>
-  ));
-
   return (
     <Container my="md">
-      <Box
-        styles={{
-          width: '66px',
-          display: 'flex',
-          flexWrap: 'wrap', // Explicitly set the flexWrap property
-        }}
-      >
-        {cards}
-      </Box>
+      <Flex wrap={"wrap"} w="1200px">
+        {sessions.map((session) => (
+          <Card
+            withBorder
+            radius="md"
+            className={classes.card}
+            m="8px"
+            p="2px"
+            w="300px"
+            style={{
+              border: "1px solid #ccc",
+              borderRadius: "8px",
+              overflow: "hidden",
+            }}
+          >
+            <Card.Section>
+              <a>
+                <Image src={session.generated_image?.image_url} />
+              </a>
+              <Text className={classes.title} fw={700}>
+                {session.concept}
+              </Text>
+              <Text fz="sm" c="dimmed">
+                {session.student_persona}
+              </Text>
+            </Card.Section>
+          </Card>
+        ))}
+      </Flex>
     </Container>
   );
-};
-
+}
 
 function SessionsComponent() {
   const [sessions, setSessions] = React.useState([]);
@@ -69,11 +74,13 @@ function SessionsComponent() {
     // Fetch sessions when the component mounts
     fetchSessionsData();
   }, []);
-
+  // const getAllSessionsByUser
   const fetchSessionsData = async () => {
     try {
       //TODO: change this to a proper hook
-      const response = await fetch("http://localhost:7071/api/get_all_sessions_by_user?user_id=02");
+      const response = await fetch(
+        "http://localhost:7071/api/get_all_sessions_by_user?user_id=02"
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch sessions");
@@ -81,7 +88,7 @@ function SessionsComponent() {
 
       const data = await response.json();
       setSessions(data.sessions); // Assuming the API returns an object with a 'sessions' property
-      console.log(sessions,'sessionsconsolelog')
+      console.log(sessions, "sessionsconsolelog");
     } catch (error) {
       console.error("Error fetching sessions:", error.message);
     }
@@ -103,14 +110,14 @@ function SessionsComponent() {
         clicking on any of them will redirect to /sessions/$sessionId
       </div>
       <div className="p-2 flex flex-col gap-2">
-      <div className="flex items-center">
-        <Button component={Link} to="/sessions/new">
-          New Session
-        </Button>
+        <div className="flex items-center">
+          <Button component={Link} to="/sessions/new">
+            New Session
+          </Button>
+        </div>
+        <SessionGrid sessions={sessions} />
+        <Outlet />
       </div>
-      <SessionGrid sessions={sessions} />
-      <Outlet />
-    </div>
       <Outlet />
     </div>
   );
