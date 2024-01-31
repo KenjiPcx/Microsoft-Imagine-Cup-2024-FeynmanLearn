@@ -19,10 +19,6 @@ const useStyles = createStyles({
 
 const TranscriptButton = () => {
   const { classes } = useStyles();
-
-  const { browserSupportsSpeechRecognition, isMicrophoneAvailable } =
-    useSpeechRecognition();
-
   const [isRecognizing, setIsRecognizing] = useRecoilState(isRecognizingState);
 
   return (
@@ -32,7 +28,6 @@ const TranscriptButton = () => {
       onClick={() => setIsRecognizing((prevVal) => !prevVal)}
       size={rem(80)}
       className={classes.iconButton}
-      disabled={!isMicrophoneAvailable || !browserSupportsSpeechRecognition}
     >
       {isRecognizing ? (
         <Image src="/record_button.svg" />
