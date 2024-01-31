@@ -35,30 +35,28 @@ function SessionComponent() {
   const [recognizing, setRecognizing] = useRecoilState(isRecognizingState);
   const [messages, setMessages] = useState<string[]>([]);
   const [combinedMessages, setCombinedMessages] = useState<string[]>([]);
-  const [messageIdx, setMessageIdx] = useState(0);
 
-  const debouncedSendMessages = useDebounce(async () => {
-    if (messages.length === 0) return;
-    console.log("Message idx", messageIdx);
-    console.log("Send messages", messages.slice(messageIdx));
+  const baseData = {
+    user_id: "KenjiPcx",
+    session_id: "3dbf279a-0f4e-4616-a78f-262c0b54256f",
+  };
+
+  const debouncedUserTalk = useDebounce(async (newRecognizedText: string) => {
+    if (!newRecognizedText) {
+      return;
+    }
 
     const data = {
-      user_id: "KenjiPcx",
-      session_id: "3dbf279a-0f4e-4616-a78f-262c0b54256f",
-      message: messages.slice(messageIdx).join(" "),
+      ...baseData,
+      messages: messages.join(" ") + " " + newRecognizedText,
     };
 
-    setMessageIdx(messages.length);
-
     try {
-      setRecognizing(false);
+      console.log(data);
+      return;
       const res = await axios.post(sendMessageEndpoint, data);
-      console.log("Response", res);
-      setRecognizing(false);
       setAssistantMessage(res.data.message);
       playMessage(res.data.message, () => {
-        console.log("Audio ended");
-        setRecognizing(true);
         const data = {
           user_id: "KenjiPcx",
           session_id: "3dbf279a-0f4e-4616-a78f-262c0b54256f",
@@ -68,7 +66,7 @@ function SessionComponent() {
     } catch (err) {
       console.log("Error", err);
     }
-  }, 1000);
+  }, 7500);
 
   useEffect(() => {
     speechRecognizer.recognizing = (s, e) => {
@@ -82,9 +80,8 @@ function SessionComponent() {
         console.log(`RECOGNIZED: Text=${e.result.text}`);
       }
     };
-    playMessage("Hello, I am your assistant for today", () => {});
     return () => {
-      debouncedSendMessages.cancel();
+      debouncedUserTalk.cancel();
     };
   }, []);
 
@@ -95,6 +92,10 @@ function SessionComponent() {
       speechRecognizer.stopContinuousRecognitionAsync();
     }
   }, [recognizing]);
+
+  useEffect(() => {
+    debouncedUserTalk(userMessage);
+  }, [userMessage]);
 
   return (
     <>

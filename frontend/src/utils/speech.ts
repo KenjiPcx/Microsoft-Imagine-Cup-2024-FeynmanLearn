@@ -12,11 +12,13 @@ const speechConfig = SpeechConfig.fromSubscription(
 );
 speechConfig.speechSynthesisVoiceName = "en-US-JaneNeural";
 const audioConfig = AudioConfig.fromDefaultMicrophoneInput();
+
 export const speechRecognizer = new SpeechRecognizer(speechConfig, audioConfig);
 speechRecognizer.sessionStopped = (s, e) => {
   console.log("\nSession stopped event.");
   speechRecognizer.stopContinuousRecognitionAsync();
 };
+
 export const playMessage = (message: string, onAudioEnd: () => void) => {
   const player = new SpeakerAudioDestination();
   player.onAudioEnd = onAudioEnd;
