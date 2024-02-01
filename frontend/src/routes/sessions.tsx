@@ -75,6 +75,7 @@ function SessionGrid({ sessions }) {
 
 function SessionsComponent() {
   const [sessions, setSessions] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
     // Fetch sessions when the component mounts
@@ -97,6 +98,9 @@ function SessionsComponent() {
       console.log(sessions, "sessionsconsolelog");
     } catch (error) {
       console.error("Error fetching sessions:", error.message);
+    } finally {
+      // Set loading state to false whether the fetch succeeded or failed
+      setIsLoading(false);
     }
   };
 
@@ -121,7 +125,13 @@ function SessionsComponent() {
             New Session
           </Button>
         </div>
-        <SessionGrid sessions={sessions} />
+        {isLoading ? (
+          // Render Skeleton when loading
+          <Skeleton height={800} />
+        ) : (
+          // Render SessionGrid when not loading
+          <SessionGrid sessions={sessions} />
+        )}
         <Outlet />
       </div>
       <Outlet />
