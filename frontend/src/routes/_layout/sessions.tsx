@@ -47,7 +47,10 @@ function SessionGrid({ sessions }: SessionGridProps) {
     <Container my="md">
       {/* Use skeleton when it is loading */}
       {/* <Skeleton>  */}
-      <Flex wrap={"wrap"} w="1200px">
+      <Flex
+        wrap={"wrap"}
+        w={{ base: 300, xs: 300, sm: 700, md: 900, lg: 1200 }}
+      >
         {sessions.map((session) => (
           <Card
             withBorder
@@ -55,7 +58,7 @@ function SessionGrid({ sessions }: SessionGridProps) {
             className={classes.card}
             m="8px"
             p="2px"
-            w="300px"
+            w={{ base: 280, xs: 280, sm: 330, md: 280, lg: 350 }}
             style={{
               border: "1px solid #ccc",
               borderRadius: "8px",
@@ -67,7 +70,10 @@ function SessionGrid({ sessions }: SessionGridProps) {
               style={{ textDecoration: "none", color: "inherit" }}
               key={session.id}
             >
-              <Card.Section>
+              <Card.Section
+                pl={{ base: 15, xs: 15, sm: 20, lg: 8 }}
+                pr={{ base: 15, xs: 15, sm: 20, lg: 8 }}
+              >
                 <a>
                   <Image src={session.generated_image} />
                 </a>
