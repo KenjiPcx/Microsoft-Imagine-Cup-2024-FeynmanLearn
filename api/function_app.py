@@ -14,6 +14,7 @@ from langchain_openai import OpenAI
 import azure.functions as func
 from azure.core.exceptions import AzureError
 from azure.cosmos import CosmosClient, PartitionKey
+from openai import OpenAI
 
 from agents.agent_prompt import prompt, prompt_template, parser
 
@@ -424,18 +425,25 @@ def get_all_sessions_by_user(req: func.HttpRequest) -> func.HttpResponse:
     sessions = fetch_sessions_by_user(user_id)
 
     # # TODO: move generating image to post_analysis 
-    # dalle_api_wrapper = DallEAPIWrapper()
 
-    # # # loop through sessions and generate image based on each sessions
+    # # loop through sessions and generate image based on each sessions
     # for session in sessions:
     #     student_persona = session.get("student_persona", "")
     #     concept = session.get("concept","")
 
     #     # Create a prompt for the current session
-    #     dall_e_prompt = f"Can you create an image to illustrate a student having the following persona: {student_persona}, while teaching: {concept}"
+    #     dall_e_prompt = f"Can you create an image to illustrate a student having the following persona: {student_persona}, while learning: {concept}"
 
-    #     # Run the prompt through the DALL·E API
-    #     image_url = dalle_api_wrapper.run(dall_e_prompt)
+    #     # Run the prompt through the openai DALL·E API
+    #     response = openai_client.images.generate(
+    #         model="dall-e-3",
+    #         prompt=dall_e_prompt,
+    #         size="1024x1024",
+    #         quality="standard",
+    #         n=1,
+    #         )
+        
+    #     image_url = response.data[0].url
 
     #     # Add the generated image information to the current session dictionary
     #     session["generated_image"] = {"image_url":image_url}

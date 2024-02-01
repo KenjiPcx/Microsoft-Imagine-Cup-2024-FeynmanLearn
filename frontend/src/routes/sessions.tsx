@@ -56,7 +56,7 @@ function SessionGrid({ sessions }) {
             >
               <Card.Section>
                 <a>
-                  <Image src={session.generated_image?.image_url} />
+                  <Image src={session.generated_image} />
                 </a>
                 <Text className={classes.title} fw={700}>
                   {session.concept}
