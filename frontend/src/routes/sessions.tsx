@@ -33,16 +33,20 @@ function SessionGrid({ sessions }) {
   const theme = useMantineTheme();
 
   return (
-    <Container my="md">
-      <Flex wrap={"wrap"} w="1200px">
+    <Container my="md" ml="5%" mr="5%" mt="400px">
+      <Flex
+        wrap={"wrap"}
+        w={{ base: 300, xs: 300, sm: 700, md: 900, lg: 1200 }}
+      >
         {sessions.map((session) => (
           <Card
             withBorder
             radius="md"
             className={classes.card}
             m="8px"
-            p="2px"
-            w="300px"
+            p="8px"
+            // w="350px"
+            w={{ base: 280, xs: 280, sm: 330, md: 280, lg: 350 }}
             style={{
               border: "1px solid #ccc",
               borderRadius: "8px",
@@ -54,7 +58,12 @@ function SessionGrid({ sessions }) {
               style={{ textDecoration: "none", color: "inherit" }}
               key={session.id}
             >
-              <Card.Section>
+              <Card.Section
+                // p="10px"
+                // p={{ xs: 15, sm: 20, lg: 8 }}
+                pl={{ base: 15, xs: 15, sm: 20, lg: 8 }}
+                pr={{ base: 15, xs: 15, sm: 20, lg: 8 }}
+              >
                 <a>
                   <Image src={session.generated_image} />
                 </a>
