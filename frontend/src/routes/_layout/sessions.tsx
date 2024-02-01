@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { FileRoute, Link, Outlet } from "@tanstack/react-router";
-import { fetchSessions, getAllSessionsByUser } from "../sessions";
+import { fetchSessions, getAllSessionsByUser } from "../../sessionsService";
 import { Button, NavLink } from "@mantine/core";
 import {
   Flex,
@@ -17,7 +17,18 @@ import {
   useMantineTheme,
   px,
 } from "@mantine/core";
-import classes from "../components/ArticleCard.module.css";
+import classes from "../../components/ArticleCard.module.css";
+
+interface SessionProps {
+  id: string;
+  generated_image: string;
+  concept: string;
+  student_persona: string;
+}
+
+interface SessionGridProps {
+  sessions: SessionProps[];
+}
 
 export const Route = new FileRoute("/_layout/sessions").createRoute({
   // loader: fetchSessions,
@@ -29,11 +40,13 @@ export const Route = new FileRoute("/_layout/sessions").createRoute({
 // put image in the grid
 // on-click link to sessions post analysis
 // TODO : add types (TYPESCRIPT STUFFS)
-function SessionGrid({ sessions }) {
+function SessionGrid({ sessions }: SessionGridProps) {
   const theme = useMantineTheme();
 
   return (
     <Container my="md">
+      {/* Use skeleton when it is loading */}
+      {/* <Skeleton>  */}
       <Flex wrap={"wrap"} w="1200px">
         {sessions.map((session) => (
           <Card
@@ -50,7 +63,7 @@ function SessionGrid({ sessions }) {
             }}
           >
             <Link
-              to={`/sessions/${session.id}`}
+              to={`/sessions/${session.id}` as any} //TODO: check
               style={{ textDecoration: "none", color: "inherit" }}
               key={session.id}
             >
@@ -69,6 +82,7 @@ function SessionGrid({ sessions }) {
           </Card>
         ))}
       </Flex>
+      {/* </Skeleton> */}
     </Container>
   );
 }
@@ -88,15 +102,18 @@ function SessionsComponent() {
         "http://localhost:7071/api/get_all_sessions_by_user?user_id=02"
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch sessions");
-      }
+      // user_id = '02' //needs to be changed to something that takes user_id automatically from the route
+      // const response = await getAllSessionsByUser(user_id);
+
+      // if (!response.ok) {
+      //   throw new Error("Failed to fetch sessions");
+      // }
 
       const data = await response.json();
       setSessions(data.sessions); // Assuming the API returns an object with a 'sessions' property
       console.log(sessions, "sessionsconsolelog");
     } catch (error) {
-      console.error("Error fetching sessions:", error.message);
+      console.error("Error fetching sessions:", (error as Error).message);
     }
   };
 
@@ -111,10 +128,6 @@ function SessionsComponent() {
       <Button component={Link} to="/sessions/new">
         New Session
       </Button>
-      <div>
-        Other than that, a grid of user previous sessions would be here,
-        clicking on any of them will redirect to /sessions/$sessionId
-      </div>
       <div className="p-2 flex flex-col gap-2">
         <div className="flex items-center">
           <Button component={Link} to="/sessions/new">

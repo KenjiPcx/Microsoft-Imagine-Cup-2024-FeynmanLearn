@@ -3,8 +3,8 @@ import os
 import sys
 import uuid
 import logging
-
 import openai
+
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
 from langchain.agents import AgentExecutor
 
@@ -16,6 +16,7 @@ from azure.core.exceptions import AzureError
 from azure.cosmos import CosmosClient, PartitionKey
 
 from agents.agent_prompt import prompt, prompt_template, parser
+from databaseHandler import DatabaseHandler
 
 openai_key = os.getenv("OPENAI_API_KEY")
 cosmos_endpoint, cosmos_key = os.getenv("COSMOS_ENDPOINT"), os.getenv("COSMOS_KEY")
@@ -23,11 +24,12 @@ cosmos_endpoint, cosmos_key = os.getenv("COSMOS_ENDPOINT"), os.getenv("COSMOS_KE
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
 openai_client = openai.OpenAI(api_key=openai_key)
-cosmos_client = CosmosClient(cosmos_endpoint, cosmos_key)
-db = cosmos_client.get_database_client("feynman_db")
-users_container = db.get_container_client("users")
-sessions_container = db.get_container_client("sessions")
+# cosmos_client = CosmosClient(cosmos_endpoint, cosmos_key)
+# db = cosmos_client.get_database_client("feynman_db")
+# users_container = db.get_container_client("users")
+# database_handler.sessions_container = db.get_container_client("sessions")
 
+database_handler = DatabaseHandler()
 
 @app.route(route="get_session_prebuilts")
 def get_session_prebuilts(req: func.HttpRequest) -> func.HttpResponse:
@@ -170,7 +172,7 @@ def start_session(req: func.HttpRequest) -> func.HttpResponse:
             session_data["thread_id"] = thread_id
 
             try:
-                sessions_container.create_item(body=session_data)
+                database_handler.sessions_container.create_item(body=session_data)
             except AzureError as e:
                 print("Error", e)
                 res = {}
@@ -211,7 +213,7 @@ def send_message(req: func.HttpRequest) -> func.HttpResponse:
             session_id = req_body.get("session_id")
             message = req_body.get("message")
 
-            session_data = sessions_container.read_item(
+            session_data = database_handler.sessions_container.read_item(
                 item=session_id, partition_key=user_id
             )
 
@@ -222,7 +224,7 @@ def send_message(req: func.HttpRequest) -> func.HttpResponse:
             # if agent is still speaking, we offshore the last message sent
             if agent_speaking:
                 session_data["unprocessed_transcript"] = message
-                sessions_container.upsert_item(body=session_data)
+                database_handler.sessions_container.upsert_item(body=session_data)
 
                 res["success"] = True
                 res[
@@ -252,7 +254,7 @@ def send_message(req: func.HttpRequest) -> func.HttpResponse:
                 {"user": message, "assistant": assistant_res}
             )
             session_data["agent_speaking"] = True
-            sessions_container.upsert_item(body=session_data)
+            database_handler.sessions_container.upsert_item(body=session_data)
 
             res = {}
             res["message"] = assistant_res["message"]
@@ -283,13 +285,13 @@ def stop_speaking(req: func.HttpRequest) -> func.HttpResponse:
             user_id = req_body.get("user_id")
             session_id = req_body.get("session_id")
 
-            session_data = sessions_container.read_item(
+            session_data = database_handler.sessions_container.read_item(
                 item=session_id, partition_key=user_id
             )
 
             session_data["agent_speaking"] = False
 
-            sessions_container.upsert_item(body=session_data)
+            database_handler.sessions_container.upsert_item(body=session_data)
 
             res = {}
             res["success"] = True
@@ -397,19 +399,6 @@ def get_session_data(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="get_all_sessions_by_user")
 def get_all_sessions_by_user(req: func.HttpRequest) -> func.HttpResponse:
 
-    def fetch_sessions_by_user(user_id: str) -> list:
-        # Get the container (collection)
-        # Query sessions for the given user_id
-        query = f"SELECT c.id,c.concept,c.student_persona FROM c WHERE c.user_id = '{user_id}'"
-        sessions = list(sessions_container.query_items(query, enable_cross_partition_query=True))
-
-        # Return the sessions
-        logging.info("log sessions update %s", sessions)
-
-        return sessions
-
-    logging.info("get_session_data HTTP trigger function processed a request.")
-
     # request body only takes user_id
     user_id = req.params.get("user_id")
     if not user_id:
@@ -421,7 +410,7 @@ def get_all_sessions_by_user(req: func.HttpRequest) -> func.HttpResponse:
             user_id = req_body.get("user_id")
 
     # Fetch sessions for the given user_id
-    sessions = fetch_sessions_by_user(user_id)
+    sessions = database_handler.fetch_sessions_by_user(user_id)
 
     # # TODO: move generating image to post_analysis 
     # dalle_api_wrapper = DallEAPIWrapper()
@@ -441,6 +430,7 @@ def get_all_sessions_by_user(req: func.HttpRequest) -> func.HttpResponse:
     #     session["generated_image"] = {"image_url":image_url}
 
     # Prepare the response and count number of sessions (pagination?)
+    
     response_data = {
         "user_id": user_id,
         "sessions": sessions,
