@@ -19,18 +19,12 @@ from error_responses import (
 )
 from databaseHandler import DatabaseHandler
 
-openai_key = os.getenv("OPENAI_API_KEY")
-cosmos_endpoint, cosmos_key = os.getenv("COSMOS_ENDPOINT"), os.getenv("COSMOS_KEY")
-
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
+openai_key = os.getenv("OPENAI_API_KEY")
 openai_client = openai.OpenAI(api_key=openai_key)
-# cosmos_client = CosmosClient(cosmos_endpoint, cosmos_key)
-# db = cosmos_client.get_database_client("feynman_db")
-# users_container = db.get_container_client("users")
-# database_handler.sessions_container = db.get_container_client("sessions")
-
 database_handler = DatabaseHandler()
+
 
 @app.route(route="create_session")
 def create_session(req: func.HttpRequest) -> func.HttpResponse:
@@ -94,7 +88,7 @@ def create_session(req: func.HttpRequest) -> func.HttpResponse:
             ],
             "thread_id": thread_id,
         }
-        sessions_container.create_item(body=session_data)
+        database_handler.sessions_container.create_item(body=session_data)
 
         # Build the response
         res = {
@@ -128,8 +122,8 @@ def send_message(req: func.HttpRequest) -> func.HttpResponse:
         message = req_body.get("message")
 
         # Get the session data from the database
-        session_data = sessions_container.read_item(
-            item=session_id, partition_key=user_id
+        session_data = database_handler.sessions_container.read_item(
+            session_id, partition_key=user_id
         )
         thread_id = session_data.get("thread_id")
 
@@ -145,7 +139,7 @@ def send_message(req: func.HttpRequest) -> func.HttpResponse:
         session_data["transcripts"].append(
             {"user": message, "assistant": assistant_res}
         )
-        sessions_container.upsert_item(body=session_data)
+        database_handler.sessions_container.upsert_item(body=session_data)
 
         # Build the response
         res = {
@@ -162,40 +156,6 @@ def send_message(req: func.HttpRequest) -> func.HttpResponse:
         return cosmos_404_error_response
     except Exception:
         return generic_server_error_response
-
-
-@app.route(route="stop_speaking")
-def stop_speaking(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("stop_speaking HTTP trigger function processed a request.")
-
-    user_id = req.params.get("user_id")
-    session_id = req.params.get("session_id")
-
-    if not user_id or not session_id:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            user_id = req_body.get("user_id")
-            session_id = req_body.get("session_id")
-
-            session_data = database_handler.sessions_container.read_item(
-                item=session_id, partition_key=user_id
-            )
-
-            session_data["agent_speaking"] = False
-
-            database_handler.sessions_container.upsert_item(body=session_data)
-
-            res = {}
-            res["success"] = True
-            return func.HttpResponse(json.dumps(res), status_code=200)
-
-    return func.HttpResponse(
-        "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-        status_code=400,
-    )
 
 
 @app.route(route="analyze_session")
@@ -271,7 +231,7 @@ def get_session_data(req: func.HttpRequest) -> func.HttpResponse:
         session_id = req_body.get("session_id")
         user_id = req_body.get("user_id")
 
-        session_data = sessions_container.read_item(
+        session_data = database_handler.sessions_container.read_item(
             item=session_id, partition_key=user_id
         )
 
@@ -289,19 +249,6 @@ def get_session_data(req: func.HttpRequest) -> func.HttpResponse:
 
 @app.route(route="get_all_sessions_by_user")
 def get_all_sessions_by_user(req: func.HttpRequest) -> func.HttpResponse:
-    def fetch_sessions_by_user(user_id: str) -> list:
-        # Get the container (collection)
-        # Query sessions for the given user_id
-        query = f"SELECT c.id,c.concept,c.student_persona FROM c WHERE c.user_id = '{user_id}'"
-        sessions = list(
-            sessions_container.query_items(query, enable_cross_partition_query=True)
-        )
-
-        # Return the sessions
-        logging.info("log sessions update %s", sessions)
-
-        return sessions
-
     logging.info("get_session_data HTTP trigger function processed a request.")
 
     # request body only takes user_id
@@ -335,8 +282,8 @@ def get_all_sessions_by_user(req: func.HttpRequest) -> func.HttpResponse:
     #     session["generated_image"] = {"image_url":image_url}
 
     # Prepare the response and count number of sessions (pagination?)
-    
-    response_data = {
+
+    res = {
         "user_id": user_id,
         "sessions": sessions,
         "sessions_count": len(sessions),
@@ -344,7 +291,7 @@ def get_all_sessions_by_user(req: func.HttpRequest) -> func.HttpResponse:
     }
 
     # Convert the response data to JSON
-    response_json = json.dumps(response_data)
+    response_json = json.dumps(res)
 
     if user_id:
         logging.info(response_json)
