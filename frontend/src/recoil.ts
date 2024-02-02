@@ -9,5 +9,5 @@ import { SpeechRecognizer } from "microsoft-cognitiveservices-speech-sdk";
 
 export const isRecognizingState = atom<boolean>({
   key: "isRecognizing",
-  default: true,
+  default: false,
 });

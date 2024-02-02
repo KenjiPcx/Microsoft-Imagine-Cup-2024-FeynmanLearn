@@ -2,28 +2,31 @@ import axios from "axios";
 import { GET_SESSION_DATA_ENDPOINT } from "./backendEndpoints";
 
 export type SessionType = {
-  id: string;
-  user_id: string;
-  concept: string;
-  game_mode: string;
-  depth: string;
-  student_persona: string;
-  session_plan: string;
-  prompt: string;
-  transcripts: Array<{
-    user: string;
-    assistant: {
-      message: string;
-      emotion: "happy" | "confused";
-      internal_thoughts: string;
-    };
-  }>;
-  thread_id: string;
-  _rid?: string;
-  _self?: string;
-  _etag?: string;
-  _attachments?: string;
-  _ts?: number;
+  session_data: {
+    id: string;
+    user_id: string;
+    concept: string;
+    game_mode: string;
+    depth: string;
+    student_persona: string;
+    session_plan: string;
+    prompt: string;
+    transcripts: Array<{
+      user: string;
+      assistant: {
+        message: string;
+        emotion: "happy" | "confused";
+        internal_thoughts: string;
+      };
+    }>;
+    thread_id: string;
+    _rid?: string;
+    _self?: string;
+    _etag?: string;
+    _attachments?: string;
+    _ts?: number;
+  };
+  success: boolean;
 };
 
 export class SessionNotFoundError extends Error {}

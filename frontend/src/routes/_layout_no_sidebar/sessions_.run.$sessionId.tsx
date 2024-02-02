@@ -37,31 +37,30 @@ function SessionComponent() {
   const [combinedMessages, setCombinedMessages] = useState<string[]>([]);
 
   const baseData = {
-    user_id: "KenjiPcx",
-    session_id: "3dbf279a-0f4e-4616-a78f-262c0b54256f",
+    user_id: "Azure",
+    session_id: "a763d853-4345-4017-8265-2151c63c67ba",
   };
 
   const debouncedUserTalk = useDebounce(async (newRecognizedText: string) => {
-    if (!newRecognizedText) {
+    if (!newRecognizedText || newRecognizedText.length < 15) {
       return;
     }
 
     const data = {
       ...baseData,
-      messages: messages.join(" ") + " " + newRecognizedText,
+      message: messages.join(" ") + " " + newRecognizedText,
     };
 
     try {
       console.log(data);
-      return;
+      setRecognizing(false);
+      // return;
       const res = await axios.post(SEND_MESSAGE_ENDPOINT, data);
+      setUserMessage("");
       setAssistantMessage(res.data.message);
       playMessage(res.data.message, () => {
-        const data = {
-          user_id: "KenjiPcx",
-          session_id: "3dbf279a-0f4e-4616-a78f-262c0b54256f",
-        };
-        // axios.post(stopSpeakingEndpoint, data);
+        setRecognizing(true);
+        setAssistantMessage("");
       });
     } catch (err) {
       console.log("Error", err);
@@ -69,6 +68,14 @@ function SessionComponent() {
   }, 7500);
 
   useEffect(() => {
+    const assistantStartMessage =
+      session.session_data.transcripts[0].assistant.message;
+    setAssistantMessage(assistantStartMessage);
+    setRecognizing(false);
+    playMessage(assistantStartMessage, () => {
+      setAssistantMessage("");
+      setRecognizing(true);
+    });
     speechRecognizer.recognizing = (s, e) => {
       setUserMessage(e.result.text);
       console.log(`RECOGNIZING: Text=${e.result.text}`);
@@ -119,10 +126,15 @@ function SessionComponent() {
       <Stack
         justify="space-between"
         h={"85vh"}
+        maw={"60%"}
         // style={{ outline: "1px solid red" }}
       >
-        <Text size={"xl"}>{assistantMessage}</Text>
-        <Text size={"xl"}>{userMessage}</Text>
+        <Text size={"xl"} align="center">
+          {assistantMessage}
+        </Text>
+        <Text size={"xl"} align="center">
+          {userMessage}
+        </Text>
       </Stack>
     </>
   );
