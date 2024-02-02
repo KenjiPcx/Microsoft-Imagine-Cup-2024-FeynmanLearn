@@ -10,6 +10,7 @@ import { Route as AuthImport } from './routes/_auth'
 import { Route as LayoutIndexImport } from './routes/_layout/index'
 import { Route as LayoutSessionsImport } from './routes/_layout/sessions'
 import { Route as AuthProfileImport } from './routes/_auth.profile'
+import { Route as LayoutNavSessionsNewImport } from './routes/_layout-nav/sessions_.new'
 import { Route as LayoutSessionsNewImport } from './routes/_layout/sessions_.new'
 import { Route as LayoutnosidebarSessionsRunSessionIdImport } from './routes/_layout_no_sidebar/sessions_.run.$sessionId'
 import { Route as LayoutSessionsAnalysisSessionIdImport } from './routes/_layout/sessions_.analysis.$sessionId'
@@ -49,6 +50,11 @@ const LayoutSessionsRoute = LayoutSessionsImport.update({
 const AuthProfileRoute = AuthProfileImport.update({
   path: '/profile',
   getParentRoute: () => AuthRoute,
+} as any)
+
+const LayoutNavSessionsNewRoute = LayoutNavSessionsNewImport.update({
+  id: '/_layout-nav/sessions_/new',
+  getParentRoute: () => rootRoute,
 } as any)
 
 const LayoutSessionsNewRoute = LayoutSessionsNewImport.update({
@@ -112,6 +118,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutnosidebarSessionsRunSessionIdImport
       parentRoute: typeof LayoutnosidebarImport
     }
+    '/_layout-nav/sessions/new': {
+      preLoaderRoute: typeof LayoutNavSessionsNewImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -127,4 +137,5 @@ export const routeTree = rootRoute.addChildren([
   ]),
   LayoutnosidebarRoute.addChildren([LayoutnosidebarSessionsRunSessionIdRoute]),
   LoginRoute,
+  LayoutNavSessionsNewRoute,
 ])
