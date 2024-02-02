@@ -13,22 +13,22 @@ import axios from "axios";
 import { useDebounce } from "../../utils/hooks";
 import { isRecognizingState } from "../../recoil";
 import { useRecoilState } from "recoil";
-import {
-  stopSpeakingEndpoint,
-  sendMessageEndpoint,
-} from "../../backendEndpoints";
 import { playMessage, speechRecognizer } from "../../utils/speech";
+import { SEND_MESSAGE_ENDPOINT } from "../../backendEndpoints";
+import { fetchSession } from "../../sessionsService";
+import { SessionErrorComponent } from "../../components/SessionErrorComponent";
 
 export const Route = new FileRoute(
   "/_layout_no_sidebar/sessions/run/$sessionId"
 ).createRoute({
-  // loader: async ({ params: { sessionId } }) => fetchSession(sessionId),
-  // errorComponent: SessionErrorComponent as any,
+  loader: async ({ params: { sessionId } }) => fetchSession(sessionId),
+  errorComponent: SessionErrorComponent as any,
   component: SessionComponent,
 });
 
 function SessionComponent() {
   const session = Route.useLoaderData();
+  console.log(session);
 
   const [userMessage, setUserMessage] = useState("");
   const [assistantMessage, setAssistantMessage] = useState("");
@@ -54,14 +54,14 @@ function SessionComponent() {
     try {
       console.log(data);
       return;
-      const res = await axios.post(sendMessageEndpoint, data);
+      const res = await axios.post(SEND_MESSAGE_ENDPOINT, data);
       setAssistantMessage(res.data.message);
       playMessage(res.data.message, () => {
         const data = {
           user_id: "KenjiPcx",
           session_id: "3dbf279a-0f4e-4616-a78f-262c0b54256f",
         };
-        axios.post(stopSpeakingEndpoint, data);
+        // axios.post(stopSpeakingEndpoint, data);
       });
     } catch (err) {
       console.log("Error", err);

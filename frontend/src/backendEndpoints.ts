@@ -1,4 +1,6 @@
-const baseUrl = import.meta.env.VITE_REACT_APP_FUNCTION_BASE_URL;
+const isProd = import.meta.env.PROD;
+const baseUrl = `${isProd ? "" : import.meta.env.VITE_REACT_APP_FUNCTION_BASE_URL}/api`;
 
-export const sendMessageEndpoint = `${baseUrl}/api/send_message`;
-export const stopSpeakingEndpoint = `${baseUrl}/api/stop_speaking`;
+export const CREATE_SESSION_ENDPOINT = `${baseUrl}/create_session`;
+export const GET_SESSION_DATA_ENDPOINT = `${baseUrl}/get_session_data`;
+export const SEND_MESSAGE_ENDPOINT = `${baseUrl}/send_message`;
