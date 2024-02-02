@@ -9,8 +9,8 @@ export const useDebounce = (callback: unknown, delay: number) => {
   }, [callback]);
 
   const debouncedCallback = useMemo(() => {
-    const func = () => {
-      ref.current?.();
+    const func = (...args: any[]) => {
+      ref.current?.(...args);
     };
 
     return debounce(func, delay);

@@ -7,7 +7,7 @@ import {
   ResultReason,
   SpeakerAudioDestination,
 } from "microsoft-cognitiveservices-speech-sdk";
-import { useDebounce } from "./hooks";
+import { useDebounce } from "./utils/hooks";
 import axios from "axios";
 import duck from "./assets/duck-gpt-trans.png";
 import "./App.css";
@@ -21,7 +21,7 @@ import {
   Route,
   RootRoute,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/router-devtools";
+import { isRecognizingState } from "./recoil";
 
 const speechConfig = SpeechConfig.fromSubscription(
   import.meta.env.VITE_AZURE_SPEECH_KEY,
@@ -37,27 +37,17 @@ function App() {
   const [message, setMessage] = useState("User message");
   const [assistantMessage, setAssistantMessage] = useState("Assistant message");
   const [recognizer, setRecognizer] = useState<SpeechRecognizer>();
-  const [recognizing, setRecognizing] = useState(false);
+  const [isRecognizing, setIsRecognizing] = useRecoilState(isRecognizingState);
   const [messages, setMessages] = useState<string[]>([]);
   const [messageIdx, setMessageIdx] = useState(0);
-  const [emotion, setEmotion] = useState<"happy" | "confused">("happy");
-  const [innerThoughts, setInnerThoughts] = useState<string>("");
 
-  const startRecognizing = () => {
-    recognizer?.startContinuousRecognitionAsync();
-    setRecognizing(true);
-  };
-
-  const stopRecognizing = () => {
-    recognizer?.stopContinuousRecognitionAsync();
-    setRecognizing(false);
-  };
-
-  const toggleRecognizing = () => {
-    if (recognizing) {
-      stopRecognizing();
+  const toggleisRecognizing = () => {
+    if (isRecognizing) {
+      recognizer?.stopContinuousRecognitionAsync();
+      setIsRecognizing(false);
     } else {
-      startRecognizing();
+      recognizer?.startContinuousRecognitionAsync();
+      setIsRecognizing(true);
     }
   };
 
@@ -65,7 +55,7 @@ function App() {
     const player = new SpeakerAudioDestination();
     player.onAudioEnd = () => {
       console.log("Audio ended");
-      setRecognizing(true);
+      setIsRecognizing(true);
       const data = {
         user_id: "KenjiPcx",
         session_id: "3dbf279a-0f4e-4616-a78f-262c0b54256f",
@@ -93,10 +83,10 @@ function App() {
     setMessageIdx(messages.length);
 
     try {
-      setRecognizing(false);
+      setIsRecognizing(false);
       const res = await axios.post(sendMessageEndpoint, data);
       console.log("Response", res);
-      setRecognizing(false);
+      setIsRecognizing(false);
       setAssistantMessage(res.data.message);
       setEmotion(res.data.emotion);
       setInnerThoughts(res.data.inner_thoughts);
@@ -109,6 +99,9 @@ function App() {
   const initSpeech = () => {
     const audioConfig = AudioConfig.fromDefaultMicrophoneInput();
     const speechRecognizer = new SpeechRecognizer(speechConfig, audioConfig);
+    speechRecognizer.isRecognizing = (s, e) => {
+      console.log(`isRecognizing: Text=${e.result.text}`);
+    };
     speechRecognizer.recognized = (s, e) => {
       if (e.result.reason == ResultReason.RecognizedSpeech) {
         setMessage(e.result.text);
@@ -131,10 +124,10 @@ function App() {
     };
   }, []);
 
-  useEffect(() => {
-    // console.log("Messages", messages);
-    debouncedSendMessages();
-  }, [messages]);
+  // useEffect(() => {
+  //   // console.log("Messages", messages);
+  //   debouncedSendMessages();
+  // }, [messages]);
 
   useEffect(() => {
     console.log(emotion);
@@ -147,8 +140,8 @@ function App() {
     <>
       <p>{assistantMessage}</p>
       <img alt="duck" src={duck} />
-      <button onClick={toggleRecognizing}>
-        {recognizing ? "Stop" : "Start"}
+      <button onClick={toggleisRecognizing}>
+        {isRecognizing ? "Stop" : "Start"}
       </button>
       <p>{message}</p>
     </>
@@ -156,3 +149,6 @@ function App() {
 }
 
 export default App;
+function useRecoilState(isRecognizingState: any): [any, any] {
+  throw new Error("Function not implemented.");
+}
