@@ -32,10 +32,7 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-const SettingsModal = ({
-  opened,
-  closeSettings,
-}: SettingsModalProps) => {
+const SettingsModal = ({ opened, closeSettings }: SettingsModalProps) => {
   const { classes } = useStyles();
 
   const ref = useRef<HTMLInputElement>(null);
@@ -46,6 +43,7 @@ const SettingsModal = ({
       size={"md"}
       opened={opened}
       onClose={closeSettings}
+      yOffset={300}
       title={<Text fw={700}>Settings</Text>}
       classNames={{ content: classes.content, header: classes.header }}
     >

@@ -1,10 +1,5 @@
 import { atom, selector } from "recoil";
-
-export const isExplicitListeningState = atom<boolean>({
-  key: "isExplicitListening",
-  default: false,
-});
-
+import { SpeechRecognizer } from "microsoft-cognitiveservices-speech-sdk";
 /**
  * Type guard for Recoil's Default Value type.
  */
@@ -14,5 +9,5 @@ export const isExplicitListeningState = atom<boolean>({
 
 export const isRecognizingState = atom<boolean>({
   key: "isRecognizing",
-  default: true,
+  default: false,
 });

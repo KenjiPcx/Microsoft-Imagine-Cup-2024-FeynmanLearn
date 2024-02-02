@@ -7,10 +7,8 @@ export const Route = new FileRoute("/_layout_no_sidebar").createRoute({
 
 function LayoutNoSidebarComponent() {
   return (
-    <>
-      <LayoutContainer>
-        <Outlet />
-      </LayoutContainer>
-    </>
+    <LayoutContainer opacity={1}>
+      <Outlet />
+    </LayoutContainer>
   );
 }

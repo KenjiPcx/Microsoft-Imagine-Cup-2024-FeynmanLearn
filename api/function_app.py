@@ -1,21 +1,22 @@
 import json
 import os
-import sys
 import uuid
 import logging
+
+import azure.functions as func
+from azure.cosmos import CosmosClient
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
+
 import openai
 
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
-from langchain.agents import AgentExecutor
-
-from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
-from langchain_openai import OpenAI
-
-import azure.functions as func
-from azure.core.exceptions import AzureError
-from azure.cosmos import CosmosClient, PartitionKey
-
 from agents.agent_prompt import prompt, prompt_template, parser
+from agents.assistant_ids import feynman_assistant_id
+from error_responses import (
+    cosmos_404_error_response,
+    generic_server_error_response,
+    value_error_response,
+)
 from databaseHandler import DatabaseHandler
 
 openai_key = os.getenv("OPENAI_API_KEY")
@@ -31,242 +32,136 @@ openai_client = openai.OpenAI(api_key=openai_key)
 
 database_handler = DatabaseHandler()
 
-@app.route(route="get_session_prebuilts")
-def get_session_prebuilts(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("get_session_prebuilts HTTP trigger function processed a request.")
+@app.route(route="create_session")
+def create_session(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("create_session HTTP trigger function processed a request.")
 
-    # just some prebuilt combinations of session options for the home page
+    try:
+        # Extract the request body
+        req_body = req.get_json()
+        user_id = req_body.get("user_id")
+        concept = req_body.get("concept")
+        game_mode = req_body.get("game_mode")
+        depth = req_body.get("depth")
 
-    user_id = req.params.get("user_id")
-    if not user_id:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            user_id = req_body.get("user_id")
+        # Hard code for now
+        concept = "Diffusion Models in AI"
+        student_persona = req_body.get("student_persona")
+        game_mode = "Explain to a 5 year old - you will act as a 5 year old student, user needs to explain using very simple language and examples, otherwise you don't understand"
+        depth = "beginner - just ask really basic information"
+        student_persona = "None"
+        session_plan = "To test the user on their knowledge on diffusion models, 1) verify if they know what it is, what it does, how it does it and where is it used"
 
-    res = {}
-    res["user_id"] = user_id
-    res["success"] = True
-
-    if user_id:
-        return func.HttpResponse(json.dumps(res), status_code=200)
-    else:
-        return func.HttpResponse(
-            "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-            status_code=200,
+        instructions_prompt = prompt_template.format(
+            concept=concept,
+            game_mode=game_mode,
+            depth=depth,
+            student_persona=student_persona,
+            session_plan=session_plan,
+            output_format=parser.get_format_instructions(),
         )
 
-
-@app.route(route="get_session_options")
-def get_session_options(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("get_session_options HTTP trigger function processed a request.")
-
-    # for a custom session thing, we just need to get all the options
-    # in a page, so user can choose some combination for start_session
-
-    user_id = req.params.get("user_id")
-    if not user_id:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            user_id = req_body.get("user_id")
-
-    res = {}
-    res["user_id"] = user_id
-    res["success"] = True
-
-    if user_id:
-        return func.HttpResponse(json.dumps(res), status_code=200)
-    else:
-        return func.HttpResponse(
-            "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-            status_code=200,
+        # Send the first message to create a thread
+        assistant = OpenAIAssistantRunnable(
+            assistant_id=feynman_assistant_id, as_agent=True
         )
+        start_msg = "Hey there, before we start, can you please briefly introduce yourself and what we will learn today?"
+        output = assistant.invoke(
+            {
+                "instructions": instructions_prompt,
+                "content": start_msg,
+            }
+        )
+        assistant_intro_msg = output.return_values["output"]
+        assistant_intro_msg = json.loads(assistant_intro_msg)
+        thread_id = output.return_values["thread_id"]
 
-
-@app.route(route="start_session")
-def start_session(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("start_session HTTP trigger function processed a request.")
-
-    # plan
-    # start an open ai assistant thread here and save it
-    # take in concept src here
-    # come up with a session plan
-    # probably add some session data into the database here
-    # and send some ok message before frontend redirects to the chat page
-    # maybe create the thread here?
-
-    user_id = req.params.get("user_id")
-    # concept = req.params.get("concept")
-    # game_mode = req.params.get("game_mode")
-    # depth = req.params.get("depth")
-    # student_persona = req.params.get("student_persona")
-    if not user_id:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            user_id = req_body.get("user_id")
-            concept = req_body.get("concept")
-            game_mode = req_body.get("game_mode")
-            depth = req_body.get("depth")
-
-            # hard code for now
-            concept = "Diffusion Models in AI"
-            student_persona = req_body.get("student_persona")
-            game_mode = "Explain to a 5 year old, user needs to explain using very simple language and examples"
-            depth = "beginner - just ask really basic information"
-            student_persona = "5 year old, you don't know a lot of things, if the user mentions something a 5 year old wouldn't know, you ask them to explain again in the words of a 5 year old"
-            example_questions = ["What is Diffusion Models in AI?"]
-
-            instructions_prompt = prompt_template.format(
-                concept=concept,
-                game_mode=game_mode,
-                depth=depth,
-                student_persona=student_persona,
-                example_questions=str(example_questions),
-                output_format=parser.get_format_instructions(),
-            )
-
-            # Create the assistant here to handle all sorts of conditions
-            # Honestly, we should only create this if we have a custom combo of options
-            # Prebuilt game modes should just store assistant id as well, so we don't have to always create a new one
-            assistant = OpenAIAssistantRunnable.create_assistant(
-                name="feynman student",
-                instructions=instructions_prompt,
-                tools=[],
-                model="gpt-4-1106-preview",
-                client=openai_client,
-            )
-
-            output = assistant.invoke(
+        # Create the session data and store it in the database
+        session_data = {
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "concept": concept,
+            "game_mode": game_mode,
+            "depth": depth,
+            "student_persona": student_persona,
+            "session_plan": session_plan,
+            "prompt": prompt,
+            "transcripts": [
                 {
-                    "content": "Hey there, before we start, can you please briefly introduce yourself and what we will learn today?"
+                    "user": start_msg,
+                    "assistant": assistant_intro_msg,
                 }
-            )
-            assistant_id = output[0].assistant_id
-            assistant_intro_msg = output[0].content[0].text.value
-            thread_id = output[0].thread_id
+            ],
+            "thread_id": thread_id,
+        }
+        sessions_container.create_item(body=session_data)
 
-            # Create the session data
-            session_data = {}
-            session_data["id"] = str(uuid.uuid4())
-            session_data["user_id"] = user_id
-            session_data["concept"] = concept
-            session_data["game_mode"] = game_mode
-            session_data["depth"] = depth
-            session_data["student_persona"] = student_persona
-            session_data["example_questions"] = example_questions
-            session_data["prompt"] = prompt
-            session_data["transcripts"] = []
-            session_data["unprocessed_transcript"] = ""
-            session_data[
-                "agent_speaking"
-            ] = False  # honestly this belongs in an Azure key value store
-            session_data["assistant_id"] = assistant_id
-            session_data["thread_id"] = thread_id
+        # Build the response
+        res = {
+            "session_id": session_data["id"],
+            "concept": session_data["concept"],
+            "game_mode": session_data["game_mode"],
+            "depth": session_data["depth"],
+            "student_persona": session_data["student_persona"],
+            "intro_msg": assistant_intro_msg,
+            "success": True,
+        }
+        return func.HttpResponse(json.dumps(res), status_code=200)
 
-            try:
-                database_handler.sessions_container.create_item(body=session_data)
-            except AzureError as e:
-                print("Error", e)
-                res = {}
-                res["success"] = False
-                return func.HttpResponse(json.dumps(res), status_code=500)
-            else:
-                res = {}
-                res["session_id"] = session_data["id"]
-                res["concept"] = session_data["concept"]
-                res["game_mode"] = session_data["game_mode"]
-                res["depth"] = session_data["depth"]
-                res["student_persona"] = session_data["student_persona"]
-                res["intro_msg"] = assistant_intro_msg
-                res["success"] = True
-            return func.HttpResponse(json.dumps(res), status_code=200)
-
-    return func.HttpResponse(
-        "Bad request. Missing user_id in query string or request body.",
-        status_code=400,
-    )
+    except ValueError:
+        return value_error_response
+    except CosmosResourceNotFoundError:
+        return cosmos_404_error_response
+    except Exception:
+        return generic_server_error_response
 
 
 @app.route(route="send_message")
 def send_message(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("send_message HTTP trigger function processed a request.")
 
-    user_id = req.params.get("user_id")
-    session_id = req.params.get("session_id")
-    message = req.params.get("message")
+    try:
+        # Extract the request body
+        req_body = req.get_json()
+        user_id = req_body.get("user_id")
+        session_id = req_body.get("session_id")
+        message = req_body.get("message")
 
-    if not user_id or not session_id or not message:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            user_id = req_body.get("user_id")
-            session_id = req_body.get("session_id")
-            message = req_body.get("message")
+        # Get the session data from the database
+        session_data = sessions_container.read_item(
+            item=session_id, partition_key=user_id
+        )
+        thread_id = session_data.get("thread_id")
 
-            session_data = database_handler.sessions_container.read_item(
-                item=session_id, partition_key=user_id
-            )
+        # Get student agent response
+        assistant = OpenAIAssistantRunnable(
+            assistant_id=feynman_assistant_id, as_agent=True
+        )
+        output = assistant.invoke({"content": message, "thread_id": thread_id})
+        assistant_res = output.return_values["output"]
+        assistant_res = json.loads(assistant_res)
 
-            res = {}
-            agent_speaking = session_data.get("agent_speaking")
+        # Update session data
+        session_data["transcripts"].append(
+            {"user": message, "assistant": assistant_res}
+        )
+        sessions_container.upsert_item(body=session_data)
 
-            # In case the user says something before the agent starts speaking but it gets sent here anyways
-            # if agent is still speaking, we offshore the last message sent
-            if agent_speaking:
-                session_data["unprocessed_transcript"] = message
-                database_handler.sessions_container.upsert_item(body=session_data)
+        # Build the response
+        res = {
+            "message": assistant_res["message"],
+            "emotion": assistant_res["emotion"],
+            "internal_thoughts": assistant_res["internal_thoughts"],
+            "success": True,
+        }
+        return func.HttpResponse(json.dumps(res), status_code=200)
 
-                res["success"] = True
-                res[
-                    "message"
-                ] = "Agent is still speaking, added message to unprocessed transcript for next turn"
-                return func.HttpResponse(json.dumps(res), status_code=200)
-
-            thread_id = session_data.get("thread_id")
-            assistant_id = session_data.get("assistant_id")
-
-            # Handle unprocessed transcript
-            unprocessed_transcript = session_data.get("unprocessed_transcript")
-            if unprocessed_transcript != "":
-                message = unprocessed_transcript + "\n" + message
-                session_data["unprocessed_transcript"] = ""
-
-            # Get student response
-            assistant = OpenAIAssistantRunnable(
-                assistant_id=assistant_id, as_agent=True
-            )
-            next_res = assistant.invoke({"content": message, "thread_id": thread_id})
-            assistant_res = next_res.return_values["output"]
-            assistant_res = json.loads(assistant_res)
-
-            # Update session data
-            session_data["transcripts"].append(
-                {"user": message, "assistant": assistant_res}
-            )
-            session_data["agent_speaking"] = True
-            database_handler.sessions_container.upsert_item(body=session_data)
-
-            res = {}
-            res["message"] = assistant_res["message"]
-            res["emotion"] = assistant_res["emotion"]
-            res["internal_thoughts"] = assistant_res["internal_thoughts"]
-            res["success"] = True
-            return func.HttpResponse(json.dumps(res), status_code=200)
-
-    return func.HttpResponse(
-        "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-        status_code=400,
-    )
+    except ValueError:
+        return value_error_response
+    except CosmosResourceNotFoundError:
+        return cosmos_404_error_response
+    except Exception:
+        return generic_server_error_response
 
 
 @app.route(route="stop_speaking")
@@ -369,35 +264,45 @@ def get_user_data(req: func.HttpRequest) -> func.HttpResponse:
 
 @app.route(route="get_session_data")
 def get_session_data(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("analyze_session HTTP trigger function processed a request.")
+    logging.info("get_session_data HTTP trigger function processed a request.")
 
-    # fetch session data from the db
-    # just display it the same as the analyze_session function
+    try:
+        req_body = req.get_json()
+        session_id = req_body.get("session_id")
+        user_id = req_body.get("user_id")
 
-    user_id = req.params.get("user_id")
-    if not user_id:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            user_id = req_body.get("user_id")
-
-    res = {}
-    res["user_id"] = user_id
-    res["success"] = True
-
-    if user_id:
-        return func.HttpResponse(json.dumps(res), status_code=200)
-    else:
-        return func.HttpResponse(
-            "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-            status_code=200,
+        session_data = sessions_container.read_item(
+            item=session_id, partition_key=user_id
         )
+
+        res = {"success": True, "session_data": session_data}
+        return func.HttpResponse(json.dumps(res), status_code=200)
+
+    except ValueError:
+        # Handle JSON parsing error
+        return value_error_response
+    except CosmosResourceNotFoundError:
+        return cosmos_404_error_response
+    except Exception:
+        return generic_server_error_response
 
 
 @app.route(route="get_all_sessions_by_user")
 def get_all_sessions_by_user(req: func.HttpRequest) -> func.HttpResponse:
+    def fetch_sessions_by_user(user_id: str) -> list:
+        # Get the container (collection)
+        # Query sessions for the given user_id
+        query = f"SELECT c.id,c.concept,c.student_persona FROM c WHERE c.user_id = '{user_id}'"
+        sessions = list(
+            sessions_container.query_items(query, enable_cross_partition_query=True)
+        )
+
+        # Return the sessions
+        logging.info("log sessions update %s", sessions)
+
+        return sessions
+
+    logging.info("get_session_data HTTP trigger function processed a request.")
 
     # request body only takes user_id
     user_id = req.params.get("user_id")
@@ -412,7 +317,7 @@ def get_all_sessions_by_user(req: func.HttpRequest) -> func.HttpResponse:
     # Fetch sessions for the given user_id
     sessions = database_handler.fetch_sessions_by_user(user_id)
 
-    # # TODO: move generating image to post_analysis 
+    # # TODO: move generating image to post_analysis
     # dalle_api_wrapper = DallEAPIWrapper()
 
     # # # loop through sessions and generate image based on each sessions
@@ -435,7 +340,7 @@ def get_all_sessions_by_user(req: func.HttpRequest) -> func.HttpResponse:
         "user_id": user_id,
         "sessions": sessions,
         "sessions_count": len(sessions),
-        "success": True
+        "success": True,
     }
 
     # Convert the response data to JSON
