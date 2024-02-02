@@ -17,8 +17,12 @@ import {
   Select,
   Title,
   Text,
+  Grid,
+  Col,
+
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import "./sessions.css";
 
 export const Route = new FileRoute("/_layout/sessions/new").createRoute({
   component: NewSessionConfigurationComponent,
@@ -85,6 +89,7 @@ function NewSessionConfigurationComponent() {
         active={active}
         onStepClick={setActive}
         allowNextStepsSelect={false}
+        className="stepper"
       >
         <Stepper.Step
           label="First step"
@@ -128,41 +133,25 @@ function NewSessionConfigurationComponent() {
           description="Configure learner agent"
           disabled={active === 3}
         >
-          <Select
-            label="Lesson depth"
-            description="What kind of lesson will this be for your learner?"
-            placeholder="Select explanation depth"
-            data={[
-              "Beginner (Awareness) - Understands and communicates basic definitions and core principles. Answers straightforward questions and applies the concept in familiar contexts.",
-              "Intermediate (Application) - Explains how the concept works and applies it in problem-solving. Handles moderately challenging questions and connects different parts of the concept.",
-              "Advanced (Analysis) - Discusses subtle or complex aspects. Analyzes, critiques, and draws connections to other concepts. Answers complex questions with detailed explanation.",
-              "Expert (Mastery) - Possesses comprehensive knowledge. Teaches, debates, and creates new insights. Handles any question with in-depth, nuanced explanations and diverse examples.",
-            ]}
-            required
-            {...form.getInputProps("agentConfig.depth")}
-          />
-          <br />
-          <Textarea
-            label="Learner persona"
-            description="(Optional) Give your learner agent a personality to make the session more engaging."
-            placeholder="sassy, curious, friendly, etc."
-            {...form.getInputProps("agentConfig.persona")}
-          />
-          <br />
-          <Select
-            label="Game mode"
-            description="Some fun challenges to make the session more engaging"
-            placeholder="Playground"
-            defaultValue={"Playground"}
-            data={[
-              "Playground",
-              "Explain to a 5 year old",
-              "5 levels",
-              "Expert (Mastery) - Possesses comprehensive knowledge. Teaches, debates, and creates new insights. Handles any question with in-depth, nuanced explanations and diverse examples.",
-            ]}
-            required
-            {...form.getInputProps("agentConfig.gameMode")}
-          />
+          <div style={{ margin: '20px 0' }}>
+            <label style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '10px', display: 'block' }}>
+              Game mode
+            </label>
+            <Grid>
+            {["Playground", "Explain to a 5 year old", "5 levels", "Expert (Mastery)"].map((mode, index) => (
+              <Col span={6} key={mode}> {/* Adjust the `span` value for responsiveness */}
+                <Button
+                  fullWidth // Make the button expand to the full width of the column
+                  variant="filled"
+                  color={form.values.agentConfig.gameMode === mode ? "blue" : "gray"}
+                  onClick={() => form.setFieldValue("agentConfig.gameMode", mode)}
+                >
+                  {mode}
+                </Button>
+              </Col>
+            ))}
+          </Grid>
+          </div>
         </Stepper.Step>
 
         <Stepper.Step
@@ -205,12 +194,12 @@ function NewSessionConfigurationComponent() {
       </Stepper>
 
       {active < 3 && (
-        <Group mt="xl">
-          <Button variant="default" onClick={prevStep}>
+        <Group mt="xl" position="center" className="group">
+          <Button variant="default" onClick={prevStep} disabled={active === 0}>
             Back
           </Button>
-          <Button onClick={nextStep}>
-            {active >= 2 ? "Confirm" : "Next step"}
+          <Button onClick={nextStep} disabled={active === 3}>
+            {active === 2 ? "Confirm" : "Next step"}
           </Button>
         </Group>
       )}

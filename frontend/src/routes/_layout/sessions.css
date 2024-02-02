@@ -1,0 +1,10 @@
+.stepper {
+    position: absolute;
+    z-index: 0;
+}
+
+.group {
+    position: relative;
+    top: 14em;
+    z-index: 1;
+}
