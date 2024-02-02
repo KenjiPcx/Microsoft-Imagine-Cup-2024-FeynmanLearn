@@ -3,15 +3,19 @@ import os
 import uuid
 import logging
 
-import openai
-from langchain.agents.openai_assistant import OpenAIAssistantRunnable
-
-
 import azure.functions as func
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
+import openai
+from langchain.agents.openai_assistant import OpenAIAssistantRunnable
 from agents.agent_prompt import prompt, prompt_template, parser
+from agents.assistant_ids import feynman_assistant_id
+from error_responses import (
+    cosmos_404_error_response,
+    generic_server_error_response,
+    value_error_response,
+)
 
 openai_key = os.getenv("OPENAI_API_KEY")
 cosmos_endpoint, cosmos_key = os.getenv("COSMOS_ENDPOINT"), os.getenv("COSMOS_KEY")
@@ -23,20 +27,6 @@ cosmos_client = CosmosClient(cosmos_endpoint, cosmos_key)
 db = cosmos_client.get_database_client("feynman_db")
 users_container = db.get_container_client("users")
 sessions_container = db.get_container_client("sessions")
-
-feynman_assistant_id = "asst_x5n4gyjHJHZKwPhcnUSgXDv8"
-value_error_response = func.HttpResponse(
-    "Bad request. Request body is missing or not in JSON format.",
-    status_code=400,
-)
-cosmos_404_error_response = func.HttpResponse(
-    json.dumps({"success": False, "message": "Resource not found error."}),
-    status_code=404,
-)
-generic_server_error_response = func.HttpResponse(
-    "Internal server error.",
-    status_code=500,
-)
 
 
 @app.route(route="create_session")
@@ -117,9 +107,9 @@ def create_session(req: func.HttpRequest) -> func.HttpResponse:
 
     except ValueError:
         return value_error_response
-    except CosmosResourceNotFoundError as e:
+    except CosmosResourceNotFoundError:
         return cosmos_404_error_response
-    except Exception as e:
+    except Exception:
         return generic_server_error_response
 
 
@@ -127,74 +117,48 @@ def create_session(req: func.HttpRequest) -> func.HttpResponse:
 def send_message(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("send_message HTTP trigger function processed a request.")
 
-    user_id = req.params.get("user_id")
-    session_id = req.params.get("session_id")
-    message = req.params.get("message")
+    try:
+        # Extract the request body
+        req_body = req.get_json()
+        user_id = req_body.get("user_id")
+        session_id = req_body.get("session_id")
+        message = req_body.get("message")
 
-    if not user_id or not session_id or not message:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            user_id = req_body.get("user_id")
-            session_id = req_body.get("session_id")
-            message = req_body.get("message")
+        # Get the session data from the database
+        session_data = sessions_container.read_item(
+            item=session_id, partition_key=user_id
+        )
+        thread_id = session_data.get("thread_id")
 
-            session_data = sessions_container.read_item(
-                item=session_id, partition_key=user_id
-            )
+        # Get student agent response
+        assistant = OpenAIAssistantRunnable(
+            assistant_id=feynman_assistant_id, as_agent=True
+        )
+        output = assistant.invoke({"content": message, "thread_id": thread_id})
+        assistant_res = output.return_values["output"]
+        assistant_res = json.loads(assistant_res)
 
-            res = {}
-            agent_speaking = session_data.get("agent_speaking")
+        # Update session data
+        session_data["transcripts"].append(
+            {"user": message, "assistant": assistant_res}
+        )
+        sessions_container.upsert_item(body=session_data)
 
-            # In case the user says something before the agent starts speaking but it gets sent here anyways
-            # if agent is still speaking, we offshore the last message sent
-            if agent_speaking:
-                session_data["unprocessed_transcript"] = message
-                sessions_container.upsert_item(body=session_data)
+        # Build the response
+        res = {
+            "message": assistant_res["message"],
+            "emotion": assistant_res["emotion"],
+            "internal_thoughts": assistant_res["internal_thoughts"],
+            "success": True,
+        }
+        return func.HttpResponse(json.dumps(res), status_code=200)
 
-                res["success"] = True
-                res[
-                    "message"
-                ] = "Agent is still speaking, added message to unprocessed transcript for next turn"
-                return func.HttpResponse(json.dumps(res), status_code=200)
-
-            thread_id = session_data.get("thread_id")
-            assistant_id = session_data.get("assistant_id")
-
-            # Handle unprocessed transcript
-            unprocessed_transcript = session_data.get("unprocessed_transcript")
-            if unprocessed_transcript != "":
-                message = unprocessed_transcript + "\n" + message
-                session_data["unprocessed_transcript"] = ""
-
-            # Get student response
-            assistant = OpenAIAssistantRunnable(
-                assistant_id=assistant_id, as_agent=True
-            )
-            next_res = assistant.invoke({"content": message, "thread_id": thread_id})
-            assistant_res = next_res.return_values["output"]
-            assistant_res = json.loads(assistant_res)
-
-            # Update session data
-            session_data["transcripts"].append(
-                {"user": message, "assistant": assistant_res}
-            )
-            session_data["agent_speaking"] = True
-            sessions_container.upsert_item(body=session_data)
-
-            res = {}
-            res["message"] = assistant_res["message"]
-            res["emotion"] = assistant_res["emotion"]
-            res["internal_thoughts"] = assistant_res["internal_thoughts"]
-            res["success"] = True
-            return func.HttpResponse(json.dumps(res), status_code=200)
-
-    return func.HttpResponse(
-        "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-        status_code=400,
-    )
+    except ValueError:
+        return value_error_response
+    except CosmosResourceNotFoundError:
+        return cosmos_404_error_response
+    except Exception:
+        return generic_server_error_response
 
 
 @app.route(route="stop_speaking")
@@ -314,9 +278,9 @@ def get_session_data(req: func.HttpRequest) -> func.HttpResponse:
     except ValueError:
         # Handle JSON parsing error
         return value_error_response
-    except CosmosResourceNotFoundError as e:
+    except CosmosResourceNotFoundError:
         return cosmos_404_error_response
-    except Exception as e:
+    except Exception:
         return generic_server_error_response
 
 
