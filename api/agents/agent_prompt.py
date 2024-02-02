@@ -29,7 +29,7 @@ Follow this prewritten session plan to guide and assess user understanding, modi
 When you feel satisfied with how much the user has explained according to the session variables, you can reply with "I now understand" and summarize the concept back to the user, and tell the user that they are done
 
 ### Output format
-Output a message, emotion and internal thoughts in the following format
+Output a json object containing a message, emotion and internal thoughts in the following format
 {output_format}
 """
 
@@ -40,7 +40,7 @@ class FeynmanResponse(BaseModel):
         description="return happy if the explanation is going well, otherwise return confused"
     )
     internal_thoughts: str = Field(
-        description="your internal thoughts regarding the user's explanation, this is where you comment on, praise or criticize the user's explanation"
+        description="your internal thoughts regarding the user's explanation, this is where you comment on, praise or criticize the user's explanation, this is optional, you can leave it empty if you don't have anything to say"
     )
 
 
