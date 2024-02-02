@@ -30,7 +30,6 @@ export type SessionType = {
   success: boolean;
 };
 
-
 export class SessionNotFoundError extends Error {}
 
 export const fetchSession = async (sessionId: string) => {
@@ -56,7 +55,7 @@ export const fetchSession = async (sessionId: string) => {
   return Session;
 };
 
-export const getAllSessionsByUser = async (userId: string) => {
+export const fetchSessionsByUser = async (userId: string) => {
   console.log(`Getting all sessions of userId ${userId}...`);
   await new Promise((r) => setTimeout(r, 500));
   const listOfSessions = await axios
