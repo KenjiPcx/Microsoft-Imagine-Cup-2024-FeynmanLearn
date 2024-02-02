@@ -16,7 +16,7 @@ class DatabaseHandler:
         self.users_container = self.db.get_container_client("users")
         self.sessions_container = self.db.get_container_client("sessions")
 
-    def fetch_sessions_summary_by_user(self, user_id: str) -> list:
+    def fetch_session_summaries_by_user(self, user_id: str) -> list:
         try:
             # Query session summaries for the given user_id
             query = f"SELECT c.id, c.concept, c.student_persona, c.image_url, c.last_date_attempt FROM c WHERE c.user_id = '{user_id}'"

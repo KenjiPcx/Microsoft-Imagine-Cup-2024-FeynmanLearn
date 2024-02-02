@@ -2,6 +2,7 @@ import json
 import os
 import uuid
 import logging
+import time
 
 import azure.functions as func
 from azure.cosmos import CosmosClient
@@ -10,7 +11,7 @@ from azure.cosmos.exceptions import CosmosResourceNotFoundError
 import openai
 
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
-from agents.agent_prompt import prompt, prompt_template, parser
+from api.agents.feynman_student_prompt import prompt, prompt_template, parser
 from agents.assistant_ids import feynman_assistant_id
 from error_responses import (
     cosmos_404_error_response,
@@ -170,27 +171,52 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
     # - Identifies misconceptions
     # - Gives useful additional nuggets of knowledge (did you know?)
     # - Set a timer on a session to explain again, can quiz through the user in a conversational manner?
+    # - Set last date of attempt
+    # - Set a reminder to explain again
+    # - Generate a nice image using DALL-E API
+    # - Generate a nice summary of the session
 
-    user_id = req.params.get("user_id")
-    if not user_id:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            user_id = req_body.get("user_id")
+    # # Some dall e code from ventus
+    # dalle_api_wrapper = DallEAPIWrapper()
 
-    res = {}
-    res["user_id"] = user_id
-    res["success"] = True
+    # # # loop through sessions and generate image based on each sessions
+    # for session in sessions:
+    #     student_persona = session.get("student_persona", "")
+    #     concept = session.get("concept","")
 
-    if user_id:
-        return func.HttpResponse(json.dumps(res), status_code=200)
-    else:
-        return func.HttpResponse(
-            "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-            status_code=200,
+    #     # Create a prompt for the current session
+    #     dall_e_prompt = f"Can you create an image to illustrate a student having the following persona: {student_persona}, while teaching: {concept}"
+
+    #     # Run the prompt through the DALL·E API
+    #     image_url = dalle_api_wrapper.run(dall_e_prompt)
+
+    #     # Add the generated image information to the current session dictionary
+    #     session["generated_image"] = {"image_url":image_url}
+
+    try:
+        req_body = req.get_json()
+        session_id = req_body.get("session_id")
+        user_id = req_body.get("user_id")
+
+        # Fetch the session data and process transcripts
+        session_data = database_handler.sessions_container.read_item(
+            item=session_id, partition_key=user_id
         )
+        session_data["last_date_attempt"] = time.time()
+        session_data["image_url"] = ""
+        database_handler.sessions_container.upsert_item(body=session_data)
+
+        # Build the response
+        res = {"success": True}
+        return func.HttpResponse(json.dumps(res), status_code=200)
+
+    except ValueError:
+        # Handle JSON parsing error
+        return value_error_response
+    except CosmosResourceNotFoundError:
+        return cosmos_404_error_response
+    except Exception:
+        return generic_server_error_response
 
 
 @app.route(route="get_user_data")
@@ -200,26 +226,24 @@ def get_user_data(req: func.HttpRequest) -> func.HttpResponse:
     # fetch basic user app info
     # fetch user sessions history in a list
 
-    user_id = req.params.get("user_id")
-    if not user_id:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            user_id = req_body.get("user_id")
+    try:
+        req_body = req.get_json()
+        user_id = req_body.get("user_id")
 
-    res = {}
-    res["user_id"] = user_id
-    res["success"] = True
-
-    if user_id:
-        return func.HttpResponse(json.dumps(res), status_code=200)
-    else:
-        return func.HttpResponse(
-            "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response.",
-            status_code=200,
+        user_data = database_handler.users_container.read_item(
+            item=user_id, partition_key=user_id
         )
+
+        res = {"success": True, "user_data": user_data}
+        return func.HttpResponse(json.dumps(res), status_code=200)
+
+    except ValueError:
+        # Handle JSON parsing error
+        return value_error_response
+    except CosmosResourceNotFoundError:
+        return cosmos_404_error_response
+    except Exception:
+        return generic_server_error_response
 
 
 @app.route(route="get_session_data")
@@ -247,57 +271,29 @@ def get_session_data(req: func.HttpRequest) -> func.HttpResponse:
         return generic_server_error_response
 
 
-@app.route(route="get_all_sessions_by_user")
-def get_all_sessions_by_user(req: func.HttpRequest) -> func.HttpResponse:
+@app.route(route="get_session_summaries")
+def get_session_summaries(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("get_session_data HTTP trigger function processed a request.")
 
-    # request body only takes user_id
-    user_id = req.params.get("user_id")
-    if not user_id:
-        try:
-            req_body = req.get_json()
-        except ValueError:
-            pass
-        else:
-            user_id = req_body.get("user_id")
+    try:
+        req_body = req.get_json()
+        user_id = req_body.get("user_id")
 
-    # Fetch sessions for the given user_id
-    sessions = database_handler.fetch_sessions_by_user(user_id)
+        # Fetch sessions for the given user_id
+        sessions = database_handler.fetch_session_summaries_by_user(user_id)
 
-    # # TODO: move generating image to post_analysis
-    # dalle_api_wrapper = DallEAPIWrapper()
+        # Build the response
+        res = {
+            "sessions": sessions,
+            "sessions_count": len(sessions),
+            "success": True,
+        }
+        return func.HttpResponse(json.dumps(res), status_code=200)
 
-    # # # loop through sessions and generate image based on each sessions
-    # for session in sessions:
-    #     student_persona = session.get("student_persona", "")
-    #     concept = session.get("concept","")
-
-    #     # Create a prompt for the current session
-    #     dall_e_prompt = f"Can you create an image to illustrate a student having the following persona: {student_persona}, while teaching: {concept}"
-
-    #     # Run the prompt through the DALL·E API
-    #     image_url = dalle_api_wrapper.run(dall_e_prompt)
-
-    #     # Add the generated image information to the current session dictionary
-    #     session["generated_image"] = {"image_url":image_url}
-
-    # Prepare the response and count number of sessions (pagination?)
-
-    res = {
-        "user_id": user_id,
-        "sessions": sessions,
-        "sessions_count": len(sessions),
-        "success": True,
-    }
-
-    # Convert the response data to JSON
-    response_json = json.dumps(res)
-
-    if user_id:
-        logging.info(response_json)
-        return func.HttpResponse(response_json, status_code=200)
-    else:
-        return func.HttpResponse(
-            "This HTTP triggered function executed successfully. Pass a user_id in the query string or in the request body for a personalized response.",
-            status_code=200,
-        )
+    except ValueError:
+        # Handle JSON parsing error
+        return value_error_response
+    except CosmosResourceNotFoundError:
+        return cosmos_404_error_response
+    except Exception:
+        return generic_server_error_response
