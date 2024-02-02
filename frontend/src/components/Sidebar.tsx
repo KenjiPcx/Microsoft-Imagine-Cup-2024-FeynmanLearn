@@ -97,7 +97,8 @@ export function NavbarMinimal({
         <Stack m="auto" w="min-content">
           <NavbarLink
             icon={IconSettings}
-            label={"Settings"}
+            tooltipLabel={"Settings"}
+            tooltipPosition="right"
             active={settingsOpened}
             onClick={toggleSettings}
           />
