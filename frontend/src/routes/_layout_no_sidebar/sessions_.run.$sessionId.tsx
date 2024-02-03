@@ -8,7 +8,7 @@ import TranscriptButton from "../../components/TranscriptButton";
 import { NavbarLink } from "../../components/NavbarLink";
 import { IconMessageCircle, IconSettings } from "@tabler/icons-react";
 import { ResultReason } from "microsoft-cognitiveservices-speech-sdk";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useDebounce } from "../../utils/hooks";
 import { isRecognizingState } from "../../recoil";
@@ -133,6 +133,7 @@ function SessionComponent() {
     chatHistoryOpened,
     { open: openChatHistory, close: closeChatHistory },
   ] = useDisclosure(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const baseData = {
     user_id: "Azure",
@@ -229,6 +230,12 @@ function SessionComponent() {
     debouncedUserTalk(userMessage);
   }, [userMessage]);
 
+  useEffect(() => {
+    scrollRef?.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [chatHistory]);
+
   return (
     <>
       <Navbar
@@ -249,6 +256,11 @@ function SessionComponent() {
               tooltipPosition="left"
               onClick={() => {
                 openChatHistory();
+                setTimeout(() => {
+                  scrollRef?.current?.scrollIntoView({
+                    behavior: "smooth",
+                  });
+                }, 500);
               }}
             />
             <NavbarLink
@@ -287,11 +299,24 @@ function SessionComponent() {
         scrollAreaComponent={ScrollArea.Autosize}
       >
         {chatHistory.map((msg, idx) => (
-          <Box>
-            <Box>{msg.role}</Box>
+          <Box key={`chat-hist-${idx}`} mb={"md"}>
+            <Text
+              fw={"bold"}
+              transform="uppercase"
+              size={"sm"}
+              sx={(theme) => ({
+                color:
+                  msg.role === "user"
+                    ? theme.colors.convoscopeBlue
+                    : theme.colors.blue[7],
+              })}
+            >
+              {msg.role}
+            </Text>
             <Box>{msg.message}</Box>
           </Box>
         ))}
+        <div ref={scrollRef}></div>
       </Drawer>
     </>
   );
