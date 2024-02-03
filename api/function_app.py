@@ -5,13 +5,12 @@ import logging
 import time
 
 import azure.functions as func
-from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 
 import openai
 
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
-# from api.agents.feynman_student_prompt import prompt, prompt_template, parser
+from agents.feynman_student_prompt import prompt, prompt_template, parser
 from agents.assistant_ids import feynman_assistant_id
 from error_responses import (
     cosmos_404_error_response,
