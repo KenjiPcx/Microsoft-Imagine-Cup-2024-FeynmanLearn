@@ -20,6 +20,7 @@ export type SessionType = {
       };
     }>;
     thread_id: string;
+    image_url?: string;
     _rid?: string;
     _self?: string;
     _etag?: string;
@@ -52,6 +53,24 @@ export const fetchSession = async (sessionId: string) => {
     });
 
   return Session;
+};
+
+export const fetchSessionSummaries = async () => {
+  console.log(`Fetching summary of all sessions...`);
+  await new Promise((r) => setTimeout(r, 500));
+  const listOfSessions = await axios
+    .get<SessionType[]>(
+      `https://jsonplaceholder.typicode.com/get_session_summaries`
+    )
+    .then((r) => r.data)
+    .catch((err) => {
+      if (err.response.status === 404) {
+        throw new SessionNotFoundError(`Session not found!`);
+      }
+      throw err;
+    });
+
+  return listOfSessions;
 };
 
 export const fetchSessions = async () => {
