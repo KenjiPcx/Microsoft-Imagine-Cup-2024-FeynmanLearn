@@ -2,141 +2,148 @@
 
 import * as React from "react";
 import { FileRoute, Link, Outlet } from "@tanstack/react-router";
-import { fetchSessions } from "../../sessionsService";
+import { fetchSessions, fetchSessionSummaries } from "../../sessionsService";
 import { Button, NavLink } from "@mantine/core";
 import {
-  SimpleGrid,
+  Title,
+  Flex,
+  Image,
+  Card,
   Skeleton,
   Container,
-  Stack,
+  Text,
   useMantineTheme,
-  px,
 } from "@mantine/core";
+// import classes from "../../components/ArticleCard.module.css";
+
+interface SessionProps {
+  id: string;
+  generated_image: string;
+  concept: string;
+  student_persona: string;
+}
+
+interface SessionGridProps {
+  sessions: SessionProps[];
+}
 
 export const Route = new FileRoute("/_layout/sessions").createRoute({
   // loader: fetchSessions,
   component: SessionsComponent,
 });
 
-// call hook
-// display in grid format
-// put image in the grid
-// on-click link to sessions post analysis
-// TODO : add types
-
-function Subgrid({ sessions }) {
+function SessionGrid({ sessions }: SessionGridProps) {
   const theme = useMantineTheme();
 
-  const getChild = (height) => (
-    <Skeleton height={height} radius="md" animate={false} />
-  );
-  const BASE_HEIGHT = 360;
-  const getSubHeight = (children, spacing) =>
-    BASE_HEIGHT / children - spacing * ((children - 1) / children);
-
   return (
-    <Container my="md">
-      <Stack direction="row" spacing={2}>
+    <Container>
+      <Flex
+        wrap={"wrap"}
+        w={{ base: 300, xs: 300, sm: 700, md: 900, lg: 1200 }}
+      >
         {sessions.map((session) => (
-          <Stack key={session.id}>
-            <Link to={`/sessions/${session.id}`}>
-              <div>{session.concept}</div>
-              <div>{session.student_persona}</div>
+          <Card
+            key={session.id}
+            withBorder
+            radius="md"
+            // className={classes.card} //TODO: Change this to a proper class using styles API?
+            m="8px"
+            p="2%"
+            pos="relative"
+            w={{ base: 280, xs: 280, sm: 330, md: 280, lg: 350 }}
+            style={{
+              border: "1px solid #ccc",
+              borderRadius: "8px",
+              overflow: "hidden",
+              background: "var(--mantine-color-body)",
+            }}
+          >
+            <Link
+              to={`/sessions/${session.id}` as string} //TODO: check if there is a better way to do this without showing warnings instead of changing type to string
+              style={{ textDecoration: "none", color: "inherit" }}
+              key={session.id}
+            >
+              <Card.Section
+                pl={{ base: 15, xs: 15, sm: 20, lg: 8 }}
+                pr={{ base: 15, xs: 15, sm: 20, lg: 8 }}
+              >
+                <a>
+                  <Image src={session.generated_image} />
+                </a>
+                <Text
+                  display="block"
+                  fw={700}
+                  // className={classes.title} //See if can use styles api to convert it to a proper class
+                  style={{
+                    marginTop: "var(--mantine-spacing-md)",
+                    marginBottom: "rem(5px)",
+                  }}
+                >
+                  {session.concept}
+                </Text>
+                <Text fz="sm" c="dimmed">
+                  {session.student_persona}
+                </Text>
+              </Card.Section>
             </Link>
-            {/* Placeholder for image (TODO:) */}
-            {getChild(getSubHeight(3, px(theme.spacing.md) as number))}
-          </Stack>
+          </Card>
         ))}
-      </Stack>
+      </Flex>
     </Container>
   );
 }
 
 function SessionsComponent() {
   const [sessions, setSessions] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
     // Fetch sessions when the component mounts
     fetchSessionsData();
   }, []);
-
+  // const getAllSessionsByUser
   const fetchSessionsData = async () => {
     try {
-      //TODO: change this to a proper hook
+      //TODO: change this to a proper hook, only for testing purposes
       const response = await fetch(
-        "http://localhost:7071/api/get_all_sessions_by_user?user_id=02"
+        "http://localhost:7071/api/get_session_summaries"
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch sessions");
-      }
+      // user_id = '02' //needs to be changed to something that takes user_id automatically from the route
+      // const response = await fetchSessionSummaries;
+
+      // if (!response.ok) {
+      //   throw new Error("Failed to fetch sessions");
+      // }
 
       const data = await response.json();
       setSessions(data.sessions); // Assuming the API returns an object with a 'sessions' property
       console.log(sessions, "sessionsconsolelog");
     } catch (error) {
-      console.error("Error fetching sessions:", error.message);
+      console.error("Error fetching sessions:", (error as Error).message);
+    } finally {
+      setIsLoading(false); // Set loading to false whether the fetch succeeds or fails
     }
   };
 
   return (
-    <div className="p-2 flex gap-2">
-      Sessions
-      <div>
-        We could have a new session button here, clicking it will redirect to
-        session/new
-        {/* <NavLink component={Link} to="/sessions/new" label="New Session" /> */}
-      </div>
-      <Button component={Link} to="/sessions/new">
+    <div className="p-2 flex flex-col gap-2">
+      <Title pt="5%" m="2%">
+        Sessions
+      </Title>
+      <Button m="2%" color="blue" component={Link} to="/sessions/new">
         New Session
       </Button>
-      <div>
-        Other than that, a grid of user previous sessions would be here,
-        clicking on any of them will redirect to /sessions/$sessionId
-      </div>
-      <div className="p-2 flex flex-col gap-2">
-        <div className="flex items-center">
-          <Button component={Link} to="/sessions/new">
-            New Session
-          </Button>
-        </div>
-        <Subgrid sessions={sessions} />
-        <Outlet />
-      </div>
-      <Outlet />
-      {/* <ul className="list-disc pl-4">
-        {sessions.map((session) => (
-          <li key={session.id} className="whitespace-nowrap">
-            <Link
-              to={`/sessions/${session.id}`}
-              className="block py-1 text-blue-800 hover:text-blue-600"
-              activeProps={{ className: "text-black font-bold" }}
-            >
-              <div>{session.title.substring(0, 20)}</div>
-            </Link>
-          </li>
-        ))}
-      </ul> */}
-      {/* <ul className="list-disc pl-4">
-        {[...sessions, { id: "i-do-not-exist", title: "Non-existent Session" }]?.map(
-          (session) => {
-            return (
-              <li key={session.id} className="whitespace-nowrap">
-                <Link
-                  to="/sessions/$sessionId"
-                  params={{
-                    sessionId: session.id,
-                  }}
-                  className="block py-1 text-blue-800 hover:text-blue-600"
-                  activeProps={{ className: "text-black font-bold" }}
-                >
-                  <div>{session.title.substring(0, 20)}</div>
-                </Link>
-              </li>
-            );
-          }
-        )}
-      </ul> */}
+      {isLoading ? (
+        <Skeleton
+          ml="5%"
+          mr="5%"
+          w={{ base: 300, xs: 300, sm: 700, md: 900, lg: 1200 }}
+          h="90vh"
+        />
+      ) : (
+        <SessionGrid sessions={sessions} />
+      )}
     </div>
   );
 }
