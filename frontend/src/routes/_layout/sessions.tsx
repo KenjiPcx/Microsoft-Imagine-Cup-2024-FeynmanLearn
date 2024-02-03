@@ -49,13 +49,13 @@ function SessionGrid({ sessions }: SessionGridProps) {
             // className={classes.card} //TODO: Change this to a proper class using styles API?
             m="8px"
             p="2%"
-            bg="inherit"
             pos="relative"
             w={{ base: 280, xs: 280, sm: 330, md: 280, lg: 350 }}
             style={{
               border: "1px solid #ccc",
               borderRadius: "8px",
               overflow: "hidden",
+              background: "var(--mantine-color-body)",
             }}
           >
             <Link
@@ -72,9 +72,12 @@ function SessionGrid({ sessions }: SessionGridProps) {
                 </a>
                 <Text
                   display="block"
-                  mb="0.3rem"
-                  // className={classes.title} //See if can use styles api to convert it to a proper class
                   fw={700}
+                  // className={classes.title} //See if can use styles api to convert it to a proper class
+                  style={{
+                    marginTop: "var(--mantine-spacing-md)",
+                    marginBottom: "rem(5px)",
+                  }}
                 >
                   {session.concept}
                 </Text>
