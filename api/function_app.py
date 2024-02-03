@@ -11,7 +11,7 @@ from azure.cosmos.exceptions import CosmosResourceNotFoundError
 import openai
 
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
-from api.agents.feynman_student_prompt import prompt, prompt_template, parser
+# from api.agents.feynman_student_prompt import prompt, prompt_template, parser
 from agents.assistant_ids import feynman_assistant_id
 from error_responses import (
     cosmos_404_error_response,
@@ -185,13 +185,10 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
     #     concept = session.get("concept","")
 
     #     # Create a prompt for the current session
-    #     dall_e_prompt = f"Can you create an image to illustrate a student having the following persona: {student_persona}, while teaching: {concept}"
-
-    #     # Run the prompt through the DALL·E API
-    #     image_url = dalle_api_wrapper.run(dall_e_prompt)
+    #     dall_e_prompt = f"Can you create an image to illustrate a student having the following persona: {student_persona}, while learning: {concept}"
 
     #     # Add the generated image information to the current session dictionary
-    #     session["generated_image"] = {"image_url":image_url}
+    #     session["image_url"] = dalle_api_wrapper.run(dall_e_prompt)
 
     try:
         req_body = req.get_json()
@@ -278,6 +275,7 @@ def get_session_summaries(req: func.HttpRequest) -> func.HttpResponse:
     try:
         req_body = req.get_json()
         user_id = req_body.get("user_id")
+        # user_id = "02" #For ventus testing purposes
 
         # Fetch sessions for the given user_id
         sessions = database_handler.fetch_session_summaries_by_user(user_id)

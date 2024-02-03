@@ -20,6 +20,7 @@ class DatabaseHandler:
         try:
             # Query session summaries for the given user_id
             query = f"SELECT c.id, c.concept, c.student_persona, c.image_url, c.last_date_attempt FROM c WHERE c.user_id = '{user_id}'"
+            # query = f"SELECT c.id, c.concept, c.student_persona FROM c WHERE c.user_id = '{user_id}'" # For ventus testing purposes
             sessions = self.sessions_container.query_items(
                 query, enable_cross_partition_query=True
             )

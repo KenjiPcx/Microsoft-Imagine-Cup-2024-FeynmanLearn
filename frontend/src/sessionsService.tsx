@@ -55,19 +55,17 @@ export const fetchSession = async (sessionId: string) => {
   return Session;
 };
 
-export const fetchSessionsByUser = async (userId: string) => {
-  console.log(`Getting all sessions of userId ${userId}...`);
+export const fetchSessionSummaries = async () => {
+  console.log(`Fetching summary of all sessions...`);
   await new Promise((r) => setTimeout(r, 500));
   const listOfSessions = await axios
     .get<SessionType[]>(
-      `https://jsonplaceholder.typicode.com/get_all_sessions_by_user?user_id=${userId}`
+      `https://jsonplaceholder.typicode.com/get_session_summaries`
     )
     .then((r) => r.data)
     .catch((err) => {
       if (err.response.status === 404) {
-        throw new SessionNotFoundError(
-          `Session with user id "${userId}" not found!`
-        );
+        throw new SessionNotFoundError(`Session not found!`);
       }
       throw err;
     });

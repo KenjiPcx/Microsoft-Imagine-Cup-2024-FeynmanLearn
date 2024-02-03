@@ -2,22 +2,19 @@
 
 import * as React from "react";
 import { FileRoute, Link, Outlet } from "@tanstack/react-router";
-import { fetchSessions, fetchSessionsByUser } from "../../sessionsService";
+import { fetchSessions, fetchSessionSummaries } from "../../sessionsService";
 import { Button, NavLink } from "@mantine/core";
 import {
+  Title,
   Flex,
   Image,
   Card,
-  Box,
-  Grid,
-  SimpleGrid,
   Skeleton,
   Container,
   Text,
   useMantineTheme,
-  px,
 } from "@mantine/core";
-import classes from "../../components/ArticleCard.module.css";
+// import classes from "../../components/ArticleCard.module.css";
 
 interface SessionProps {
   id: string;
@@ -35,29 +32,25 @@ export const Route = new FileRoute("/_layout/sessions").createRoute({
   component: SessionsComponent,
 });
 
-// call hook
-// display in grid format
-// put image in the grid
-// on-click link to sessions post analysis
-// TODO : add types (TYPESCRIPT STUFFS)
 function SessionGrid({ sessions }: SessionGridProps) {
   const theme = useMantineTheme();
 
   return (
-    <Container my="md">
-      {/* Use skeleton when it is loading */}
-      {/* <Skeleton>  */}
+    <Container>
       <Flex
         wrap={"wrap"}
         w={{ base: 300, xs: 300, sm: 700, md: 900, lg: 1200 }}
       >
         {sessions.map((session) => (
           <Card
+            key={session.id}
             withBorder
             radius="md"
-            className={classes.card}
+            // className={classes.card} //TODO: Change this to a proper class using styles API?
             m="8px"
-            p="2px"
+            p="2%"
+            bg="inherit"
+            pos="relative"
             w={{ base: 280, xs: 280, sm: 330, md: 280, lg: 350 }}
             style={{
               border: "1px solid #ccc",
@@ -66,7 +59,7 @@ function SessionGrid({ sessions }: SessionGridProps) {
             }}
           >
             <Link
-              to={`/sessions/${session.id}` as any} //TODO: check
+              to={`/sessions/${session.id}` as string} //TODO: check if there is a better way to do this without showing warnings instead of changing type to string
               style={{ textDecoration: "none", color: "inherit" }}
               key={session.id}
             >
@@ -77,7 +70,12 @@ function SessionGrid({ sessions }: SessionGridProps) {
                 <a>
                   <Image src={session.generated_image} />
                 </a>
-                <Text className={classes.title} fw={700}>
+                <Text
+                  display="block"
+                  mb="0.3rem"
+                  // className={classes.title} //See if can use styles api to convert it to a proper class
+                  fw={700}
+                >
                   {session.concept}
                 </Text>
                 <Text fz="sm" c="dimmed">
@@ -88,13 +86,13 @@ function SessionGrid({ sessions }: SessionGridProps) {
           </Card>
         ))}
       </Flex>
-      {/* </Skeleton> */}
     </Container>
   );
 }
 
 function SessionsComponent() {
   const [sessions, setSessions] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
     // Fetch sessions when the component mounts
@@ -103,13 +101,13 @@ function SessionsComponent() {
   // const getAllSessionsByUser
   const fetchSessionsData = async () => {
     try {
-      //TODO: change this to a proper hook
+      //TODO: change this to a proper hook, only for testing purposes
       const response = await fetch(
-        "http://localhost:7071/api/get_all_sessions_by_user?user_id=02"
+        "http://localhost:7071/api/get_session_summaries"
       );
 
       // user_id = '02' //needs to be changed to something that takes user_id automatically from the route
-      // const response = await getAllSessionsByUser(user_id);
+      // const response = await fetchSessionSummaries;
 
       // if (!response.ok) {
       //   throw new Error("Failed to fetch sessions");
@@ -120,30 +118,29 @@ function SessionsComponent() {
       console.log(sessions, "sessionsconsolelog");
     } catch (error) {
       console.error("Error fetching sessions:", (error as Error).message);
+    } finally {
+      setIsLoading(false); // Set loading to false whether the fetch succeeds or fails
     }
   };
 
   return (
-    <div className="p-2 flex gap-2">
-      Sessions
-      <div>
-        We could have a new session button here, clicking it will redirect to
-        session/new
-        {/* <NavLink component={Link} to="/sessions/new" label="New Session" /> */}
-      </div>
-      <Button component={Link} to="/sessions/new">
+    <div className="p-2 flex flex-col gap-2">
+      <Title pt="5%" m="2%">
+        Sessions
+      </Title>
+      <Button m="2%" color="blue" component={Link} to="/sessions/new">
         New Session
       </Button>
-      <div className="p-2 flex flex-col gap-2">
-        <div className="flex items-center">
-          <Button component={Link} to="/sessions/new">
-            New Session
-          </Button>
-        </div>
+      {isLoading ? (
+        <Skeleton
+          ml="5%"
+          mr="5%"
+          w={{ base: 300, xs: 300, sm: 700, md: 900, lg: 1200 }}
+          h="90vh"
+        />
+      ) : (
         <SessionGrid sessions={sessions} />
-        <Outlet />
-      </div>
-      <Outlet />
+      )}
     </div>
   );
 }
