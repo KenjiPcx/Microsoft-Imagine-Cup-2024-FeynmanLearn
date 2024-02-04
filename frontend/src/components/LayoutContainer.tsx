@@ -26,7 +26,10 @@ const useStyles = createStyles({
 
 const PContainer = createPolymorphicComponent<"div", ContainerProps>(Container);
 
-export default function LayoutContainer({ children, opacity }: LayoutContainerProps) {
+export default function LayoutContainer({
+  children,
+  opacity,
+}: LayoutContainerProps) {
   const { classes } = useStyles();
 
   return (
@@ -50,7 +53,7 @@ export default function LayoutContainer({ children, opacity }: LayoutContainerPr
         <Image src={"/blobs.gif"} fit="cover" />
       </Box>
       <Center
-        style={{
+        sx={{
           width: "100vw",
           height: "100vh",
           position: "absolute",

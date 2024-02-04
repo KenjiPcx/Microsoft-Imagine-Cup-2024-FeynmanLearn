@@ -171,8 +171,8 @@ def send_message(req: func.HttpRequest) -> func.HttpResponse:
         return generic_server_error_response
 
 @app.route(route="analyze_question_response")
-def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("analyze_session HTTP trigger function processed a request.")
+def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("analyze_question_response HTTP trigger function processed a request.")
 
     try:
         req_body = req.get_json()
@@ -342,9 +342,9 @@ def get_session_summaries(req: func.HttpRequest) -> func.HttpResponse:
         return generic_server_error_response
 
 
-@app.route(route="verify_concept_scope")
-def verify_concept_scope(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("verify_concept_scope HTTP trigger function processed a request.")
+@app.route(route="verify_lesson_scope")
+def verify_lesson_scope(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("verify_lesson_scope HTTP trigger function processed a request.")
 
     try:
         req_body = req.get_json()

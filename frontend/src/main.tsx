@@ -7,6 +7,7 @@ import { auth } from "./utils/auth";
 import { routeTree } from "./routeTree.gen";
 import { Spinner } from "./components/Spinner";
 import { MantineProvider } from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
 import { theme } from "./theme";
 import { RecoilRoot } from "recoil";
 
@@ -58,6 +59,7 @@ function App() {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <MantineProvider withGlobalStyles withNormalizeCSS theme={theme}>
+    <Notifications />
     <App />
   </MantineProvider>
 );
