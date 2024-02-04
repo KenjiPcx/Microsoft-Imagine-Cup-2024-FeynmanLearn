@@ -17,6 +17,7 @@ import {
   Select,
   Title,
   Text,
+  Stack,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 
@@ -80,7 +81,7 @@ function NewSessionConfigurationComponent() {
   });
 
   return (
-    <>
+    <Stack>
       <Stepper
         active={active}
         onStepClick={setActive}
@@ -100,12 +101,15 @@ function NewSessionConfigurationComponent() {
           />
           <br />
           <Textarea
-            label="Goal of the lesson"
-            description="(Optional) Define detailed key objectives of your lesson, this helps you scope the lesson and keep it focused"
-            placeholder="In this lesson, I want to explain specifically how the Feynman method can be used to learn new concepts, and what makes it so effective."
+            label="Lesson objective(s)"
+            description="Define one or many detailed key objectives of your lesson, this helps you scope the lesson and keep it focused"
+            placeholder="Student will understand specifically how the Feynman method can be used to learn new concepts, and what makes it so effective."
+            required
             {...form.getInputProps("additionalInformation")}
           />
           <br />
+          {/* 
+          Remove for MVP
           <Group>
             <TextInput
               label="Online references"
@@ -120,7 +124,7 @@ function NewSessionConfigurationComponent() {
               data={["Article", "Video", "PDF"]}
               {...form.getInputProps("referenceType")}
             />
-          </Group>
+          </Group> */}
         </Stepper.Step>
 
         <Stepper.Step
@@ -205,7 +209,7 @@ function NewSessionConfigurationComponent() {
       </Stepper>
 
       {active < 3 && (
-        <Group mt="xl">
+        <Group mt="xl" position="apart">
           <Button variant="default" onClick={prevStep}>
             Back
           </Button>
@@ -214,6 +218,6 @@ function NewSessionConfigurationComponent() {
           </Button>
         </Group>
       )}
-    </>
+    </Stack>
   );
 }

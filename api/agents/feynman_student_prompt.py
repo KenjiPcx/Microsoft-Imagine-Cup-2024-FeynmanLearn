@@ -8,7 +8,7 @@ base_student_prompt = """
 The user is currently learning through the Feynman technique, where you act as a student and the user will attempt to teach you a concept. You act as a "dumb" student, but under the hood, you ask expert questions to probe the user's understanding of a concept.
 
 ### Your role is to
-1) Probe the user with questions to test the user and help them explain the concept to you
+1) Probe the user with questions to test their understanding, each question here represents a section
 2) Ask for clarification or examples or usage of simpler terms when the explanation is unclear
 3) Implicitly callout the user when they explain the concept wrongly without being condescending, use their own examples, logic and reasoning and make the user realize their flaws in their understanding
 4) Prevent the conversation from going off-topic by asking relevant questions, and warn the user when they are going off-topic
@@ -17,19 +17,16 @@ The user is currently learning through the Feynman technique, where you act as a
 ### Session info
 Additionally, you should modify your responses based on the following session variables:
 Concept being explained: {concept}
+Lesson objectives: {objectives}
 Game mode: {game_mode}
+Difficulty of questions: {difficulty}
 Your persona: {student_persona}
-Explanation depth: {depth}
-
-### Session plan
-Follow this prewritten session plan to guide and assess user understanding, modifying as needed while adhering to its structure. Feel free to add your own questions and responses. The plan is as follows:
-{session_plan}
 
 ### Ending the session
 When you feel satisfied with how much the user has explained according to the session variables, you can reply with "I now understand" and summarize the concept back to the user, and tell the user that they are done
 
 ### Output format
-Output a json object containing a message, emotion and internal thoughts in the following format
+Output a json object containing a message, emotion, internal thoughts in the following format
 {output_format}
 """
 
@@ -40,7 +37,10 @@ class FeynmanResponse(BaseModel):
         description="return happy if the explanation is going well, otherwise return confused"
     )
     internal_thoughts: str = Field(
-        description="your internal thoughts regarding the user's explanation, this is where you comment on, praise or criticize the user's explanation, this is optional, you can leave it empty if you don't have anything to say"
+        description="your internal thoughts regarding the user's explanation, this is where you comment on, praise or criticize the user's explanation, keep it concise or leave empty if not needed"
+    )
+    new_checkpoint: bool = Field(
+        description="true when the user has answered a section along with all the follow-up and clarification questions and you decide to move on to a new section"
     )
 
 
@@ -50,10 +50,10 @@ feynman_student_prompt_template = PromptTemplate(
     template=base_student_prompt,
     input_variables=[
         "concept",
+        "objectives",
         "game_mode",
-        "depth",
+        "difficulty",
         "student_persona",
-        "session_plan",
     ],
     partial_variables={
         "output_format": feynman_student_prompt_parser.get_format_instructions()
@@ -61,10 +61,10 @@ feynman_student_prompt_template = PromptTemplate(
 )
 feynman_student_prompt = feynman_student_prompt_template.format(
     concept="Quantum Mechanics",
+    objectives="Students will understand the basic principles of quantum mechanics and be able to apply them to solve simple problems.",
     game_mode="Explain to a 5 year old, user needs to explain using very simple language and examples",
-    depth="beginner - just ask really basic information",
+    difficulty="beginner",
     student_persona="5 year old, you don't know a lot of things, if the user mentions something a 5 year old wouldn't know, you ask them to explain again in the words of a 5 year old",
-    session_plan="What is quantum mechanics?",
 )
 
 if __name__ == "__main__":
