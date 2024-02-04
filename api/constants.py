@@ -1,0 +1,29 @@
+# Library for storing global constants
+
+# Marking rubric for a learner's explanation
+marking_rubric = """
+Clarity (Understanding and simplicity of language)
+1: The explanation is confusing, uses complex or technical language excessively, and lacks a logical flow.
+2: The explanation has moments of clarity but is often difficult to follow, with some use of technical language that is not well-explained.
+3: The explanation is clear for the most part, with a reasonable use of simple language and logical flow, though minor areas may benefit from simplification.
+4: The explanation is very clear, with a logical flow and occasional use of technical language that is well-explained. Minor improvements could be made for simplicity.
+5: The explanation is exceptionally clear, uses simple and accessible language throughout, and follows a logical and intuitive flow, making the concept easy to understand for all audiences.
+Conciseness (Brevity and efficiency of language)
+1: The explanation is overly lengthy and filled with unnecessary details or repetition.
+2: The explanation is longer than necessary with some repetition, but key points are identifiable.
+3: The explanation is moderately concise, with a good balance between detail and brevity, though some sections could be more streamlined.
+4: The explanation is concise, with information presented efficiently. Minor areas could be condensed further without losing clarity.
+5: The explanation is exceptionally concise, delivering all necessary information in the most efficient manner possible without any unnecessary detail or repetition.
+Comprehensiveness (Coverage of key aspects and concepts)
+1: The explanation misses several key aspects of the concept, leaving significant gaps in understanding.
+2: The explanation covers some aspects of the concept but omits important details or considerations.
+3: The explanation covers most key aspects, though it could provide more examples or details for a fuller understanding.
+4: The explanation is comprehensive, covering all key aspects and including relevant examples. Minor details may be omitted but do not significantly impact understanding.
+5: The explanation is exceptionally comprehensive, thoroughly covering all aspects of the concept, including examples and addressing potential questions or misunderstandings.
+Correctness (Accuracy of information)
+1: The explanation contains multiple inaccuracies or misconceptions that significantly misrepresent the concept.
+2: The explanation has some inaccuracies or oversimplifications that affect the overall understanding of the concept.
+3: The explanation is mostly accurate, with minor errors or simplifications that do not significantly impact the overall understanding.
+4: The explanation is accurate, with all key aspects correctly explained. There might be extremely minor inaccuracies that do not detract from the overall understanding.
+5: The explanation is exceptionally accurate, with all information presented correctly and precisely, reflecting a deep understanding of the concept.
+"""

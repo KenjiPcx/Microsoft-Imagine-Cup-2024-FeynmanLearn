@@ -7,9 +7,13 @@ import time
 import azure.functions as func
 from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
-
+from langchain_openai import ChatOpenAI
+from langchain.output_parsers import ResponseSchema, StructuredOutputParser
+from langchain.prompts import PromptTemplate
+from langchain.chat_models import ChatOpenAI
 import openai
 
+import constants
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
 # from api.agents.feynman_student_prompt import prompt, prompt_template, parser
 from agents.assistant_ids import feynman_assistant_id
@@ -158,6 +162,39 @@ def send_message(req: func.HttpRequest) -> func.HttpResponse:
     except Exception:
         return generic_server_error_response
 
+@app.route(route="analyze_question_response")
+def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("analyze_session HTTP trigger function processed a request.")
+
+    try:
+        req_body = req.get_json()
+        session_id = req_body.get("session_id")
+        user_id = req_body.get("user_id")
+
+        # Fetch the session data and process transcripts
+        session_data = database_handler.sessions_container.read_item(
+            item=session_id, partition_key=user_id
+        )
+
+        # TODO: Obtain transcript by question
+        # TODO: Construct response schema and format instructions to use in prompt
+        # TODO: Create prompt and run analysis on prompt
+
+        session_data["last_date_attempt"] = time.time()
+        session_data["image_url"] = ""
+        database_handler.sessions_container.upsert_item(body=session_data)
+
+        # Build the response
+        res = {"success": True}
+        return func.HttpResponse(json.dumps(res), status_code=200)
+
+    except ValueError:
+        # Handle JSON parsing error
+        return value_error_response
+    except CosmosResourceNotFoundError:
+        return cosmos_404_error_response
+    except Exception:
+        return generic_server_error_response
 
 @app.route(route="analyze_session")
 def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
