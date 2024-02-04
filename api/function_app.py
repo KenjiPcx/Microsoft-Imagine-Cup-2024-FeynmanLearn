@@ -5,7 +5,6 @@ import logging
 import time
 
 import azure.functions as func
-from azure.cosmos import CosmosClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from langchain_openai import ChatOpenAI
 from langchain.output_parsers import ResponseSchema, StructuredOutputParser
@@ -15,7 +14,16 @@ import openai
 
 import constants
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
-# from api.agents.feynman_student_prompt import prompt, prompt_template, parser
+from langchain_openai import ChatOpenAI
+from agents.feynman_student_prompt import (
+    feynman_student_prompt,
+    feynman_student_prompt_template,
+)
+from agents.lesson_verification_prompt import (
+    verify_lesson_prompt,
+    verify_lesson_prompt_template,
+    verify_lesson_parser,
+)
 from agents.assistant_ids import feynman_assistant_id
 from error_responses import (
     cosmos_404_error_response,
@@ -28,6 +36,7 @@ app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
 openai_key = os.getenv("OPENAI_API_KEY")
 openai_client = openai.OpenAI(api_key=openai_key)
+langchain_llm = ChatOpenAI(api_key=openai_key, model="gpt-4-turbo-preview")
 database_handler = DatabaseHandler()
 
 
@@ -51,13 +60,12 @@ def create_session(req: func.HttpRequest) -> func.HttpResponse:
         student_persona = "None"
         session_plan = "To test the user on their knowledge on diffusion models, 1) verify if they know what it is, what it does, how it does it and where is it used"
 
-        instructions_prompt = prompt_template.format(
+        instructions_prompt = feynman_student_prompt_template.format(
             concept=concept,
             game_mode=game_mode,
             depth=depth,
             student_persona=student_persona,
             session_plan=session_plan,
-            output_format=parser.get_format_instructions(),
         )
 
         # Send the first message to create a thread
@@ -84,7 +92,7 @@ def create_session(req: func.HttpRequest) -> func.HttpResponse:
             "depth": depth,
             "student_persona": student_persona,
             "session_plan": session_plan,
-            "prompt": prompt,
+            "prompt": feynman_student_prompt,
             "transcripts": [
                 {
                     "user": start_msg,
@@ -330,5 +338,30 @@ def get_session_summaries(req: func.HttpRequest) -> func.HttpResponse:
         return value_error_response
     except CosmosResourceNotFoundError:
         return cosmos_404_error_response
+    except Exception:
+        return generic_server_error_response
+
+
+@app.route(route="verify_concept_scope")
+def verify_concept_scope(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("verify_concept_scope HTTP trigger function processed a request.")
+
+    try:
+        req_body = req.get_json()
+        concept = req_body.get("lesson_concept")
+        objectives = req_body.get("lesson_objectives")
+
+        chain = verify_lesson_prompt_template | langchain_llm | verify_lesson_parser
+        llm_res = chain.invoke({"concept": concept, "objectives": objectives})
+
+        # Build the response
+        res = {
+            "passed_verification": llm_res.feasible,
+            "feedback": llm_res.feedback,
+            "suggestion": llm_res.suggestion, 
+            "success": True,
+        }
+        return func.HttpResponse(json.dumps(res), status_code=200)
+
     except Exception:
         return generic_server_error_response

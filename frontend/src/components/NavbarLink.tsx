@@ -22,21 +22,26 @@ const useStyles = createStyles((theme) => ({
 
 interface NavbarLinkProps {
   icon: (props: TablerIconsProps) => JSX.Element;
-  label: string;
+  tooltipLabel: string;
   active?: boolean;
   onClick?(): void;
+  tooltipPosition?: "left" | "right" | "top" | "bottom";
 }
 
 export function NavbarLink({
   icon: Icon,
-  label,
-  // active,
+  tooltipLabel,
+  tooltipPosition,
   onClick,
 }: NavbarLinkProps) {
   const { classes, cx } = useStyles();
 
   return (
-    <Tooltip label={label} position="right" transitionProps={{ duration: 0 }}>
+    <Tooltip
+      label={tooltipLabel}
+      position={tooltipPosition}
+      transitionProps={{ duration: 0 }}
+    >
       <UnstyledButton
         variant={"outline"}
         onClick={onClick}
