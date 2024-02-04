@@ -103,6 +103,7 @@ export function NavbarMinimal({
           />
         </Stack>
       </Navbar.Section>
+      
     </Navbar>
   );
 }

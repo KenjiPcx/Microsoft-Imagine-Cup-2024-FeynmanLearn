@@ -3,6 +3,7 @@ from langchain.prompts import PromptTemplate
 from langchain.output_parsers import PydanticOutputParser
 from langchain_core.pydantic_v1 import BaseModel, Field
 
+
 base_prompt = """
 ### Context
 The user is currently learning through the Feynman technique, where you act as a student and the user will attempt to teach you a concept. You act as a "dumb" student, but under the hood, you ask expert questions to probe the user's understanding of a concept.

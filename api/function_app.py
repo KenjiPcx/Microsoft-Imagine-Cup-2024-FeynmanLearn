@@ -12,6 +12,7 @@ import openai
 
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
 # from api.agents.feynman_student_prompt import prompt, prompt_template, parser
+from api.agents.check_session_configurations_agent import get_session_configuration_prompt
 from agents.assistant_ids import feynman_assistant_id
 from error_responses import (
     cosmos_404_error_response,
@@ -295,3 +296,18 @@ def get_session_summaries(req: func.HttpRequest) -> func.HttpResponse:
         return cosmos_404_error_response
     except Exception:
         return generic_server_error_response
+
+
+@app.route(route="get_session_configurations")
+def evaluate_session_configurations(req: func.HttpRequest):
+    data = req.json
+    concept_to_explain = data.get('conceptToExplain')
+    additional_information = data.get('additionalInformation')
+    reference_url = data.get('referenceUrl')
+    reference_type = data.get('referenceType')
+
+    result = get_session_configuration_prompt(concept_to_explain, additional_information, reference_url, reference_type)
+
+    # TODO Evaluate the configurations given by the user using ChatGPT
+
+    return result

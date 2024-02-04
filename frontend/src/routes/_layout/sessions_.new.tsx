@@ -45,13 +45,42 @@ export type NewSessionConfigurationForm = {
 
 function NewSessionConfigurationComponent() {
   const [active, setActive] = useState(0);
-  const nextStep = () =>
-    setActive((current) => {
-      if (form.validate().hasErrors) {
-        return current;
-      }
-      return current < 3 ? current + 1 : current;
+
+  const submitStepData = (data) => {
+    fetch('/get_session_configurations', {
+      method: 'POST', // or 'PUT'
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Success:', data);
+    })
+    .catch((error) => {
+      console.error('Error:', error);
     });
+  };
+
+  const nextStep = () => {
+    if (form.validate().hasErrors) {
+      return;
+    }
+
+    if (active === 0) {
+      const stepData = {
+        conceptToExplain: form.values.conceptToExplain,
+        additionalInformation: form.values.additionalInformation,
+        referenceUrl: form.values.referenceUrl,
+        referenceType: form.values.referenceType,
+      };
+      submitStepData(stepData);
+    }
+
+    setActive(current => current < 3 ? current + 1 : current);
+  };
+
   const prevStep = () =>
     setActive((current) => (current > 0 ? current - 1 : current));
 
@@ -139,9 +168,9 @@ function NewSessionConfigurationComponent() {
             </label>
             <Grid>
             {["Playground", "Explain to a 5 year old", "5 levels", "Expert (Mastery)"].map((mode, index) => (
-              <Col span={6} key={mode}> {/* Adjust the `span` value for responsiveness */}
+              <Col span={6} key={mode}>
                 <Button
-                  fullWidth // Make the button expand to the full width of the column
+                  fullWidth
                   variant="filled"
                   color={form.values.agentConfig.gameMode === mode ? "blue" : "gray"}
                   onClick={() => form.setFieldValue("agentConfig.gameMode", mode)}
