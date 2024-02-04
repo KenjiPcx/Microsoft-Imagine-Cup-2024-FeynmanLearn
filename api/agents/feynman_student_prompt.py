@@ -3,7 +3,7 @@ from langchain.prompts import PromptTemplate
 from langchain.output_parsers import PydanticOutputParser
 from langchain_core.pydantic_v1 import BaseModel, Field
 
-base_prompt = """
+base_student_prompt = """
 ### Context
 The user is currently learning through the Feynman technique, where you act as a student and the user will attempt to teach you a concept. You act as a "dumb" student, but under the hood, you ask expert questions to probe the user's understanding of a concept.
 
@@ -44,17 +44,28 @@ class FeynmanResponse(BaseModel):
     )
 
 
-parser = PydanticOutputParser(pydantic_object=FeynmanResponse)
+feynman_student_prompt_parser = PydanticOutputParser(pydantic_object=FeynmanResponse)
 
-prompt_template = PromptTemplate.from_template(base_prompt)
-prompt = prompt_template.format(
+feynman_student_prompt_template = PromptTemplate(
+    template=base_student_prompt,
+    input_variables=[
+        "concept",
+        "game_mode",
+        "depth",
+        "student_persona",
+        "session_plan",
+    ],
+    partial_variables={
+        "output_format": feynman_student_prompt_parser.get_format_instructions()
+    },
+)
+feynman_student_prompt = feynman_student_prompt_template.format(
     concept="Quantum Mechanics",
     game_mode="Explain to a 5 year old, user needs to explain using very simple language and examples",
     depth="beginner - just ask really basic information",
     student_persona="5 year old, you don't know a lot of things, if the user mentions something a 5 year old wouldn't know, you ask them to explain again in the words of a 5 year old",
     session_plan="What is quantum mechanics?",
-    output_format=parser.get_format_instructions(),
 )
 
 if __name__ == "__main__":
-    print(prompt)
+    print(feynman_student_prompt)
