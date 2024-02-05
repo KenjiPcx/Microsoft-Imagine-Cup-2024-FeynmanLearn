@@ -183,8 +183,9 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
         if len(transcript) < 1:
             return func.HttpResponse("Cannot find transcript by question_id", status_code=401)
 
-        # Obtain transcript by question;
+        # Obtain transcript by question
         question_transcript = transcript[0]["session_transcript"]["question_transcript"]
+        audience_level = transcript[0]["student_persona"]
 
         # Construct response schema and format instructions to use in prompt
         response_schemas = constants.RESPONSE_SCHEMA
@@ -192,13 +193,15 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
         format_instructions = output_parser.get_format_instructions()
 
         # Create prompt and run analysis on prompt
-        template = "You are a helpful assistant that takes a transcript and scores the learner's explanation to the agent and provides a detailed explanation using the evidence available. You will score using this rubric: {rubric} and you can use the agent's response to support your case but remember that you are scoring the learner's explanations. \n{format_instructions}\n{question}. Your response is directed towards the learner, so do address them as from a second person perspective, that is, phrasing your feedback with 'You/ Your explanation/ You did well'. Also, try to be encouraging, and make sure to score in whole numbers between 1 and 5 inclusive."
+        template = "You are a helpful assistant that takes a transcript and scores the user's explanation to a learner and provides a detailed explanation for the score using the evidence available. You will score using this rubric: {rubric} and you can use the learner's response to support your case but remember that you are scoring the user's explanations. \n{format_instructions}\n{question}. Your response is directed towards the user, so do address them as from a second person perspective, that is, phrasing your feedback with 'You/ Your explanation/ You did well'. Use evidence and quotation in your explanation where possible.  Also, try to be encouraging, and make sure to score in whole numbers between 1 and 5 inclusive. The audience level you will evaluate for is '{audience_level}'."
         prompt = PromptTemplate(
             template=template,
             input_variables=["question", "rubric"],
             partial_variables={"format_instructions": format_instructions}
         )
-        _input = prompt.format_prompt(question=question_transcript, rubric=constants.MARKING_RUBRIC)
+        _input = prompt.format_prompt(
+            question=question_transcript, rubric=constants.MARKING_RUBRIC, audience_level=audience_level
+        )
 
         # Build response
         output = langchain_llm(_input.to_messages())
