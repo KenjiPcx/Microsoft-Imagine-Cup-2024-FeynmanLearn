@@ -37,7 +37,7 @@ export const fetchSession = async (sessionId: string) => {
 
   const data = {
     session_id: sessionId,
-    user_id: "Azure",
+    user_id: "KenjiPcx",
   };
 
   const Session = await axios

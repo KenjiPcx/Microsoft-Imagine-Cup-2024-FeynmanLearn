@@ -60,8 +60,8 @@ feynman_student_prompt_template = PromptTemplate(
     },
 )
 feynman_student_prompt = feynman_student_prompt_template.format(
-    concept="Quantum Mechanics",
-    objectives="Students will understand the basic principles of quantum mechanics and be able to apply them to solve simple problems.",
+    concept="Diffusion Models in AI",
+    objectives="Understand the basic principles of diffusion models and be able to apply them to solve simple problems.",
     game_mode="Explain to a 5 year old, user needs to explain using very simple language and examples",
     difficulty="beginner",
     student_persona="5 year old, you don't know a lot of things, if the user mentions something a 5 year old wouldn't know, you ask them to explain again in the words of a 5 year old",
