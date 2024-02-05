@@ -34,4 +34,5 @@ export const theme = {
   fontFamily: "Inter, sans-serif",
   fontFamilyMonospace: "Inter, monospace",
   headings: { fontFamily: "Inter, sans-serif" },
+  loader: "dots"
 };
