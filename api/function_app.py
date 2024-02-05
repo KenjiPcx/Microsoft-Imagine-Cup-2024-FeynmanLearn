@@ -37,7 +37,6 @@ app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 openai_key = os.getenv("OPENAI_API_KEY")
 openai_client = openai.OpenAI(api_key=openai_key)
 langchain_llm = ChatOpenAI(api_key=openai_key, model="gpt-4-turbo-preview")
-chat_model = ChatOpenAI(model="gpt-4-turbo-preview", openai_api_key=openai_key)
 database_handler = DatabaseHandler()
 
 
@@ -202,7 +201,7 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
         _input = prompt.format_prompt(question=question_transcript, rubric=constants.MARKING_RUBRIC)
 
         # Build response
-        output = chat_model(_input.to_messages())
+        output = langchain_llm(_input.to_messages())
         question_transcript_analysis = output_parser.parse(output.content)
         question_transcript_analysis["question"] = transcript[0]["session_transcript"]["question"]
         question_transcript_analysis["question_id"] = transcript[0]["session_transcript"]["question_id"]
