@@ -7,10 +7,11 @@ import time
 import azure.functions as func
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from langchain_openai import ChatOpenAI
-from langchain.output_parsers import ResponseSchema, StructuredOutputParser
+from langchain.output_parsers import StructuredOutputParser
 from langchain.prompts import PromptTemplate
 from langchain.chat_models import ChatOpenAI
 import openai
+import constants
 
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
 from langchain_openai import ChatOpenAI
@@ -173,25 +174,45 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
 
     try:
         req_body = req.get_json()
-        session_id = req_body.get("session_id")
         user_id = req_body.get("user_id")
+        question_id = req_body.get("question_id")
+        session_id = req_body.get("session_id")
 
         # Fetch the session data and process transcripts
-        session_data = database_handler.sessions_container.read_item(
-            item=session_id, partition_key=user_id
+        transcript = database_handler.get_transcript_by_question(user_id, question_id, session_id)
+        if len(transcript) < 1:
+            return func.HttpResponse("Cannot find transcript by question_id", status_code=401)
+
+        # Obtain transcript by question
+        question_transcript = transcript[0]["session_transcript"]["question_transcript"]
+        audience_level = transcript[0]["student_persona"]
+
+        # Construct response schema and format instructions to use in prompt
+        response_schemas = constants.RESPONSE_SCHEMA
+        output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
+        format_instructions = output_parser.get_format_instructions()
+
+        # Create prompt and run analysis on prompt
+        template = "You are a helpful assistant that takes a transcript and scores the user's explanation to a learner and provides a detailed explanation for the score using the evidence available. You will score using this rubric: {rubric} and you can use the learner's response to support your case but remember that you are scoring the user's explanations. \n{format_instructions}\n{question}. Your response is directed towards the user, so do address them as from a second person perspective, that is, phrasing your feedback with 'You/ Your explanation/ You did well'. Use evidence and quotation in your explanation where possible.  Also, try to be encouraging, and make sure to score in whole numbers between 1 and 5 inclusive. The audience level you will evaluate for is '{audience_level}'."
+        prompt = PromptTemplate(
+            template=template,
+            input_variables=["question", "rubric"],
+            partial_variables={"format_instructions": format_instructions}
+        )
+        _input = prompt.format_prompt(
+            question=question_transcript, rubric=constants.MARKING_RUBRIC, audience_level=audience_level
         )
 
-        # TODO: Obtain transcript by question
-        # TODO: Construct response schema and format instructions to use in prompt
-        # TODO: Create prompt and run analysis on prompt
-
-        session_data["last_date_attempt"] = time.time()
-        session_data["image_url"] = ""
-        database_handler.sessions_container.upsert_item(body=session_data)
-
-        # Build the response
-        res = {"success": True}
+        # Build response
+        output = langchain_llm(_input.to_messages())
+        question_transcript_analysis = output_parser.parse(output.content)
+        question_transcript_analysis["question"] = transcript[0]["session_transcript"]["question"]
+        question_transcript_analysis["question_id"] = transcript[0]["session_transcript"]["question_id"]
+        res = {"success": True, "analysis": question_transcript_analysis}
+        logging.info(question_transcript_analysis)
         return func.HttpResponse(json.dumps(res), status_code=200)
+
+    # TODO: save response in the DB
 
     except ValueError:
         # Handle JSON parsing error
