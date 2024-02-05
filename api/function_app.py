@@ -11,8 +11,8 @@ from langchain.output_parsers import StructuredOutputParser
 from langchain.prompts import PromptTemplate
 from langchain.chat_models import ChatOpenAI
 import openai
-
 import constants
+
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
 from langchain_openai import ChatOpenAI
 from agents.feynman_student_prompt import (
@@ -49,31 +49,33 @@ def create_session(req: func.HttpRequest) -> func.HttpResponse:
         # Extract the request body
         req_body = req.get_json()
         user_id = req_body.get("user_id")
-        concept = req_body.get("concept")
+        lesson_concept = req_body.get("lesson_concept")
+        lesson_objectives = req_body.get("lesson_objectives")
         game_mode = req_body.get("game_mode")
-        depth = req_body.get("depth")
+        difficulty = req_body.get("difficulty")
+        student_persona = req_body.get("student_persona")
 
         # Hard code for now
-        concept = "Diffusion Models in AI"
-        student_persona = req_body.get("student_persona")
-        game_mode = "Explain to a 5 year old - you will act as a 5 year old student, user needs to explain using very simple language and examples, otherwise you don't understand"
-        depth = "beginner - just ask really basic information"
+        lesson_concept = "Diffusion Models in AI"
+        lesson_objectives = "Understand the basic principles of diffusion models and be able to apply them to solve simple problems."
         student_persona = "None"
-        session_plan = "To test the user on their knowledge on diffusion models, 1) verify if they know what it is, what it does, how it does it and where is it used"
+        game_mode = "Explain to a 5 year old - you will act as a 5 year old student, user needs to explain using very simple language and examples, otherwise you don't understand"
+        difficulty = "beginner - just ask really basic information"
+        student_persona = "None"
 
         instructions_prompt = feynman_student_prompt_template.format(
-            concept=concept,
+            concept=lesson_concept,
+            objectives=lesson_objectives,
             game_mode=game_mode,
-            depth=depth,
+            difficulty=difficulty,
             student_persona=student_persona,
-            session_plan=session_plan,
         )
 
         # Send the first message to create a thread
         assistant = OpenAIAssistantRunnable(
             assistant_id=feynman_assistant_id, as_agent=True
         )
-        start_msg = "Hey there, before we start, can you please briefly introduce yourself and what we will learn today?"
+        start_msg = "Before we start, can you please ask me what we will be learning today in a fun and concise way?"
         output = assistant.invoke(
             {
                 "instructions": instructions_prompt,
@@ -88,13 +90,13 @@ def create_session(req: func.HttpRequest) -> func.HttpResponse:
         session_data = {
             "id": str(uuid.uuid4()),
             "user_id": user_id,
-            "concept": concept,
+            "lesson_concept": lesson_concept,
+            "lesson_objectives": lesson_objectives,
             "game_mode": game_mode,
-            "depth": depth,
+            "difficulty": difficulty,
             "student_persona": student_persona,
-            "session_plan": session_plan,
             "prompt": feynman_student_prompt,
-            "transcripts": [
+            "session_transcripts": [
                 {
                     "user": start_msg,
                     "assistant": assistant_intro_msg,
@@ -107,11 +109,6 @@ def create_session(req: func.HttpRequest) -> func.HttpResponse:
         # Build the response
         res = {
             "session_id": session_data["id"],
-            "concept": session_data["concept"],
-            "game_mode": session_data["game_mode"],
-            "depth": session_data["depth"],
-            "student_persona": session_data["student_persona"],
-            "intro_msg": assistant_intro_msg,
             "success": True,
         }
         return func.HttpResponse(json.dumps(res), status_code=200)
@@ -171,9 +168,10 @@ def send_message(req: func.HttpRequest) -> func.HttpResponse:
     except Exception:
         return generic_server_error_response
 
+
 @app.route(route="analyze_question_response")
 def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("analyze_session HTTP trigger function processed a request.")
+    logging.info("analyze_question_response HTTP trigger function processed a request.")
 
     try:
         req_body = req.get_json()
@@ -221,6 +219,7 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
         return cosmos_404_error_response
     except Exception:
         return generic_server_error_response
+
 
 @app.route(route="analyze_session")
 def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
@@ -360,9 +359,9 @@ def get_session_summaries(req: func.HttpRequest) -> func.HttpResponse:
         return generic_server_error_response
 
 
-@app.route(route="verify_concept_scope")
-def verify_concept_scope(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("verify_concept_scope HTTP trigger function processed a request.")
+@app.route(route="verify_lesson_scope")
+def verify_lesson_scope(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("verify_lesson_scope HTTP trigger function processed a request.")
 
     try:
         req_body = req.get_json()
@@ -376,7 +375,7 @@ def verify_concept_scope(req: func.HttpRequest) -> func.HttpResponse:
         res = {
             "passed_verification": llm_res.feasible,
             "feedback": llm_res.feedback,
-            "suggestion": llm_res.suggestion, 
+            "suggestion": llm_res.suggestion,
             "success": True,
         }
         return func.HttpResponse(json.dumps(res), status_code=200)

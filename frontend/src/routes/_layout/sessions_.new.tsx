@@ -6,8 +6,8 @@
 //<li>We could have a input src concept to explain button</li>
 // <li>We could have some common agent configs</li>
 
-import React, { useRef, useState } from "react";
-import { FileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { FileRoute, useNavigate } from "@tanstack/react-router";
 import {
   Stepper,
   Button,
@@ -17,61 +17,281 @@ import {
   Select,
   Title,
   Text,
+  Stack,
+  SimpleGrid,
+  rem,
+  createStyles,
+  Code,
+  Box,
+  Center,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import axios from "axios";
+import {
+  CREATE_SESSION_ENDPOINT,
+  VERIFY_LESSON_SCOPE_ENDPOINT,
+} from "../../backendEndpoints";
+import { notifications } from "@mantine/notifications";
+import GameCard from "../../components/GameCard";
+import {
+  CreateNewSessionResponse,
+  LessonVerificationResponse,
+} from "../../apiResponseTypes";
 
 export const Route = new FileRoute("/_layout/sessions/new").createRoute({
   component: NewSessionConfigurationComponent,
 });
 
-export type AgentSessionConfig = {
+export type NewSessionConfigurationForm = {
+  lessonConcept: string;
+  lessonObjectives: string;
+  // referenceUrl: string;
+  // referenceType: "Article" | "Video" | "PDF" | "";
+  //   customDataFiles: File[]; // Will try for now but I guess we can handle this in the future
   gameMode: string;
-  depth: string;
+  difficulty: string;
   persona: string;
 };
 
-export type NewSessionConfigurationForm = {
-  conceptToExplain: string;
-  additionalInformation: string;
-  referenceUrl: string;
-  referenceType: "Article" | "Video" | "PDF" | "";
-  //   customDataFiles: File[]; // Will try for now but I guess we can handle this in the future
-  agentConfig: AgentSessionConfig;
-};
+const gameModes = [
+  {
+    label: "Explain to a kid",
+    image: "/explain_to_a_kid.png",
+  },
+  {
+    label: "Custom",
+    image: "/custom.png",
+  },
+];
+
+const selectOptions = [
+  "Beginner (Awareness) - Understands and communicates basic definitions and core principles. Answers straightforward questions and applies the concept in familiar contexts.",
+  "Intermediate (Application) - Explains how the concept works and applies it in problem-solving. Handles moderately challenging questions and connects different parts of the concept.",
+  "Advanced (Analysis) - Discusses subtle or complex aspects. Analyzes, critiques, and draws connections to other concepts. Answers complex questions with detailed explanation.",
+  "Expert (Mastery) - Possesses comprehensive knowledge. Teaches, debates, and creates new insights. Handles any question with in-depth, nuanced explanations and diverse examples.",
+];
+
+const noOfSteps = 4;
+
+const useStyles = createStyles((theme) => ({
+  separator: {
+    height: rem(2),
+    borderTop: `${rem(2)} dashed ${theme.colorScheme === "dark" ? theme.colors.dark[3] : theme.colors.gray[4]}`,
+    borderRadius: theme.radius.xl,
+    backgroundColor: "transparent",
+  },
+
+  separatorActive: {
+    borderWidth: 0,
+    backgroundImage: theme.fn.linearGradient(
+      45,
+      theme.colors.blue[6],
+      theme.colors.cyan[6]
+    ),
+  },
+
+  stepIcon: {
+    borderColor: "transparent",
+    backgroundColor:
+      theme.colorScheme === "dark" ? theme.colors.dark[4] : theme.white,
+    borderWidth: 0,
+
+    "&[data-completed]": {
+      borderWidth: 0,
+      backgroundColor: "transparent",
+      backgroundImage: theme.fn.linearGradient(
+        45,
+        theme.colors.blue[7],
+        theme.colors.cyan[6]
+      ),
+    },
+  },
+
+  step: {
+    transition: "transform 150ms ease",
+
+    "&[data-progress]": {
+      transform: "scale(1.05)",
+    },
+  },
+}));
 
 function NewSessionConfigurationComponent() {
+  const navigate = useNavigate({ from: "/sessions/new" });
+  const { classes } = useStyles();
   const [active, setActive] = useState(0);
-  const nextStep = () =>
-    setActive((current) => {
-      if (form.validate().hasErrors) {
-        return current;
+  const [loading, setLoading] = useState(-1);
+  const [scopeVerified, setScopeVerified] = useState(false);
+  const [createSessionMsg, setCreateSessionMsg] = useState(
+    "Creating session..."
+  );
+
+  const nextStep = async () => {
+    if (form.validate().hasErrors) {
+      if (active === 1) {
+        notifications.show({
+          title: "Error",
+          message: form.errors.gameMode,
+          color: "red",
+        });
       }
-      return current < 3 ? current + 1 : current;
-    });
+      return;
+    }
+
+    if (active === 0) {
+      await handleStepOne();
+      return;
+    }
+
+    if (active === 3) {
+      await handleCreateSession();
+      return;
+    }
+
+    setActive((current) => (current < noOfSteps ? current + 1 : current));
+  };
+
   const prevStep = () =>
     setActive((current) => (current > 0 ? current - 1 : current));
 
+  const handleStepOne = async () => {
+    console.log("Called", form.values);
+    if (scopeVerified) {
+      setActive((current) => (current < noOfSteps ? current + 1 : current));
+      return;
+    }
+    try {
+      const data = {
+        lesson_concept: form.values.lessonConcept,
+        lesson_objectives: form.values.lessonObjectives,
+      };
+      console.log("data", data);
+      setLoading(1);
+      const res = await axios.post<LessonVerificationResponse>(
+        VERIFY_LESSON_SCOPE_ENDPOINT,
+        data
+      );
+      // const res = {
+      //   data: {
+      //     passed_verification: true,
+      //     feedback: "Success",
+      //     suggestion: "Lesson scope is feasible!",
+      //   },
+      // };
+      setLoading(-1);
+      console.log(res.data);
+      if (res.data.passed_verification) {
+        notifications.show({
+          title: "Success",
+          message: "Lesson scope is feasible!",
+          color: "green",
+        });
+        setActive((current) => (current < noOfSteps ? current + 1 : current));
+        setScopeVerified(true);
+      } else {
+        notifications.show({
+          title: res.data.feedback || "Error",
+          message: res.data.suggestion,
+          color: "red",
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      notifications.show({
+        title: "Error",
+        message: "Failed to verify lesson scope. Please try again.",
+        color: "red",
+      });
+      setLoading(-1);
+    }
+  };
+
+  const handleCreateSession = async () => {
+    // Create session
+    const data = {
+      lesson_concept: form.values.lessonConcept,
+      lesson_objectives: form.values.lessonObjectives,
+      game_mode: form.values.gameMode,
+      difficulty: form.values.difficulty,
+      persona: form.values.persona,
+      user_id: "KenjiPcx",
+    };
+
+    try {
+      setLoading(4);
+      setActive((current) => (current < noOfSteps ? current + 1 : current));
+      const res = await axios.post<CreateNewSessionResponse>(
+        CREATE_SESSION_ENDPOINT,
+        data
+      );
+      setLoading(-1);
+      console.log(res.data);
+      if (res.data.success) {
+        setCreateSessionMsg("Session created successfully! Redirecting...");
+        // Redirect to new session id after 1s
+        setTimeout(() => {
+          navigate({
+            to: "/sessions/run/$sessionId",
+            params: { sessionId: res.data.session_id },
+          });
+        }, 1000);
+        return;
+      } else {
+        notifications.show({
+          title: "Error",
+          message: `Failed to create session. Please try again. ${res.data.error}`,
+          color: "red",
+        });
+        prevStep();
+        return;
+      }
+    } catch (error) {
+      console.error(error);
+      notifications.show({
+        title: "Error",
+        message: `Failed to create session. Please try again. ${error}`,
+        color: "red",
+      });
+      return;
+    }
+  };
+
   const form = useForm<NewSessionConfigurationForm>({
     initialValues: {
-      conceptToExplain: "",
-      additionalInformation: "",
-      referenceUrl: "",
-      referenceType: "",
+      lessonConcept: "",
+      lessonObjectives: "",
+      // referenceUrl: "",
+      // referenceType: "",
       //   customDataFiles: [],
-      agentConfig: {
-        gameMode: "",
-        depth: "",
-        persona: "",
-      },
+      gameMode: "",
+      difficulty: "",
+      persona: "",
     },
 
     validate: (values) => {
       if (active === 0) {
         return {
-          conceptToExplain:
-            values.conceptToExplain === ""
+          lessonConcept:
+            values.lessonConcept === ""
               ? "Concept to explain is required"
               : null,
+          lessonObjectives:
+            values.lessonObjectives === ""
+              ? "Lesson objectives is required"
+              : null,
+        };
+      }
+
+      if (active === 1) {
+        return {
+          gameMode: values.gameMode === "" ? "Game mode is required" : null,
+        };
+      }
+
+      if (active === 2) {
+        return {
+          difficulty:
+            values.difficulty === "" ? "Difficulty level is required" : null,
         };
       }
 
@@ -79,33 +299,49 @@ function NewSessionConfigurationComponent() {
     },
   });
 
+  const selectGameMode = (gameMode: string) => {
+    form.setFieldValue("gameMode", gameMode);
+  };
+
+  useEffect(() => {
+    setScopeVerified(false);
+  }, [form.values.lessonConcept, form.values.lessonObjectives]);
+
   return (
-    <>
+    <Stack>
       <Stepper
         active={active}
         onStepClick={setActive}
         allowNextStepsSelect={false}
+        w={"50vw"}
+        classNames={classes}
       >
         <Stepper.Step
-          label="First step"
+          label="Step 1"
           description="Select a topic"
-          disabled={active === 3}
+          loading={loading === 1}
         >
           <TextInput
+            mt={"xl"}
             label="Concept to explain"
             description="Define the concept you want to teach in this session"
             placeholder="The Feynman method"
+            size="md"
             required
-            {...form.getInputProps("conceptToExplain")}
+            {...form.getInputProps("lessonConcept")}
           />
           <br />
           <Textarea
-            label="Goal of the lesson"
-            description="(Optional) Define detailed key objectives of your lesson, this helps you scope the lesson and keep it focused"
-            placeholder="In this lesson, I want to explain specifically how the Feynman method can be used to learn new concepts, and what makes it so effective."
-            {...form.getInputProps("additionalInformation")}
+            label="Lesson objective(s)"
+            description="Define detailed key objective(s) for your lesson, this should be well scoped and feasible to teach within a short timeframe."
+            placeholder="Student will understand specifically how the Feynman method can be used to learn new concepts, and what makes it so effective."
+            size="md"
+            required
+            {...form.getInputProps("lessonObjectives")}
           />
           <br />
+          {/* 
+          Remove for MVP
           <Group>
             <TextInput
               label="Online references"
@@ -120,100 +356,108 @@ function NewSessionConfigurationComponent() {
               data={["Article", "Video", "PDF"]}
               {...form.getInputProps("referenceType")}
             />
-          </Group>
+          </Group> */}
         </Stepper.Step>
 
-        <Stepper.Step
-          label="Second step"
-          description="Configure learner agent"
-          disabled={active === 3}
-        >
+        <Stepper.Step label="Step 2" description="Configure game mode">
+          <SimpleGrid cols={2} mx={"auto"} mt={"xl"} spacing={"xl"}>
+            {/* <GameCard label={"Playground"} image={""} />
+            <GameCard label={"Time limit"} image={""} /> */}
+            {gameModes.map((gameMode) => (
+              <GameCard
+                label={gameMode.label}
+                image={gameMode.image}
+                selected={form.values.gameMode === gameMode.label}
+                onChoose={() => {
+                  selectGameMode(gameMode.label);
+                }}
+                key={`game-mode-${gameMode.label}`}
+              />
+            ))}
+          </SimpleGrid>
+        </Stepper.Step>
+
+        <Stepper.Step label="Step 3" description="Configure agent">
           <Select
-            label="Lesson depth"
-            description="What kind of lesson will this be for your learner?"
-            placeholder="Select explanation depth"
-            data={[
-              "Beginner (Awareness) - Understands and communicates basic definitions and core principles. Answers straightforward questions and applies the concept in familiar contexts.",
-              "Intermediate (Application) - Explains how the concept works and applies it in problem-solving. Handles moderately challenging questions and connects different parts of the concept.",
-              "Advanced (Analysis) - Discusses subtle or complex aspects. Analyzes, critiques, and draws connections to other concepts. Answers complex questions with detailed explanation.",
-              "Expert (Mastery) - Possesses comprehensive knowledge. Teaches, debates, and creates new insights. Handles any question with in-depth, nuanced explanations and diverse examples.",
-            ]}
+            label="Difficulty level"
+            description="This is not the complexity of your lesson, but the difficulty of the questions you want to be asked by the agent"
+            placeholder="Select difficulty level"
+            mt={"xl"}
+            data={selectOptions}
+            size={"md"}
             required
-            {...form.getInputProps("agentConfig.depth")}
+            {...form.getInputProps("difficulty")}
           />
           <br />
           <Textarea
             label="Learner persona"
             description="(Optional) Give your learner agent a personality to make the session more engaging."
             placeholder="sassy, curious, friendly, etc."
-            {...form.getInputProps("agentConfig.persona")}
+            size={"md"}
+            {...form.getInputProps("persona")}
           />
           <br />
-          <Select
-            label="Game mode"
-            description="Some fun challenges to make the session more engaging"
-            placeholder="Playground"
-            defaultValue={"Playground"}
-            data={[
-              "Playground",
-              "Explain to a 5 year old",
-              "5 levels",
-              "Expert (Mastery) - Possesses comprehensive knowledge. Teaches, debates, and creates new insights. Handles any question with in-depth, nuanced explanations and diverse examples.",
-            ]}
-            required
-            {...form.getInputProps("agentConfig.gameMode")}
-          />
         </Stepper.Step>
 
         <Stepper.Step
           label="Final step"
           description="Review"
-          disabled={active === 3}
+          loading={active === 4}
         >
-          <Title order={2}>Review your session configuration</Title>
-          <Text size="xl">
-            <Text fw={"bold"}>Concept to explain: </Text>{" "}
-            {form.values.conceptToExplain}
-          </Text>
-          {form.values.additionalInformation && (
-            <Text size="xl">
-              Lesson objective: {form.values.additionalInformation}
-            </Text>
-          )}
-          {form.values.referenceUrl && (
-            <Text size="xl">
-              Reference: {form.values.referenceUrl} ({form.values.referenceType}
-              )
-            </Text>
-          )}
-
-          <Text size="xl">
-            <Text fw={"bold"}>Lesson depth: </Text>{" "}
-            {form.values.agentConfig.depth}
-          </Text>
-          {form.values.agentConfig.persona && (
-            <Text size="xl">
-              Learner persona: {form.values.agentConfig.persona}
-            </Text>
-          )}
-          <Text size="xl">
-            <Text fw={"bold"}>Game mode: </Text>{" "}
-            {form.values.agentConfig.gameMode}
-          </Text>
+          <Code
+            block
+            mt={"xl"}
+            p={"md"}
+            sx={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
+          >
+            <Title order={3}>Confirm your session configuration</Title>
+            <Box mt={"lg"}>
+              <Text size={"lg"} fw={700}>
+                Topic Selection
+              </Text>
+              <Text size={"md"}>
+                Concept to explain: {form.values.lessonConcept}
+              </Text>
+              <Text size={"md"}>
+                Lesson objectives: {form.values.lessonObjectives}
+              </Text>
+            </Box>
+            <Box mt={"lg"}>
+              <Text size={"lg"} fw={700}>
+                Session Configuration
+              </Text>
+              <Text size={"md"}>Game mode: {form.values.gameMode}</Text>
+              <Text size={"md"}>Difficulty: {form.values.difficulty}</Text>
+              <Text size={"md"}>
+                Agent persona: {form.values.persona || "Not set"}
+              </Text>
+            </Box>
+          </Code>
         </Stepper.Step>
-        <Stepper.Completed>Session created! Redirecting...</Stepper.Completed>
+        <Stepper.Completed>
+          <Center mt={"xl"}>
+            <Text size={"xl"} fw={"bold"}>
+              {createSessionMsg}
+            </Text>
+          </Center>
+        </Stepper.Completed>
       </Stepper>
 
-      {active < 3 && (
-        <Group mt="xl">
-          <Button variant="default" onClick={prevStep}>
+      {active < 4 && (
+        <Group mt="xl" position="apart">
+          <Button variant="light" color="gray" onClick={prevStep}>
             Back
           </Button>
-          <Button onClick={nextStep}>
-            {active >= 2 ? "Confirm" : "Next step"}
+          <Button
+            variant="light"
+            color="blue"
+            onClick={nextStep}
+            disabled={loading !== -1}
+          >
+            {active >= 3 ? "Start Session" : "Next step"}
           </Button>
         </Group>
       )}
-    </>
+    </Stack>
   );
 }
