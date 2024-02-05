@@ -1,4 +1,6 @@
-import { Container, Text, Button, Group, createStyles } from "@mantine/core";
+import { useState, useEffect } from 'react';
+import { Link } from "@tanstack/react-router";
+import { Container, Text, Button, Group, createStyles } from '@mantine/core';
 
 const useStyles = createStyles((theme) => ({
   wrapper: {
@@ -37,6 +39,8 @@ const useStyles = createStyles((theme) => ({
   },
   controls: {
     marginTop: theme.spacing.xl,
+    alignItems: 'center', // Center the words vertically
+    justifyContent: 'center', // Center the words horizontally
     [`@media (max-width: ${theme.breakpoints.sm}px)`]: {
       marginTop: theme.spacing.xl,
     },
@@ -52,51 +56,76 @@ const useStyles = createStyles((theme) => ({
       flex: 1,
     },
   },
+  wordContainer: {
+    position: 'relative',
+    height: 80, // Ensure this is enough height to accommodate your largest word
+    display: 'flex',
+    alignItems: 'center', // Center the words vertically
+    justifyContent: 'center' // Center the words horizontally
+  },
+  word: {
+    position: 'absolute',
+    opacity: 0,
+    transition: 'opacity 1s ease-in-out',
+  },
+  visibleWord: {
+    opacity: 1,
+  },
 }));
+
 
 export function HeroTitle() {
   const { classes } = useStyles();
+  const words = ['Learn', 'Talk', 'Explore', 'Think', 'Discover'];
+  const [currentWord, setCurrentWord] = useState(words[0]);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setIsTransitioning(true);
+
+      setTimeout(() => {
+        setCurrentWord(words[(words.indexOf(currentWord) + 1) % words.length]);
+        setIsTransitioning(false);
+      }, 700); // Half the interval time to change the word after fade out
+
+    }, 4000); // Interval for the whole cycle (fade out + change word + fade in)
+
+    return () => clearInterval(intervalId); // Clean up on unmount
+  }, [currentWord, words]);
+
   return (
     <div className={classes.wrapper}>
       <Container size={700} className={classes.inner}>
         <h1 className={classes.title}>
-          A{" "}
-          <Text
-            component="span"
-            variant="gradient"
-            gradient={{ from: "blue", to: "cyan" }}
-            inherit
-          >
-            fully featured
-          </Text>{" "}
-          React components and hooks library
+          <span className={classes.wordContainer}>
+            {words.map((word) => (
+              <Text
+                key={word}
+                component="span"
+                variant="gradient"
+                gradient={{ from: 'blue', to: '#40A2E3' }}
+                inherit
+                className={`${classes.word} ${word === currentWord && !isTransitioning ? classes.visibleWord : ''}`}
+              >
+                {word}
+              </Text>
+            ))}
+          </span>
+          {' '}with Feynman
         </h1>
 
-        <Text className={classes.description} color="dimmed">
-          Build fully functional accessible web applications with ease – Mantine
-          includes more than 100 customizable components and hooks to cover you
-          in any situation
-        </Text>
-
         <Group className={classes.controls}>
-          <Button
-            size="xl"
-            className={classes.control}
-            variant="gradient"
-            gradient={{ from: "blue", to: "cyan" }}
-          >
-            Get started
-          </Button>
-
-          <Button
-            component="a"
-            href="https://github.com/mantinedev/mantine"
-            size="xl"
-            variant="default"
-            className={classes.control}
-          >
-            GitHub
-          </Button>
+          <Link to="/sessions/new"> {/* Use Link component */}
+            <Button
+              size="xl"
+              className={classes.control}
+              variant="gradient"
+              gradient={{ from: 'blue', to: 'cyan' }}
+            >
+              Get Started
+            </Button>
+          </Link>
         </Group>
       </Container>
     </div>
