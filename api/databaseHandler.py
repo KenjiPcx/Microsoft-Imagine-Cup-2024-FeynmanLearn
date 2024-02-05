@@ -43,3 +43,17 @@ class DatabaseHandler:
 
         except Exception as e:
             raise
+
+    def get_transcript_by_user_and_question(self, user_id: str, question_id: int, session_id: str) -> list:
+        try:
+            # Query transcripts of a specific question using user_id and question_id 
+            query = f"SELECT c.id, c.user_id, st AS session_transcript FROM c JOIN st IN c.session_transcripts WHERE c.user_id='{user_id}' AND st.question_id={question_id} AND c.session_id='{session_id}'"
+            sessions = list(
+                self.sessions_container.query_items(
+                    query, enable_cross_partition_query=True
+                )
+            )
+            return sessions
+
+        except Exception as e:
+            raise

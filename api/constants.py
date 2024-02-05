@@ -1,7 +1,9 @@
 # Library for storing global constants
 
+from langchain.output_parsers import ResponseSchema
+
 # Marking rubric for a learner's explanation
-marking_rubric = """
+MARKING_RUBRIC = """
 Clarity (Understanding and simplicity of language)
 1: The explanation is confusing, uses complex or technical language excessively, and lacks a logical flow.
 2: The explanation has moments of clarity but is often difficult to follow, with some use of technical language that is not well-explained.
@@ -27,3 +29,14 @@ Correctness (Accuracy of information)
 4: The explanation is accurate, with all key aspects correctly explained. There might be extremely minor inaccuracies that do not detract from the overall understanding.
 5: The explanation is exceptionally accurate, with all information presented correctly and precisely, reflecting a deep understanding of the concept.
 """
+
+RESPONSE_SCHEMA = [
+    ResponseSchema(name="clarity_score", description="score of clarity of learner's explanation"),
+    ResponseSchema(name="clarity_explanation", description="explanation of clarity score given"),
+    ResponseSchema(name="conciseness_score", description="score of conciseness of learner's explanation"),
+    ResponseSchema(name="conciseness_explanation", description="explanation of conciseness score given"),
+    ResponseSchema(name="comprehensiveness_score", description="score of comprehensiveness of learner's explanation"),
+    ResponseSchema(name="comprehensiveness_explanation", description="explanation of comprehensiveness score given"),
+    ResponseSchema(name="correctness_score", description="score of correctness of learner's explanation"),
+    ResponseSchema(name="correctness_explanation", description="explanation of correctness score given"),
+]
