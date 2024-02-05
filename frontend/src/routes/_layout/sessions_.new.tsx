@@ -6,8 +6,8 @@
 //<li>We could have a input src concept to explain button</li>
 // <li>We could have some common agent configs</li>
 
-import React, { useRef, useState } from "react";
-import { FileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { FileRoute } from "@tanstack/react-router";
 import {
   Stepper,
   Button,
@@ -18,11 +18,14 @@ import {
   Title,
   Text,
   Stack,
+  SimpleGrid,
+  Center,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import axios from "axios";
 import { VERIFY_LESSON_SCOPE_ENDPOINT } from "../../backendEndpoints";
 import { notifications } from "@mantine/notifications";
+import GameCard from "../../components/GameCard";
 
 export const Route = new FileRoute("/_layout/sessions/new").createRoute({
   component: NewSessionConfigurationComponent,
@@ -42,20 +45,42 @@ export type NewSessionConfigurationForm = {
 export type LessonVerificationResponse = {
   passed_verification: boolean;
   feedback: string;
-  suggestions: string;
+  suggestion: string;
 };
+
+const gameModes = [
+  {
+    label: "Explain to a kid",
+    image: "/explain_to_a_kid.png",
+  },
+  {
+    label: "Custom",
+    image: "/custom.png",
+  },
+];
 
 function NewSessionConfigurationComponent() {
   const [active, setActive] = useState(0);
   const [loading, setLoading] = useState(-1);
+  const [scopeVerified, setScopeVerified] = useState(false);
+
   const nextStep = async () => {
-    console.log("CALled");
     if (form.validate().hasErrors) {
-      console.log("had erros");
+      if (active === 1) {
+        notifications.show({
+          title: "Error",
+          message: form.errors.gameMode,
+          color: "red",
+        });
+      }
       return;
     }
 
     if (active === 0) {
+      if (scopeVerified) {
+        setActive((current) => (current < 3 ? current + 1 : current));
+        return;
+      }
       try {
         const data = {
           lesson_concept: form.values.lessonConcept,
@@ -63,10 +88,17 @@ function NewSessionConfigurationComponent() {
         };
         console.log("data", data);
         setLoading(1);
-        const res = await axios.post<LessonVerificationResponse>(
-          VERIFY_LESSON_SCOPE_ENDPOINT,
-          data
-        );
+        // const res = await axios.post<LessonVerificationResponse>(
+        //   VERIFY_LESSON_SCOPE_ENDPOINT,
+        //   data
+        // );
+        const res = {
+          data: {
+            passed_verification: true,
+            feedback: "Success",
+            suggestion: "Lesson scope is feasible!",
+          },
+        };
         setLoading(-1);
         console.log(res.data);
         if (res.data.passed_verification) {
@@ -76,10 +108,11 @@ function NewSessionConfigurationComponent() {
             color: "green",
           });
           setActive((current) => (current < 3 ? current + 1 : current));
+          setScopeVerified(true);
         } else {
           notifications.show({
             title: res.data.feedback || "Error",
-            message: res.data.suggestions,
+            message: res.data.suggestion,
             color: "red",
           });
         }
@@ -125,19 +158,34 @@ function NewSessionConfigurationComponent() {
         };
       }
 
+      if (active === 1) {
+        return {
+          gameMode: values.gameMode === "" ? "Game mode is required" : null,
+        };
+      }
+
       return {};
     },
   });
 
+  const selectGameMode = (gameMode: string) => {
+    form.setFieldValue("gameMode", gameMode);
+  };
+
+  useEffect(() => {
+    setScopeVerified(false);
+  }, [form.values.lessonConcept, form.values.lessonObjectives]);
+
   return (
-    <Stack maw={"40%"}>
+    <Stack>
       <Stepper
         active={active}
         onStepClick={setActive}
-        allowNextStepsSelect={false}
+        // allowNextStepsSelect={false}
+        w={"50vw"}
       >
         <Stepper.Step
-          label="First step"
+          label="Step 1"
           description="Select a topic"
           disabled={active === 3}
           loading={loading === 1}
@@ -181,10 +229,31 @@ function NewSessionConfigurationComponent() {
         </Stepper.Step>
 
         <Stepper.Step
-          label="Second step"
-          description="Configure learner agent"
+          label="Step 2"
+          description="Configure game mode"
           disabled={active === 3}
-          loading
+        >
+          <SimpleGrid cols={2} mx={"auto"} mt={"xl"} spacing={"xl"}>
+            {/* <GameCard label={"Playground"} image={""} />
+            <GameCard label={"Time limit"} image={""} /> */}
+            {gameModes.map((gameMode) => (
+              <GameCard
+                label={gameMode.label}
+                image={gameMode.image}
+                selected={form.values.gameMode === gameMode.label}
+                onChoose={() => {
+                  selectGameMode(gameMode.label);
+                }}
+                key={`game-mode-${gameMode.label}`}
+              />
+            ))}
+          </SimpleGrid>
+        </Stepper.Step>
+
+        <Stepper.Step
+          label="Step 3"
+          description="Configure agent"
+          disabled={active === 3}
         >
           <Select
             label="Lesson depth"
@@ -222,7 +291,6 @@ function NewSessionConfigurationComponent() {
             {...form.getInputProps("agentConfig.gameMode")}
           />
         </Stepper.Step>
-
         <Stepper.Step
           label="Final step"
           description="Review"

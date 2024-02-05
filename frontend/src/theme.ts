@@ -21,7 +21,7 @@ export const theme = {
       (string | undefined)?,
       (string | undefined)?,
       (string | undefined)?,
-      (string | undefined)?
+      (string | undefined)?,
     ]
   >,
   primaryColor: "convoscopeBlue",
