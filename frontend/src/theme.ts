@@ -21,7 +21,7 @@ export const theme = {
       (string | undefined)?,
       (string | undefined)?,
       (string | undefined)?,
-      (string | undefined)?
+      (string | undefined)?,
     ]
   >,
   primaryColor: "convoscopeBlue",
@@ -34,4 +34,5 @@ export const theme = {
   fontFamily: "Inter, sans-serif",
   fontFamilyMonospace: "Inter, monospace",
   headings: { fontFamily: "Inter, sans-serif" },
+  loader: "dots"
 };
