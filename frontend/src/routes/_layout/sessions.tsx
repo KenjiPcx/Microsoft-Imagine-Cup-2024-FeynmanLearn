@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { FileRoute, Link, Outlet } from "@tanstack/react-router";
-import { fetchSessions, fetchSessionSummaries } from "../../sessionsService";
+import { fetchSessions, fetchSessionSummaries } from "../../utils/sessionsService";
 import { Button, NavLink } from "@mantine/core";
 import {
   Title,

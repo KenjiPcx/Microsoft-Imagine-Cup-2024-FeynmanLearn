@@ -1,5 +1,5 @@
 import axios from "axios";
-import { GET_SESSION_DATA_ENDPOINT } from "./backendEndpoints";
+import { GET_SESSION_DATA_ENDPOINT } from "../backendEndpoints";
 
 export type SessionType = {
   session_data: {

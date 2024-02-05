@@ -1,6 +1,6 @@
 import { Outlet, rootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
-import { Auth } from "../utils/auth";
+import { AuthContext } from "../utils/auth";
 import {
   Flex,
   FlexProps,
@@ -9,9 +9,11 @@ import {
 } from "@mantine/core";
 import { motion } from "framer-motion";
 
-export const Route = rootRouteWithContext<{
-  auth: Auth;
-}>()({
+interface RouterContext {
+  auth: AuthContext;
+}
+
+export const Route = rootRouteWithContext<RouterContext>()({
   component: RootComponent,
 });
 

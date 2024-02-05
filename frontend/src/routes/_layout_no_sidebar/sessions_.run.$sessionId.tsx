@@ -15,7 +15,7 @@ import { isRecognizingState } from "../../recoil";
 import { useRecoilState } from "recoil";
 import { playMessage, speechRecognizer } from "../../utils/speech";
 import { SEND_MESSAGE_ENDPOINT } from "../../backendEndpoints";
-import { fetchSession } from "../../sessionsService";
+import { fetchSession } from "../../utils/sessionsService";
 import { SessionErrorComponent } from "../../components/SessionErrorComponent";
 import { useDisclosure } from "@mantine/hooks";
 import { mockChatHistory } from "../../mock_data/mockChatHistoryData";
