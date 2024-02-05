@@ -1,4 +1,5 @@
 import * as React from "react";
+import { RouterContext } from "../routes/__root";
 
 export interface AuthContext {
   isAuthenticated: boolean;

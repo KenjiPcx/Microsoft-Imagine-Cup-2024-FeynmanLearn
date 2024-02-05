@@ -43,7 +43,9 @@ function App() {
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <MantineProvider withGlobalStyles withNormalizeCSS theme={theme}>
-    <Notifications />
-    <App />
+    <AuthProvider>
+      <Notifications />
+      <App />
+    </AuthProvider>
   </MantineProvider>
 );

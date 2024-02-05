@@ -9,7 +9,7 @@ import {
 } from "@mantine/core";
 import { motion } from "framer-motion";
 
-interface RouterContext {
+export interface RouterContext {
   auth: AuthContext;
 }
 

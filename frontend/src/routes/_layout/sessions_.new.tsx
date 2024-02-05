@@ -7,7 +7,7 @@
 // <li>We could have some common agent configs</li>
 
 import { useEffect, useState } from "react";
-import { FileRoute, useNavigate } from "@tanstack/react-router";
+import { FileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import {
   Stepper,
   Button,
@@ -40,6 +40,17 @@ import {
 
 export const Route = new FileRoute("/_layout/sessions/new").createRoute({
   component: NewSessionConfigurationComponent,
+  beforeLoad: ({ context, location }) => {
+    console.log(location.href);
+    if (!context.auth.isAuthenticated) {
+      throw redirect({
+        to: "/.auth/login/github" as any,
+        search: {
+          post_login_redirect_uri: location.href,
+        },
+      });
+    }
+  },
 });
 
 export type NewSessionConfigurationForm = {
