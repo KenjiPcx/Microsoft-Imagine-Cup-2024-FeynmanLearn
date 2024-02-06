@@ -12,6 +12,9 @@ from langchain_openai import ChatOpenAI
 from langchain.output_parsers import StructuredOutputParser
 from langchain.prompts import PromptTemplate
 from langchain.chat_models import ChatOpenAI
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
 import openai
 import constants
 
@@ -283,6 +286,10 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         scores = helper.get_overall_and_average_score_for_session(session_analysis)
         logging.info(scores)
 
+        if scores['overall_score'] < 2.5:
+            # TODO: suggest easier topics since student has failed the feynman session
+            pass
+
         # Structure output schema
         output_parser = StructuredOutputParser.from_response_schemas(constants.POST_SESSION_ANALYSIS_SCHEMA)
         format_instructions = output_parser.get_format_instructions()
@@ -302,13 +309,30 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         qualitative_analysis = output_parser.parse(output.content)
         logging.info(qualitative_analysis)
 
+        # Construct content dictionary to find similar topic suggestions
+        content = {
+            'concept': session_data[0].get('concept', []),
+            'question': [ question_obj['question'] for question_obj in session_analysis  ]
+        }
+
+        # Create similar topic suggestions
+        prompt = ChatPromptTemplate.from_template("Suggest 5 similar topics for a student to learn about, based on the learning session below. Return just the topics as a list of strings, nothing extra. \n Questions and concept explored in current learning session: \n {content}")
+        model = ChatOpenAI(model="gpt-4", api_key='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')
+        output_parser = StrOutputParser()
+        chain = prompt | model | output_parser
+        topics_str = chain.invoke({"content": content})
+        similar_topics_list = json.loads(topics_str)
+        logging.info(similar_topics_list)
+
         # Insert data into DB
         session_data = database_handler.sessions_container.read_item(
             item=session_document_id, partition_key=user_id
         )
         post_session_analysis = {
             'qualitative_analysis': qualitative_analysis,
-            'scores': scores
+            'scores': scores,
+            'similar_topic': similar_topics_list,
+            'feynman_session_outcome': 'passed' 
         }
         session_data['post_session_analysis'] = post_session_analysis
         database_handler.sessions_container.replace_item(
