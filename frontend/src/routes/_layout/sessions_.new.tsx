@@ -142,24 +142,24 @@ function NewSessionConfigurationComponent() {
 
   const nextStep = async () => {
     if (form.validate().hasErrors) {
-      if (active === 1) {
-        notifications.show({
-          title: "Error",
-          message: form.errors.gameMode,
-          color: "red",
-        });
-      }
+    if (active === 1) {
+    notifications.show({
+    title: "Error",
+    message: form.errors.gameMode,
+    color: "red",
+    });
+    }
       return;
     }
 
     if (active === 0) {
-      await handleStepOne();
-      return;
+    await handleStepOne();
+    return;
     }
 
     if (active === 3) {
-      await handleCreateSession();
-      return;
+    await handleCreateSession();
+    return;
     }
 
     setActive((current) => (current < noOfSteps ? current + 1 : current));
@@ -458,23 +458,25 @@ function NewSessionConfigurationComponent() {
       </Stepper>
 
       {active < 4 && (
-        <Group mt="xl" position="apart">
-          {active > 0 ? (
-            <Button variant="light" color="gray" onClick={prevStep}>
-              Back
+        <div style={{ position: 'fixed', bottom: 30, left: 0, right: 0, padding: '20px'}}>
+          <Group style={{ justifyContent: 'space-between', maxWidth: '50vw', margin: '0 auto' }}>
+            {active > 0 ? (
+              <Button variant="light" color="gray" onClick={prevStep}>
+                Back
+              </Button>
+            ) : (
+              <div style={{ width: '86px' }} />
+            )}
+            <Button
+              variant="light"
+              color="blue"
+              onClick={nextStep}
+              disabled={loading !== -1}
+            >
+              {active >= 3 ? "Start Session" : "Next step"}
             </Button>
-          ) : (
-            <div style={{ width: '86px' }} />
-          )}
-          <Button
-            variant="light"
-            color="blue"
-            onClick={nextStep}
-            disabled={loading !== -1}
-          >
-            {active >= 3 ? "Start Session" : "Next step"}
-          </Button>
-        </Group>
+          </Group>
+        </div>
       )}
     </Stack>
   );
