@@ -52,7 +52,7 @@ const SettingsModal = ({ opened, closeSettings }: SettingsModalProps) => {
       <Stack>
         {auth.isAuthenticated && (
           <Box>
-            <Text>Logged in as {auth.authData.username}</Text>
+            <Text>Logged in as {auth.authData.userDetails}</Text>
             <Button
               component={"a"}
               href="/.auth/logout"
