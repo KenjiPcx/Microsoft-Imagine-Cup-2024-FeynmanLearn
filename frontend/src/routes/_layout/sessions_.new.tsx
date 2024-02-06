@@ -142,24 +142,25 @@ function NewSessionConfigurationComponent() {
 
   const nextStep = async () => {
     if (form.validate().hasErrors) {
-    if (active === 1) {
-    notifications.show({
-    title: "Error",
-    message: form.errors.gameMode,
-    color: "red",
-    });
-    }
+      if (active === 1) {
+          notifications.show({
+          title: "Error",
+          message: form.errors.gameMode,
+          color: "red",
+        });
+      }
+
       return;
     }
 
     if (active === 0) {
-    await handleStepOne();
-    return;
+      await handleStepOne();
+      return;
     }
 
     if (active === 3) {
-    await handleCreateSession();
-    return;
+      await handleCreateSession();
+      return;
     }
 
     setActive((current) => (current < noOfSteps ? current + 1 : current));
