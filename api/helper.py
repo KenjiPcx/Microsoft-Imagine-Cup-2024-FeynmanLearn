@@ -10,7 +10,7 @@ def get_overall_and_average_score_for_session(
       - session_analysis: A list of dictionaries, each dictionary contain the scores for each question.
     
     Return:
-      - scores: A dictionary with the average and overall score.
+      - scores: A dictionary containing the average and overall score.
     """
     # Initialise scores
     scores = {score_type: 0 for score_type in constants.POST_ANALYSIS_SCORE_TYPE}
