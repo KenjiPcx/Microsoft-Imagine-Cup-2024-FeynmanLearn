@@ -343,7 +343,8 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
             item=session_document_id, body=session_data
         )
         logging.info(post_session_analysis)
-        return func.HttpResponse(json.dumps(post_session_analysis), status_code=200)
+        res = {"success": True, "user_data": post_session_analysis}
+        return func.HttpResponse(json.dumps(res), status_code=200)
 
         # session_data["session_aggregated_score"] = scores
         # session_data["last_date_attempt"] = time.time()
