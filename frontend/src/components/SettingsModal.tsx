@@ -38,8 +38,7 @@ const SettingsModal = ({ opened, closeSettings }: SettingsModalProps) => {
   const { classes } = useStyles();
   const auth = useAuth();
 
-  const ref = useRef<HTMLInputElement>(null);
-
+  console.log("auth data", auth.authData)
   return (
     <Modal
       id="settings-modal"
@@ -64,29 +63,6 @@ const SettingsModal = ({ opened, closeSettings }: SettingsModalProps) => {
             </Button>
           </Box>
         )}
-
-        <Alert
-          icon={<IconInfoCircle />}
-          title="Connect your custom data!"
-          variant="light"
-          color="blue"
-        >
-          Get started by setting a custom and unique username, then upload your
-          CSV file containing your entity definitions
-        </Alert>
-
-        <Group>
-          <TextInput
-            ref={ref}
-            placeholder="Your new username"
-            label="Set New Username"
-            withAsterisk
-            sx={{ flex: "1" }}
-          />
-          <Button variant="default" mt="auto">
-            Set Username
-          </Button>
-        </Group>
       </Stack>
     </Modal>
   );
