@@ -37,6 +37,7 @@ import {
   CreateNewSessionResponse,
   LessonVerificationResponse,
 } from "../../apiResponseTypes";
+import { useAuth } from "../../utils/auth";
 
 export const Route = new FileRoute("/_layout/sessions/new").createRoute({
   component: NewSessionConfigurationComponent,
@@ -129,6 +130,7 @@ const useStyles = createStyles((theme) => ({
 }));
 
 function NewSessionConfigurationComponent() {
+  const auth = useAuth();
   const navigate = useNavigate({ from: "/sessions/new" });
   const { classes } = useStyles();
   const [active, setActive] = useState(0);
@@ -226,7 +228,7 @@ function NewSessionConfigurationComponent() {
       game_mode: form.values.gameMode,
       difficulty: form.values.difficulty,
       persona: form.values.persona,
-      user_id: "KenjiPcx",
+      user_id: auth.getUserId(),
     };
 
     try {

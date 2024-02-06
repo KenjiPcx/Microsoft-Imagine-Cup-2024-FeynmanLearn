@@ -24,7 +24,8 @@ import { notifications } from "@mantine/notifications";
 export const Route = new FileRoute(
   "/_layout_no_sidebar/sessions/run/$sessionId"
 ).createRoute({
-  loader: async ({ params: { sessionId } }) => fetchSession(sessionId),
+  loader: async ({ params: { sessionId }, context }) =>
+    fetchSession(sessionId, context.auth.getUserId()),
   errorComponent: SessionErrorComponent as any,
   component: SessionComponent,
   beforeLoad: ({ context }) => {

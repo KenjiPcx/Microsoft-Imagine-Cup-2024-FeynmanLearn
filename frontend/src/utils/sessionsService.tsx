@@ -32,12 +32,12 @@ export type SessionType = {
 
 export class SessionNotFoundError extends Error {}
 
-export const fetchSession = async (sessionId: string) => {
+export const fetchSession = async (sessionId: string, userId: string) => {
   console.log(`Fetching Session with id ${sessionId}...`);
 
   const data = {
     session_id: sessionId,
-    user_id: "KenjiPcx",
+    user_id: userId,
   };
 
   const Session = await axios
