@@ -4,6 +4,7 @@ import { Box, Button, Group, Stack, createStyles } from "@mantine/core";
 import { HeroTitle } from "../../components/Hero";
 import { AuthData, useAuth } from "../../utils/auth";
 import { IconBrandGithub } from "@tabler/icons-react";
+import NewSessionButton from "../../components/NewSessionButton";
 
 const useStyles = createStyles((theme) => ({
   controls: {
@@ -30,13 +31,13 @@ const useStyles = createStyles((theme) => ({
 export const Route = new FileRoute("/_layout/").createRoute({
   component: IndexComponent,
   beforeLoad: async ({ context }) => {
-    console.log("Context", context)
+    console.log("Context", context);
     if (!context.auth.isAuthenticated) {
       const res = await fetch("/.auth/me");
       const payload = await res.json();
       const { clientPrincipal } = payload;
       if (clientPrincipal) {
-        console.log("Client Principal", clientPrincipal)
+        console.log("Client Principal", clientPrincipal);
         context.auth.setAuthData(clientPrincipal as AuthData);
       }
     }
@@ -52,16 +53,7 @@ function IndexComponent() {
       <HeroTitle />
       <Group className={classes.controls}>
         {auth.isAuthenticated ? (
-          <Button
-            component={Link}
-            to="sessions/new"
-            size="xl"
-            className={classes.control}
-            variant="gradient"
-            gradient={{ from: "blue", to: "cyan" }}
-          >
-            New Session
-          </Button>
+          <NewSessionButton />
         ) : (
           <Button
             component="a"

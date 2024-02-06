@@ -7,7 +7,12 @@ interface GameCardProps {
   onChoose: () => void;
 }
 
-export default function GameCard({ label, image, selected, onChoose }: GameCardProps) {
+export default function GameCard({
+  label,
+  image,
+  selected,
+  onChoose,
+}: GameCardProps) {
   return (
     <Card
       p="md"
