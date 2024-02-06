@@ -143,13 +143,12 @@ function NewSessionConfigurationComponent() {
   const nextStep = async () => {
     if (form.validate().hasErrors) {
       if (active === 1) {
-          notifications.show({
+        notifications.show({
           title: "Error",
           message: form.errors.gameMode,
           color: "red",
         });
       }
-
       return;
     }
 
