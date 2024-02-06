@@ -7,7 +7,7 @@
 // <li>We could have some common agent configs</li>
 
 import { useEffect, useState } from "react";
-import { FileRoute, useNavigate } from "@tanstack/react-router";
+import { FileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import {
   Stepper,
   Button,
@@ -37,9 +37,22 @@ import {
   CreateNewSessionResponse,
   LessonVerificationResponse,
 } from "../../apiResponseTypes";
+import { useAuth } from "../../utils/auth";
 
 export const Route = new FileRoute("/_layout/sessions/new").createRoute({
   component: NewSessionConfigurationComponent,
+  beforeLoad: ({ context }) => {
+    if (!context.auth.isAuthenticated) {
+      notifications.show({
+        color: "yellow",
+        title: "Unauthorized",
+        message: "You are not authorized yet, please login first",
+      });
+      throw redirect({
+        to: "/",
+      });
+    }
+  },
 });
 
 export type NewSessionConfigurationForm = {
@@ -117,6 +130,7 @@ const useStyles = createStyles((theme) => ({
 }));
 
 function NewSessionConfigurationComponent() {
+  const auth = useAuth();
   const navigate = useNavigate({ from: "/sessions/new" });
   const { classes } = useStyles();
   const [active, setActive] = useState(0);
@@ -214,7 +228,7 @@ function NewSessionConfigurationComponent() {
       game_mode: form.values.gameMode,
       difficulty: form.values.difficulty,
       persona: form.values.persona,
-      user_id: "KenjiPcx",
+      user_id: auth.getUserId(),
     };
 
     try {
