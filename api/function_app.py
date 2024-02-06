@@ -186,6 +186,16 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
         # Obtain transcript by question
         question_transcript = transcript[0]["session_transcript"]["question_transcript"]
         audience_level = transcript[0]["student_persona"]
+        session_id = transcript[0]["id"]
+        
+        # Terminate if analysis is already generated for this question
+        session_data = database_handler.sessions_container.read_item(
+            item=session_id, partition_key=user_id
+        )
+        session_analysis = session_data.get('session_analysis')
+        check_if_analysis_exist = filter(lambda _: _['id'] == question_id, session_analysis)
+        if check_if_analysis_exist:
+            return func.HttpResponse('Analysis already exist!', status_code=409)
 
         # Construct response schema and format instructions to use in prompt
         response_schemas = constants.RESPONSE_SCHEMA
@@ -210,9 +220,15 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
         question_transcript_analysis["question_id"] = transcript[0]["session_transcript"]["question_id"]
         res = {"success": True, "analysis": question_transcript_analysis}
         logging.info(question_transcript_analysis)
-        return func.HttpResponse(json.dumps(res), status_code=200)
 
-    # TODO: save response in the DB
+        # Update session data 
+        session_analysis = session_data.get('session_analysis', [])
+        session_analysis.append(question_transcript_analysis)
+        session_data['session_analysis'] = session_analysis
+        database_handler.sessions_container.replace_item(
+            item=session_id, body=session_data
+        )
+        return func.HttpResponse(json.dumps(res), status_code=200)
 
     except ValueError:
         # Handle JSON parsing error
