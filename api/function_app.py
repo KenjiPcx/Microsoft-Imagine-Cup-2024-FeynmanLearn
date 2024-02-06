@@ -4,6 +4,7 @@ import os
 import uuid
 import logging
 import time
+import helper 
 
 import azure.functions as func
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
@@ -279,13 +280,7 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
             return func.HttpResponse('Post session analysis already exist', status_code=401)
 
         # Aggregate scores across all questions
-        scores = {score_type: 0 for score_type in constants.POST_ANALYSIS_SCORE_TYPE}
-        for question in session_analysis:
-            for score_type in constants.POST_ANALYSIS_SCORE_TYPE:
-                scores[score_type] += int(question[score_type])
-        for score_type in scores:
-            scores[score_type] = round(scores[score_type] / len(session_analysis), 1)
-        scores['overall_score'] = round(sum(scores.values()) / len(scores.values()), 1)
+        scores = helper.get_overall_and_average_score_for_session(session_analysis)
         logging.info(scores)
 
         # Structure output schema
