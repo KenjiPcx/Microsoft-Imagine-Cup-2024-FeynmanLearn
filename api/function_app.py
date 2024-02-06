@@ -269,7 +269,7 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         # Fetch the session data and process analysis
         session_data = database_handler.get_analysis_by_session(user_id, session_id)
 
-        if len(session_data) != 1:
+        if len(session_data) < 1:
             return func.HttpResponse('Failed to get session data', status_code=401)
 
         session_analysis = session_data[0].get('session_analysis', [])
@@ -285,10 +285,6 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         # Aggregate scores across all questions
         scores = helper.get_overall_and_average_score_for_session(session_analysis)
         logging.info(scores)
-
-        if scores['overall_score'] < 2.5:
-            # TODO: suggest easier topics since student has failed the feynman session
-            pass
 
         # Structure output schema
         output_parser = StructuredOutputParser.from_response_schemas(constants.POST_SESSION_ANALYSIS_SCHEMA)
@@ -309,20 +305,28 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         qualitative_analysis = output_parser.parse(output.content)
         logging.info(qualitative_analysis)
 
-        # Construct content dictionary to find similar topic suggestions
+        # Construct content dictionary to use as input to find new topic suggestions
         content = {
+            'overall_score': scores['overall_score'],
             'concept': session_data[0].get('concept', []),
             'question': [ question_obj['question'] for question_obj in session_analysis  ]
         }
 
-        # Create similar topic suggestions
-        prompt = ChatPromptTemplate.from_template("Suggest 5 similar topics for a student to learn about, based on the learning session below. Return just the topics as a list of strings, nothing extra. \n Questions and concept explored in current learning session: \n {content}")
+        # Suggest new topics depending on performance: 
+        student_did_poorly = scores['overall_score'] < 3.5
+        topic_list = []
+        topic_type = 'related and at a similar or slightly higher level of difficulty'
+        if student_did_poorly:
+            topic_type = 'at a lower level of difficulty'
+
+        # Generate sugggestions for new topics in subsequent feynman sessions 
+        prompt = ChatPromptTemplate.from_template("Suggest 5 topics that are {topic_type} for a student to learn about, based on the content the student explored in the session. Return just the topics as a list of strings, nothing extra. \n Questions, score and concept explored in current learning session: \n {content}")
         model = ChatOpenAI(model="gpt-4", api_key='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')
         output_parser = StrOutputParser()
         chain = prompt | model | output_parser
-        topics_str = chain.invoke({"content": content})
-        similar_topics_list = json.loads(topics_str)
-        logging.info(similar_topics_list)
+        topics_str = chain.invoke({"content": content, "topic_type": topic_type})
+        topic_list = json.loads(topics_str)
+        logging.info(topic_list)
 
         # Insert data into DB
         session_data = database_handler.sessions_container.read_item(
@@ -331,8 +335,8 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         post_session_analysis = {
             'qualitative_analysis': qualitative_analysis,
             'scores': scores,
-            'similar_topic': similar_topics_list,
-            'feynman_session_outcome': 'passed' 
+            'suggested_topics': topic_list,
+            'satisfactory_outcome': scores['overall_score'] >= 3.5 
         }
         session_data['post_session_analysis'] = post_session_analysis
         database_handler.sessions_container.replace_item(
