@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
-import { Link } from "@tanstack/react-router";
-import { Container, Text, Button, Group, createStyles } from "@mantine/core";
+import { Container, Text, keyframes, createStyles } from "@mantine/core";
+
+const breathe = keyframes`
+  0% { transform: translate(0); filter: brightness(1); }
+  50% { transform: translate(0, -3px); filter: brightness(1.2); }
+  100% { transform: translate(0); filter: brightness(1); }
+`;
 
 const useStyles = createStyles((theme) => ({
   inner: {
@@ -23,6 +28,7 @@ const useStyles = createStyles((theme) => ({
       fontSize: 42,
       lineHeight: 1.2,
     },
+    animation: `${breathe} 6s ease-in-out infinite`,
   },
   description: {
     marginTop: theme.spacing.xl,
@@ -33,10 +39,11 @@ const useStyles = createStyles((theme) => ({
   },
   wordContainer: {
     position: "relative",
-    height: 80, // Ensure this is enough height to accommodate your largest word
+    height: 80,
     display: "flex",
-    alignItems: "center", // Center the words vertically
-    justifyContent: "center", // Center the words horizontally
+    alignItems: "center",
+    justifyContent: "center",
+    animation: `${breathe} 6s ease-in-out infinite`,
   },
   word: {
     position: "absolute",
