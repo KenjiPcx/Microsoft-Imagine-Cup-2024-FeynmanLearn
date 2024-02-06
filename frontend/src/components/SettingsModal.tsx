@@ -1,5 +1,6 @@
 import {
   Alert,
+  Box,
   Button,
   Group,
   // Divider,
@@ -13,6 +14,7 @@ import {
 } from "@mantine/core";
 import { IconInfoCircle } from "@tabler/icons-react";
 import { useRef, useState } from "react";
+import { useAuth } from "../utils/auth";
 // import axiosClient from "../axiosConfig";
 // import { UPLOAD_USERDATA_ENDPOINT } from "../serverEndpoints";
 
@@ -34,6 +36,7 @@ const useStyles = createStyles((theme) => ({
 
 const SettingsModal = ({ opened, closeSettings }: SettingsModalProps) => {
   const { classes } = useStyles();
+  const auth = useAuth();
 
   const ref = useRef<HTMLInputElement>(null);
 
@@ -48,14 +51,19 @@ const SettingsModal = ({ opened, closeSettings }: SettingsModalProps) => {
       classNames={{ content: classes.content, header: classes.header }}
     >
       <Stack>
-        <Button
-          component={"a"}
-          href="/.auth/logout"
-          variant="default"
-          mt="auto"
-        >
-          Log out
-        </Button>
+        {auth.isAuthenticated && (
+          <Box>
+            <Text>Logged in as {auth.authData.username}</Text>
+            <Button
+              component={"a"}
+              href="/.auth/logout"
+              variant="default"
+              mt="auto"
+            >
+              Log out
+            </Button>
+          </Box>
+        )}
 
         <Alert
           icon={<IconInfoCircle />}
