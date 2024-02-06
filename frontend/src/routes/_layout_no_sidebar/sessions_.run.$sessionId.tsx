@@ -2,7 +2,7 @@
 // Basically App.tsx is run here
 // Send Message to student agent
 
-import { FileRoute } from "@tanstack/react-router";
+import { FileRoute, redirect } from "@tanstack/react-router";
 import { Box, Drawer, Navbar, ScrollArea, Stack, Text } from "@mantine/core";
 import TranscriptButton from "../../components/TranscriptButton";
 import { NavbarLink } from "../../components/NavbarLink";
@@ -19,6 +19,7 @@ import { fetchSession } from "../../utils/sessionsService";
 import { SessionErrorComponent } from "../../components/SessionErrorComponent";
 import { useDisclosure } from "@mantine/hooks";
 import { mockChatHistory } from "../../mock_data/mockChatHistoryData";
+import { notifications } from "@mantine/notifications";
 
 export const Route = new FileRoute(
   "/_layout_no_sidebar/sessions/run/$sessionId"
@@ -26,6 +27,18 @@ export const Route = new FileRoute(
   loader: async ({ params: { sessionId } }) => fetchSession(sessionId),
   errorComponent: SessionErrorComponent as any,
   component: SessionComponent,
+  beforeLoad: ({ context }) => {
+    if (!context.auth.isAuthenticated) {
+      notifications.show({
+        color: "yellow",
+        title: "Unauthorized",
+        message: "You are not authorized yet, please login first",
+      });
+      throw redirect({
+        to: "/",
+      });
+    }
+  },
 });
 
 type Message = {

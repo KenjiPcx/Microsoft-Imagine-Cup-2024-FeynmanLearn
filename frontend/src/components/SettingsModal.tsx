@@ -48,6 +48,15 @@ const SettingsModal = ({ opened, closeSettings }: SettingsModalProps) => {
       classNames={{ content: classes.content, header: classes.header }}
     >
       <Stack>
+        <Button
+          component={"a"}
+          href="/.auth/logout"
+          variant="default"
+          mt="auto"
+        >
+          Log out
+        </Button>
+
         <Alert
           icon={<IconInfoCircle />}
           title="Connect your custom data!"

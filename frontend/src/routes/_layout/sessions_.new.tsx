@@ -40,14 +40,15 @@ import {
 
 export const Route = new FileRoute("/_layout/sessions/new").createRoute({
   component: NewSessionConfigurationComponent,
-  beforeLoad: ({ context, location }) => {
-    console.log(location.href);
+  beforeLoad: ({ context }) => {
     if (!context.auth.isAuthenticated) {
+      notifications.show({
+        color: "yellow",
+        title: "Unauthorized",
+        message: "You are not authorized yet, please login first",
+      });
       throw redirect({
-        to: "/.auth/login/github" as any,
-        search: {
-          post_login_redirect_uri: location.href,
-        },
+        to: "/",
       });
     }
   },

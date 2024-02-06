@@ -3,6 +3,7 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as LoginImport } from './routes/login'
 import { Route as LayoutnosidebarImport } from './routes/_layout_no_sidebar'
 import { Route as LayoutImport } from './routes/_layout'
 import { Route as LayoutIndexImport } from './routes/_layout/index'
@@ -12,6 +13,11 @@ import { Route as LayoutnosidebarSessionsRunSessionIdImport } from './routes/_la
 import { Route as LayoutSessionsAnalysisSessionIdImport } from './routes/_layout/sessions_.analysis.$sessionId'
 
 // Create/Update Routes
+
+const LoginRoute = LoginImport.update({
+  path: '/login',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const LayoutnosidebarRoute = LayoutnosidebarImport.update({
   id: '/_layout_no_sidebar',
@@ -62,6 +68,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutnosidebarImport
       parentRoute: typeof rootRoute
     }
+    '/login': {
+      preLoaderRoute: typeof LoginImport
+      parentRoute: typeof rootRoute
+    }
     '/_layout/sessions': {
       preLoaderRoute: typeof LayoutSessionsImport
       parentRoute: typeof LayoutImport
@@ -95,4 +105,5 @@ export const routeTree = rootRoute.addChildren([
     LayoutSessionsAnalysisSessionIdRoute,
   ]),
   LayoutnosidebarRoute.addChildren([LayoutnosidebarSessionsRunSessionIdRoute]),
+  LoginRoute,
 ])

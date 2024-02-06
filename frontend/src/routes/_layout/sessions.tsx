@@ -1,8 +1,11 @@
 // Here is where we select the sessions based on a user's history
 
 import * as React from "react";
-import { FileRoute, Link, Outlet } from "@tanstack/react-router";
-import { fetchSessions, fetchSessionSummaries } from "../../utils/sessionsService";
+import { FileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
+import {
+  fetchSessions,
+  fetchSessionSummaries,
+} from "../../utils/sessionsService";
 import { Button, NavLink } from "@mantine/core";
 import {
   Title,
@@ -14,6 +17,7 @@ import {
   Text,
   useMantineTheme,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 // import classes from "../../components/ArticleCard.module.css";
 
 interface SessionProps {
@@ -30,6 +34,18 @@ interface SessionGridProps {
 export const Route = new FileRoute("/_layout/sessions").createRoute({
   // loader: fetchSessions,
   component: SessionsComponent,
+  beforeLoad: ({ context }) => {
+    if (!context.auth.isAuthenticated) {
+      notifications.show({
+        color: "yellow",
+        title: "Unauthorized",
+        message: "You are not authorized yet, please login first",
+      });
+      throw redirect({
+        to: "/",
+      });
+    }
+  },
 });
 
 function SessionGrid({ sessions }: SessionGridProps) {
