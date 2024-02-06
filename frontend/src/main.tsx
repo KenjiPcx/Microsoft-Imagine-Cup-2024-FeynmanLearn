@@ -1,9 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-// import App from "./App.tsx";
-// import "./index.css";
 import { RouterProvider, Router, ErrorComponent } from "@tanstack/react-router";
-import { auth } from "./utils/auth";
+import { AuthProvider, useAuth } from "./utils/auth";
 import { routeTree } from "./routeTree.gen";
 import { Spinner } from "./components/Spinner";
 import { MantineProvider } from "@mantine/core";
@@ -34,32 +32,20 @@ declare module "@tanstack/react-router" {
 }
 
 function App() {
-  // This stuff is just to tweak our sandbox setup in real-time
-  // const [loaderDelay, setLoaderDelay] = useSessionStorage("loaderDelay", 500);
-  // const [pendingMs, setPendingMs] = useSessionStorage("pendingMs", 1000);
-  // const [pendingMinMs, setPendingMinMs] = useSessionStorage(
-  //   "pendingMinMs",
-  //   500
-  // );
+  const auth = useAuth();
 
   return (
     <RecoilRoot>
-      <RouterProvider
-        router={router}
-        defaultPreload="intent"
-        // defaultPendingMs={pendingMs}
-        // defaultPendingMinMs={pendingMinMs}
-        context={{
-          auth,
-        }}
-      />
+      <RouterProvider router={router} context={{ auth }} />
     </RecoilRoot>
   );
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <MantineProvider withGlobalStyles withNormalizeCSS theme={theme}>
-    <Notifications />
-    <App />
+    <AuthProvider>
+      <Notifications />
+      <App />
+    </AuthProvider>
   </MantineProvider>
 );

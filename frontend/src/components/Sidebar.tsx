@@ -55,44 +55,7 @@ export function NavbarMinimal({
           </Menu>
         </Stack>
       </Navbar.Section>
-      <Navbar.Section mt={"auto"}>
-        <Box>
-          For dev purposes
-          {(
-            [
-              ["/", "Home (Kenji)"],
-              ["/sessions", "Sessions (Ventus)"],
-              ["/sessions/new", "New Session (Nicolo)"],
-              ["/sessions/run/$sessionId", "Feynman Session (Kenji)"],
-              ["/sessions/analysis/$sessionId", "Post Analysis (Joshua)"],
-              // ["/dashboard", "Dashboard"],
-              // ["/profile", "Profile"],
-              // ["/login", "Login"],
-            ] as const
-          ).map(([to, label]) => {
-            return (
-              <Badge key={to}>
-                <Link
-                  to={to}
-                  activeOptions={
-                    {
-                      // If the route points to the root of it's parent,
-                      // make sure it's only active if it's exact
-                      // exact: to === '.',
-                    }
-                  }
-                  preload="intent"
-                  className={`block py-2 px-3 text-blue-700`}
-                  // Make "active" links bold
-                  activeProps={{ className: `font-bold` }}
-                >
-                  {label}
-                </Link>
-              </Badge>
-            );
-          })}
-        </Box>
-      </Navbar.Section>
+
       <Navbar.Section mt={"auto"}>
         <Stack m="auto" w="min-content">
           <NavbarLink
