@@ -18,6 +18,14 @@ export interface AuthContext {
 
 const AuthContext = React.createContext<AuthContext | null>(null);
 
+const devAuthData: AuthData = {
+  identityProvider: "dev",
+  userId: "dev",
+  userDetails: "dev",
+  userRoles: ["dev"],
+  claims: {},
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authData, setAuthData] = React.useState<AuthData | null>(null);
   const isAuthenticated = !!authData;
