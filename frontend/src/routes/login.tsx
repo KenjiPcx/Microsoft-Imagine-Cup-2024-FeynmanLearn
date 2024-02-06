@@ -4,18 +4,12 @@ import { useNavigate, FileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { useAuth } from "../utils/auth";
 import {
-  Anchor,
   Button,
-  Checkbox,
   Paper,
-  PasswordInput,
-  TextInput,
   Title,
   createStyles,
-  Text,
   Group,
   Center,
-  Box,
   Stack,
 } from "@mantine/core";
 import { HeroTitle } from "../components/Hero";

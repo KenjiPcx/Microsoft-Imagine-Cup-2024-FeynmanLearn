@@ -1,22 +1,13 @@
 import {
-  Alert,
   Box,
   Button,
-  Group,
-  // Divider,
-  // FileButton,
   Modal,
   Stack,
   Text,
-  TextInput,
   createStyles,
-  // Title,
 } from "@mantine/core";
-import { IconInfoCircle } from "@tabler/icons-react";
-import { useRef, useState } from "react";
 import { useAuth } from "../utils/auth";
-// import axiosClient from "../axiosConfig";
-// import { UPLOAD_USERDATA_ENDPOINT } from "../serverEndpoints";
+
 
 interface SettingsModalProps {
   opened: boolean;
