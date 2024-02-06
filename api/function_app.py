@@ -1,3 +1,4 @@
+from functools import reduce
 import json
 import os
 import uuid
@@ -34,9 +35,12 @@ from databaseHandler import DatabaseHandler
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
-openai_key = os.getenv("OPENAI_API_KEY")
-openai_client = openai.OpenAI(api_key=openai_key)
-langchain_llm = ChatOpenAI(api_key=openai_key, model="gpt-4-turbo-preview")
+# openai_key = os.getenv("OPENAI_API_KEY")
+# openai_client = openai.OpenAI(api_key=openai_key)
+# langchain_llm = ChatOpenAI(api_key=openai_key, model="gpt-4-turbo-preview")
+openai_key = "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"
+openai_client = openai.OpenAI(api_key="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")
+langchain_llm = ChatOpenAI(api_key="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", model="gpt-4-turbo-preview")
 database_handler = DatabaseHandler()
 
 
@@ -192,9 +196,9 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
         session_data = database_handler.sessions_container.read_item(
             item=session_id, partition_key=user_id
         )
-        session_analysis = session_data.get('session_analysis')
-        check_if_analysis_exist = filter(lambda _: _['id'] == question_id, session_analysis)
-        if check_if_analysis_exist:
+        session_analysis = session_data.get('session_analysis', [])
+        check_if_analysis_exist = list(filter(lambda _: _['question_id'] == question_id, session_analysis))
+        if len(check_if_analysis_exist) != 0:
             return func.HttpResponse('Analysis already exist!', status_code=409)
 
         # Construct response schema and format instructions to use in prompt
@@ -222,7 +226,6 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
         logging.info(question_transcript_analysis)
 
         # Update session data 
-        session_analysis = session_data.get('session_analysis', [])
         session_analysis.append(question_transcript_analysis)
         session_data['session_analysis'] = session_analysis
         database_handler.sessions_container.replace_item(
@@ -272,16 +275,32 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
 
     try:
         req_body = req.get_json()
-        session_id = req_body.get("session_id")
         user_id = req_body.get("user_id")
+        session_id = req_body.get("session_id")
 
         # Fetch the session data and process transcripts
-        session_data = database_handler.sessions_container.read_item(
-            item=session_id, partition_key=user_id
-        )
-        session_data["last_date_attempt"] = time.time()
-        session_data["image_url"] = ""
-        database_handler.sessions_container.upsert_item(body=session_data)
+        session_data = database_handler.get_analysis_by_session(user_id, session_id)
+        session_analysis = session_data[0].get('session_analysis', [])
+        if len(session_analysis) == 0:
+            return value_error_response
+    
+        # Aggregate scores across all questions
+        scores = {score_type: 0 for score_type in constants.POST_ANALYSIS_SCORE_TYPE}
+        for question in session_analysis:
+            for score_type in constants.POST_ANALYSIS_SCORE_TYPE:
+                scores[score_type] += int(question[score_type])
+        for score_type in scores:
+            scores[score_type] = round(scores[score_type] / len(session_analysis), 1)
+        scores['overall_score'] = round(sum(scores.values())/len(scores.values()), 1)
+        logging.info(scores)
+
+        # TODO: Integration explanation aggregation
+        # TODO: Insert into DB
+
+        # session_data["session_aggregated_score"] = scores
+        # session_data["last_date_attempt"] = time.time()
+        # session_data["image_url"] = ""
+        # database_handler.sessions_container.upsert_item(body=session_data)
 
         # Build the response
         res = {"success": True}

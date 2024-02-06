@@ -56,3 +56,12 @@ RESPONSE_SCHEMA = [
     ResponseSchema(name="adaptation_score", description="score of how well learner adapts explanation"),
     ResponseSchema(name="adaptation_explanation", description="explanation of adaptation score given"),
 ]
+
+POST_ANALYSIS_SCORE_TYPE = [
+    "clarity_score",
+    "conciseness_score",
+    "comprehensiveness_score",
+    "correctness_score",
+    "exemplification_score",
+    "adaptation_score"
+]

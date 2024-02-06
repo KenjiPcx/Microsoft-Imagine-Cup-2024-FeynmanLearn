@@ -57,3 +57,17 @@ class DatabaseHandler:
 
         except Exception as e:
             raise
+
+    def get_analysis_by_session(self, user_id: str, session_id: str) -> list:
+        try:
+            # Query transcripts of a specific question using user_id and question_id 
+            query = f"SELECT * FROM c WHERE c.user_id='{user_id}' AND c.session_id='{session_id}'"
+            sessions = list(
+                self.sessions_container.query_items(
+                    query, enable_cross_partition_query=True
+                )
+            )
+            return sessions
+
+        except Exception as e:
+            raise
