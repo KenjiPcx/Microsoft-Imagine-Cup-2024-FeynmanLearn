@@ -6,7 +6,7 @@ import {
   SessionSummary,
   fetchSessionSummaries,
 } from "../../utils/sessionsService";
-import { Box, Button, Center, NavLink, SimpleGrid } from "@mantine/core";
+import { Box, Button, Center, NavLink, SimpleGrid, Stack } from "@mantine/core";
 import {
   Title,
   Flex,
@@ -20,6 +20,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import SessionSummaryCard from "../../components/SessionSummaryCard";
 import { mockSessionsSummaries } from "../../mock_data/mockSessionSummaryData";
+import NewSessionButton from "../../components/NewSessionButton";
 
 export const Route = new FileRoute("/_layout/sessions").createRoute({
   // loader: async ({ context }) =>
@@ -42,13 +43,20 @@ export const Route = new FileRoute("/_layout/sessions").createRoute({
 function SessionsComponent() {
   // const data = Route.useLoaderData();
   // const sessionSummaries = data.sessions;
-  const sessionSummaries = mockSessionsSummaries;
+  const sessionSummaries = [];
   console.log(sessionSummaries, "sessionSummaries");
 
   return (
     <Box w={"60vw"}>
       {sessionSummaries.length === 0 ? (
-        <Text>No sessions found</Text>
+        <Center>
+          <Stack spacing={"xl"}>
+            <Text size={"xl"} fw={"bolder"} align="center">
+              No sessions found
+            </Text>
+            <NewSessionButton />
+          </Stack>
+        </Center>
       ) : (
         <SimpleGrid
           cols={3}
