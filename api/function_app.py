@@ -306,10 +306,12 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         logging.info(qualitative_analysis)
 
         # Construct content dictionary to use as input to find new topic suggestions
+        concept_explored = session_data[0].get('concept', [])
+        question_asked = [ question_obj['question'] for question_obj in session_analysis ] 
         content = {
             'overall_score': scores['overall_score'],
-            'concept': session_data[0].get('concept', []),
-            'question': [ question_obj['question'] for question_obj in session_analysis  ]
+            'concept': concept_explored,
+            'question': question_asked 
         }
 
         # Suggest new topics depending on performance: 
@@ -320,7 +322,7 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
             topic_type = 'at a lower level of difficulty'
 
         # Generate sugggestions for new topics in subsequent feynman sessions 
-        prompt = ChatPromptTemplate.from_template("Suggest 5 topics that are {topic_type} for a student to learn about, based on the content the student explored in the session. Return just the topics as a list of strings, nothing extra. \n Questions, score and concept explored in current learning session: \n {content}")
+        prompt = ChatPromptTemplate.from_template("Suggest 5 topics that are {topic_type} for a student to learn about, based on the content the student explored in the session. Return just the topics as a list of strings (the output should be parsable by json.loads in python) and nothing extra. \n Questions, score and concept explored in current learning session: \n {content}")
         output_parser = StrOutputParser()
         chain = prompt | langchain_llm | output_parser
         topics_str = chain.invoke({"content": content, "topic_type": topic_type})
@@ -332,6 +334,8 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
             item=session_document_id, partition_key=user_id
         )
         post_session_analysis = {
+            'concept_explored': concept_explored,
+            'questions_asked': question_asked,
             'qualitative_analysis': qualitative_analysis,
             'scores': scores,
             'suggested_topics': topic_list,

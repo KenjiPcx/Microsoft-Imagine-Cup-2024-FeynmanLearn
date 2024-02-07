@@ -1,4 +1,6 @@
-export const feedback: Feedback = {
+import { CreatePostSessionAnalysisResponse } from "../utils/sessionAnalysisService";
+
+export const feedback: CreatePostSessionAnalysisResponse = {
   concept_explored: "Algorithms",
   questions_asked: ["What is Merge Sort", "What is DFS"],
   qualitative_analysis: {
