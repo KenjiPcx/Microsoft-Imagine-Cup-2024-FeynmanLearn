@@ -1,20 +1,13 @@
 import {
-  Alert,
+  Box,
   Button,
-  Group,
-  // Divider,
-  // FileButton,
   Modal,
   Stack,
   Text,
-  TextInput,
   createStyles,
-  // Title,
 } from "@mantine/core";
-import { IconInfoCircle } from "@tabler/icons-react";
-import { useRef, useState } from "react";
-// import axiosClient from "../axiosConfig";
-// import { UPLOAD_USERDATA_ENDPOINT } from "../serverEndpoints";
+import { useAuth } from "../utils/auth";
+
 
 interface SettingsModalProps {
   opened: boolean;
@@ -34,9 +27,9 @@ const useStyles = createStyles((theme) => ({
 
 const SettingsModal = ({ opened, closeSettings }: SettingsModalProps) => {
   const { classes } = useStyles();
+  const auth = useAuth();
 
-  const ref = useRef<HTMLInputElement>(null);
-
+  console.log("auth data", auth.authData)
   return (
     <Modal
       id="settings-modal"
@@ -48,28 +41,19 @@ const SettingsModal = ({ opened, closeSettings }: SettingsModalProps) => {
       classNames={{ content: classes.content, header: classes.header }}
     >
       <Stack>
-        <Alert
-          icon={<IconInfoCircle />}
-          title="Connect your custom data!"
-          variant="light"
-          color="blue"
-        >
-          Get started by setting a custom and unique username, then upload your
-          CSV file containing your entity definitions
-        </Alert>
-
-        <Group>
-          <TextInput
-            ref={ref}
-            placeholder="Your new username"
-            label="Set New Username"
-            withAsterisk
-            sx={{ flex: "1" }}
-          />
-          <Button variant="default" mt="auto">
-            Set Username
-          </Button>
-        </Group>
+        {auth.isAuthenticated && (
+          <Box>
+            <Text>Logged in as {auth.authData.userDetails}</Text>
+            <Button
+              component={"a"}
+              href="/.auth/logout"
+              variant="default"
+              mt="auto"
+            >
+              Log out
+            </Button>
+          </Box>
+        )}
       </Stack>
     </Modal>
   );

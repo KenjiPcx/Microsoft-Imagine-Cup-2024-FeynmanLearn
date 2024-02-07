@@ -1,69 +1,96 @@
+/// Not used
 import * as React from "react";
-import { FileRoute, useRouter } from "@tanstack/react-router";
+import { useNavigate, FileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { useAuth } from "../utils/auth";
+import {
+  Button,
+  Paper,
+  Title,
+  createStyles,
+  Group,
+  Center,
+  Stack,
+} from "@mantine/core";
+import { HeroTitle } from "../components/Hero";
 
-export const Route = new FileRoute("/login")
-  .createRoute({
-    validateSearch: z.object({
-      redirect: z.string().optional(),
-    }),
-  })
-  .update({
-    component: LoginComponent,
-  });
+export const Route = new FileRoute("/login").createRoute({
+  validateSearch: z.object({
+    redirect: z.string().catch("/"),
+  }),
+  component: LoginComponent,
+});
+
+const useStyles = createStyles((theme) => ({
+  wrapper: {
+    height: "100vh",
+    width: "100vw",
+    backgroundSize: "cover",
+  },
+
+  form: {
+    borderRight: `1px solid ${theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[3]}`, // Adjusted for Mantine theming
+    height: "100%",
+    minWidth: "600px",
+    maxWidth: "35vw",
+    paddingTop: "80px",
+    [`@media (max-width: ${theme.breakpoints.sm}px)`]: {
+      maxWidth: "100%",
+    },
+  },
+
+  title: {
+    color:
+      theme.colorScheme === "dark" ? theme.colors.white : theme.colors.black,
+    fontFamily: "Greycliff CF, var(--mantine-font-family)",
+  },
+}));
 
 function LoginComponent() {
-  const router = useRouter();
-  const { auth } = Route.useRouteContext();
-  const search = Route.useSearch();
-  const [username, setUsername] = React.useState("");
+  const auth = useAuth();
+  const navigate = useNavigate();
+  const { classes } = useStyles();
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    auth.login(username);
-    router.invalidate();
-  };
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [name, setName] = React.useState("");
 
-  // Ah, the subtle nuances of client side auth. 🙄
-  React.useLayoutEffect(() => {
-    if (auth.status === "loggedIn" && search.redirect) {
-      router.history.push(search.redirect);
-    }
-  }, [auth.status, search.redirect]);
+  //   const search = routeApi.useSearch();
 
-  return auth.status === "loggedIn" ? (
-    <div>
-      Logged in as <strong>{auth.username}</strong>
-      <div className="h-2" />
-      <button
-        onClick={() => {
-          auth.logout();
-          router.invalidate();
-        }}
-        className="text-sm bg-blue-500 text-white border inline-block py-1 px-2 rounded"
-      >
-        Log out
-      </button>
-      <div className="h-2" />
-    </div>
-  ) : (
-    <div className="p-2">
-      <div>You must log in!</div>
-      <div className="h-2" />
-      <form onSubmit={onSubmit} className="flex gap-2">
-        <input
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="Username"
-          className="border p-1 px-2 rounded"
-        />
-        <button
-          type="submit"
-          className="text-sm bg-blue-500 text-white border inline-block py-1 px-2 rounded"
-        >
-          Login
-        </button>
-      </form>
+  //   const handleLogin = (evt: React.FormEvent<HTMLFormElement>) => {
+  //     evt.preventDefault();
+  //     setIsSubmitting(true);
+
+  //     flushSync(() => {
+  //       auth.setUser(name);
+  //     });
+
+  //     navigate({ to: search.redirect });
+  //   };
+
+  return (
+    <div className={classes.wrapper}>
+      <Group h={"100vh"} w={"100vw"} position="apart">
+        <Center mb={200} sx={{ flex: 1 }}>
+          <HeroTitle />
+        </Center>
+        <Paper className={classes.form} radius={0} p={30}>
+          <Stack h={"100%"} my={"auto"} justify="center">
+            <Title
+              order={2}
+              className={classes.title}
+              ta="center"
+              mt="md"
+              mb={50}
+            >
+              Login to Feynman Learn
+            </Title>
+
+            <Button fullWidth mt="xl" size="md">
+              Login
+            </Button>
+          </Stack>
+        </Paper>
+      </Group>
     </div>
   );
 }

@@ -1,7 +1,9 @@
 # Library for storing global constants
 
+from langchain.output_parsers import ResponseSchema
+
 # Marking rubric for a learner's explanation
-marking_rubric = """
+MARKING_RUBRIC = """
 Clarity (Understanding and simplicity of language)
 1: The explanation is confusing, uses complex or technical language excessively, and lacks a logical flow.
 2: The explanation has moments of clarity but is often difficult to follow, with some use of technical language that is not well-explained.
@@ -26,4 +28,31 @@ Correctness (Accuracy of information)
 3: The explanation is mostly accurate, with minor errors or simplifications that do not significantly impact the overall understanding.
 4: The explanation is accurate, with all key aspects correctly explained. There might be extremely minor inaccuracies that do not detract from the overall understanding.
 5: The explanation is exceptionally accurate, with all information presented correctly and precisely, reflecting a deep understanding of the concept.
+Exemplification (Use and Quality of Examples)
+1: The explanation lacks examples, or the examples provided are irrelevant or do not effectively illustrate the concept.
+2: The explanation includes examples, but they are minimally effective, only partially relevant, or not well-integrated into the explanation.
+3: The explanation includes a reasonable number of relevant examples that contribute to understanding, though some may lack clarity or full integration with the concept.
+4: The explanation uses several well-chosen examples that are relevant and effectively integrated into the explanation, enhancing understanding.
+5: The explanation excels in using a variety of highly relevant, clear, and well-integrated examples that significantly enhance comprehension and engagement.
+Audience (Adaptation to audience's Level)
+1: The explanation does not consider the audience's level of understanding; it is either too simplistic for advanced audiences or too complex for beginners.
+2: The explanation shows minimal effort to adapt to the audience's level, with occasional adjustments that do not significantly aid comprehension.
+3: The explanation is moderately adapted to the audience's level, with a balance of complexity and simplicity that suits an intermediate audience but may not fully cater to beginners or advanced audiences.
+4: The explanation shows a good effort to adapt to the audience's level, using appropriate terminology and complexity for the intended audience, though minor improvements could be made for better accessibility or depth.
+5: The explanation is exceptionally well-adapted to the audience's level, using language and concepts tailored to the audience's understanding, making it accessible and engaging for audiences at any level.
 """
+
+RESPONSE_SCHEMA = [
+    ResponseSchema(name="clarity_score", description="score of clarity of learner's explanation"),
+    ResponseSchema(name="clarity_explanation", description="explanation of clarity score given"),
+    ResponseSchema(name="conciseness_score", description="score of conciseness of learner's explanation"),
+    ResponseSchema(name="conciseness_explanation", description="explanation of conciseness score given"),
+    ResponseSchema(name="comprehensiveness_score", description="score of comprehensiveness of learner's explanation"),
+    ResponseSchema(name="comprehensiveness_explanation", description="explanation of comprehensiveness score given"),
+    ResponseSchema(name="correctness_score", description="score of correctness of learner's explanation"),
+    ResponseSchema(name="correctness_explanation", description="explanation of correctness score given"),
+    ResponseSchema(name="exemplification_score", description="score of learner's examples in their explanation"),
+    ResponseSchema(name="exemplification_explanation", description="explanation on exemplification score given"),
+    ResponseSchema(name="adaptation_score", description="score of how well learner adapts explanation"),
+    ResponseSchema(name="adaptation_explanation", description="explanation of adaptation score given"),
+]

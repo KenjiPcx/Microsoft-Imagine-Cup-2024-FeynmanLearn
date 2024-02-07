@@ -1,5 +1,4 @@
 import { ActionIcon, createStyles, keyframes, Image, rem } from "@mantine/core";
-import { useSpeechRecognition } from "react-speech-recognition";
 import { useRecoilState } from "recoil";
 import { isRecognizingState } from "../recoil";
 

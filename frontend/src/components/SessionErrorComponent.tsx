@@ -1,6 +1,6 @@
 import * as React from "react";
 import { ErrorComponent, ErrorRouteProps, Link } from "@tanstack/react-router";
-import { SessionNotFoundError } from "../sessionsService";
+import { SessionNotFoundError } from "../utils/sessionsService";
 import { Button, Group, Stack, Text } from "@mantine/core";
 
 export function SessionErrorComponent({ error }: ErrorRouteProps) {

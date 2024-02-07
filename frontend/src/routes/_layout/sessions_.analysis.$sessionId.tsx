@@ -5,14 +5,27 @@
 // 4. Give an overall score
 // 5. Suggest next steps - resources to read, simpler concepts to explain
 
-import { FileRoute } from "@tanstack/react-router";
+import { FileRoute, redirect } from "@tanstack/react-router";
 import { Card, Text, Group, Title, Button, Flex, Box } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 
-export const Route = new FileRoute("/_layout/sessions/analysis/$sessionId").createRoute(
-  {
-    component: PostSessionAnalysisComponent,
-  }
-);
+export const Route = new FileRoute(
+  "/_layout/sessions/analysis/$sessionId"
+).createRoute({
+  component: PostSessionAnalysisComponent,
+  beforeLoad: ({ context }) => {
+    if (!context.auth.isAuthenticated) {
+      notifications.show({
+        color: "yellow",
+        title: "Unauthorized",
+        message: "You are not authorized yet, please login first",
+      });
+      throw redirect({
+        to: "/",
+      });
+    }
+  },
+});
 
 function PostSessionAnalysisComponent() {
   const session_feedback: string = `
