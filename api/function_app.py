@@ -18,7 +18,7 @@ import constants
 
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
 from langchain_openai import ChatOpenAI
-from agents.feynman_student_prompt import (
+from agents.feynman_student_prompt_v6 import (
     feynman_student_prompt_template,
     feynman_student_prompt_parser,
 )
