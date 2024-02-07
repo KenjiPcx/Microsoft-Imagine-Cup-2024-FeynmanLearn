@@ -1,10 +1,8 @@
-from functools import reduce
 import json
 import os
 import uuid
 import logging
-import time
-import helper 
+import helper
 
 import azure.functions as func
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
@@ -20,12 +18,11 @@ import constants
 
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
 from langchain_openai import ChatOpenAI
-from agents.feynman_student_prompt import (
-    feynman_student_prompt,
+from agents.feynman_student_prompt_v6 import (
     feynman_student_prompt_template,
+    feynman_student_prompt_parser,
 )
 from agents.lesson_verification_prompt import (
-    verify_lesson_prompt,
     verify_lesson_prompt_template,
     verify_lesson_parser,
 )
@@ -67,7 +64,7 @@ def create_session(req: func.HttpRequest) -> func.HttpResponse:
         difficulty = "beginner - just ask really basic information"
         student_persona = "None"
 
-        instructions_prompt = feynman_student_prompt_template.format(
+        feynman_student_instructions_prompt = feynman_student_prompt_template.format(
             concept=lesson_concept,
             objectives=lesson_objectives,
             game_mode=game_mode,
@@ -79,15 +76,16 @@ def create_session(req: func.HttpRequest) -> func.HttpResponse:
         assistant = OpenAIAssistantRunnable(
             assistant_id=feynman_assistant_id, as_agent=True
         )
-        start_msg = "Before we start, can you please ask me what we will be learning today in a fun and concise way?"
+
+        start_msg = f"Tell me you're excited to learn about {lesson_concept} in a very brief way, and I'll proceed to teach"
         output = assistant.invoke(
             {
-                "instructions": instructions_prompt,
+                "instructions": feynman_student_instructions_prompt,
                 "content": start_msg,
             }
         )
-        assistant_intro_msg = output.return_values["output"]
-        assistant_intro_msg = json.loads(assistant_intro_msg)
+        assistant_output = output.return_values["output"]
+        assistant_output = feynman_student_prompt_parser.parse(assistant_output)
         thread_id = output.return_values["thread_id"]
 
         # Create the session data and store it in the database
@@ -99,11 +97,11 @@ def create_session(req: func.HttpRequest) -> func.HttpResponse:
             "game_mode": game_mode,
             "difficulty": difficulty,
             "student_persona": student_persona,
-            "prompt": feynman_student_prompt,
+            "prompt": feynman_student_instructions_prompt,
             "session_transcripts": [
                 {
                     "user": start_msg,
-                    "assistant": assistant_intro_msg,
+                    "assistant": assistant_output,
                 }
             ],
             "thread_id": thread_id,
@@ -184,7 +182,9 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
         session_id = req_body.get("session_id")
 
         # Fetch the session data and process transcripts
-        transcript = database_handler.get_transcript_by_question(user_id, question_id, session_id)
+        transcript = database_handler.get_transcript_by_question(
+            user_id, question_id, session_id
+        )
         if len(transcript) < 1:
             return func.HttpResponse("Cannot find transcript by question_id", status_code=404)
 
@@ -196,8 +196,10 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
         session_data = database_handler.sessions_container.read_item(
             item=session_id, partition_key=user_id
         )
-        session_analysis = session_data.get('session_analysis', [])
-        check_if_analysis_exist = list(filter(lambda _: _['question_id'] == question_id, session_analysis))
+        session_analysis = session_data.get("session_analysis", [])
+        check_if_analysis_exist = list(
+            filter(lambda _: _["question_id"] == question_id, session_analysis)
+        )
         if len(check_if_analysis_exist) != 0:
             return func.HttpResponse('Analysis already exist!', status_code=400)
 
@@ -211,10 +213,12 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
         prompt = PromptTemplate(
             template=template,
             input_variables=["question", "rubric"],
-            partial_variables={"format_instructions": format_instructions}
+            partial_variables={"format_instructions": format_instructions},
         )
         _input = prompt.format_prompt(
-            question=question_transcript, rubric=constants.MARKING_RUBRIC, audience_level=audience_level
+            question=question_transcript,
+            rubric=constants.MARKING_RUBRIC,
+            audience_level=audience_level,
         )
 
         # Build response
@@ -225,9 +229,9 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
         res = {"success": True, "analysis_data": question_transcript_analysis}
         logging.info(question_transcript_analysis)
 
-        # Update session data 
+        # Update session data
         session_analysis.append(question_transcript_analysis)
-        session_data['session_analysis'] = session_analysis
+        session_data["session_analysis"] = session_analysis
         database_handler.sessions_container.replace_item(
             item=session_id, body=session_data
         )
@@ -285,7 +289,9 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         logging.info(scores)
 
         # Structure output schema
-        output_parser = StructuredOutputParser.from_response_schemas(constants.POST_SESSION_ANALYSIS_SCHEMA)
+        output_parser = StructuredOutputParser.from_response_schemas(
+            constants.POST_SESSION_ANALYSIS_SCHEMA
+        )
         format_instructions = output_parser.get_format_instructions()
 
         # Create prompt and run analysis on prompt
@@ -295,7 +301,10 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
             input_variables=["session", "aggregated_score", "format_instructions"],
         )
         _input = prompt.format_prompt(
-            session=session_analysis, rubric=constants.MARKING_RUBRIC, aggregated_score=scores, format_instructions=format_instructions
+            session=session_analysis,
+            rubric=constants.MARKING_RUBRIC,
+            aggregated_score=scores,
+            format_instructions=format_instructions,
         )
 
         # Build response
@@ -312,12 +321,12 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
             'question': question_asked 
         }
 
-        # Suggest new topics depending on performance: 
-        student_did_poorly = scores['overall_score'] < 3.5
+        # Suggest new topics depending on performance:
+        student_did_poorly = scores["overall_score"] < 3.5
         topic_list = []
-        topic_type = 'related and at a similar or slightly higher level of difficulty'
+        topic_type = "related and at a similar or slightly higher level of difficulty"
         if student_did_poorly:
-            topic_type = 'at a lower level of difficulty'
+            topic_type = "at a lower level of difficulty"
 
         # Generate sugggestions for new topics in subsequent feynman sessions 
         prompt = ChatPromptTemplate.from_template("Suggest 5 topics that are {topic_type} for a student to learn about, based on the content the student explored in the session. Return just the topics as a list of strings (the output should be parsable by json.loads in python) and nothing extra. \n Questions, score and concept explored in current learning session: \n {content}")
@@ -339,7 +348,7 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
             'suggested_topics': topic_list,
             'satisfactory_outcome': scores['overall_score'] >= 3.5 
         }
-        session_data['post_session_analysis'] = post_session_analysis
+        session_data["post_session_analysis"] = post_session_analysis
         database_handler.sessions_container.replace_item(
             item=session_id, body=session_data
         )
