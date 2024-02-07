@@ -106,7 +106,7 @@ function PostSessionAnalysisComponent() {
                         <Box my={"15px"}>
                           <Title order={5}>Room for improvement 🚧</Title>
                           <Text size={"sm"}>
-                            {feedback.qualitative_analysis.strengths}
+                            {feedback.qualitative_analysis.room_for_improvement}
                           </Text>
                         </Box>
                         <Box my={"15px"}>
