@@ -222,7 +222,7 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
         question_transcript_analysis = output_parser.parse(output.content)
         question_transcript_analysis["question"] = transcript[0]["session_transcript"]["question"]
         question_transcript_analysis["question_id"] = transcript[0]["session_transcript"]["question_id"]
-        res = {"success": True, "analysis": question_transcript_analysis}
+        res = {"success": True, "analysis_data": question_transcript_analysis}
         logging.info(question_transcript_analysis)
 
         # Update session data 
@@ -344,7 +344,7 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
             item=session_id, body=session_data
         )
         logging.info(post_session_analysis)
-        res = {"success": True, "user_data": post_session_analysis}
+        res = {"success": True, "post_session_analysis_data": post_session_analysis}
         return func.HttpResponse(json.dumps(res), status_code=200)
 
         # session_data["session_aggregated_score"] = scores
@@ -462,5 +462,32 @@ def verify_lesson_scope(req: func.HttpRequest) -> func.HttpResponse:
         }
         return func.HttpResponse(json.dumps(res), status_code=200)
 
+    except Exception:
+        return generic_server_error_response
+
+@app.route(route="get_post_session_analysis")
+def get_post_session_analysis(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("get_post_session_analysis HTTP trigger function processed a request.")
+
+    try:
+        req_body = req.get_json()
+        session_id = req_body.get("session_id")
+        user_id = req_body.get("user_id")
+
+        session_data = database_handler.sessions_container.read_item(
+            item=session_id, partition_key=user_id
+        )
+        post_session_analysis_data = {
+            "post_session_analysis": session_data['post_session_analysis'],
+            "analysis_by_question": session_data['session_analysis']
+        }
+        res = { "success": True, "post_session_analysis_data": post_session_analysis_data }
+        return func.HttpResponse(json.dumps(res), status_code=200)
+
+    except ValueError:
+        # Handle JSON parsing error
+        return value_error_response
+    except CosmosResourceNotFoundError:
+        return cosmos_404_error_response
     except Exception:
         return generic_server_error_response
