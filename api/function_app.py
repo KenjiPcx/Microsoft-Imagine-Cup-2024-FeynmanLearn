@@ -291,7 +291,7 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         format_instructions = output_parser.get_format_instructions()
 
         # Create prompt and run analysis on prompt
-        template = "Using this instruction {format_instructions}, aggregate the feedback for this session using the analysis on different questions, use an encouraging tone and address using a second person perspective. Aggreagted scores across all questions in this session is: {aggregated_score}. Structure your feedback using the following in the following order: overall_comment, strengths, room_for_improvement, suggestions_for_improvement. \n Session data: {session}"
+        template = "Using this instruction {format_instructions}, aggregate the feedback for this session using the analysis on different questions, use an encouraging tone and address using a second person perspective. Aggregated scores across all questions in this session is: {aggregated_score}. Structure your feedback using the following in the following order: overall_comment, strengths, room_for_improvement, suggestions_for_improvement. \n Session data: {session}"
         prompt = PromptTemplate(
             template=template,
             input_variables=["session", "aggregated_score", "format_instructions"],
@@ -321,9 +321,8 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
 
         # Generate sugggestions for new topics in subsequent feynman sessions 
         prompt = ChatPromptTemplate.from_template("Suggest 5 topics that are {topic_type} for a student to learn about, based on the content the student explored in the session. Return just the topics as a list of strings, nothing extra. \n Questions, score and concept explored in current learning session: \n {content}")
-        model = ChatOpenAI(model="gpt-4", api_key='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')
         output_parser = StrOutputParser()
-        chain = prompt | model | output_parser
+        chain = prompt | langchain_llm | output_parser
         topics_str = chain.invoke({"content": content, "topic_type": topic_type})
         topic_list = json.loads(topics_str)
         logging.info(topic_list)

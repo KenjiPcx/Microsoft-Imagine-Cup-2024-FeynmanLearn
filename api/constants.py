@@ -69,6 +69,6 @@ POST_ANALYSIS_SCORE_TYPE = [
 POST_SESSION_ANALYSIS_SCHEMA = [
     ResponseSchema(name="overall_comment", description="overall comment across all questions"),
     ResponseSchema(name="strengths", description="areas where the user has excelled"),
-    ResponseSchema(name="room_for_improvement", description="aresas the user can improve on"),
+    ResponseSchema(name="room_for_improvement", description="areas the user can improve on"),
     ResponseSchema(name="suggestions_for_improvement", description="suggestions to user on how to improve on explaining the concept"),
 ]
