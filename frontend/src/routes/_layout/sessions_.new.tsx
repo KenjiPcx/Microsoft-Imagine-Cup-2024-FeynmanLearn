@@ -458,25 +458,21 @@ function NewSessionConfigurationComponent() {
       </Stepper>
 
       {active < 4 && (
-        <div style={{ position: 'fixed', bottom: 30, left: 0, right: 0, padding: '20px'}}>
-          <Group style={{ justifyContent: 'space-between', maxWidth: '50vw', margin: '0 auto' }}>
-            {active > 0 ? (
-              <Button variant="light" color="gray" onClick={prevStep}>
-                Back
-              </Button>
-            ) : (
-              <div style={{ width: '86px' }} />
-            )}
-            <Button
-              variant="light"
-              color="blue"
-              onClick={nextStep}
-              disabled={loading !== -1}
-            >
-              {active >= 3 ? "Start Session" : "Next step"}
+        <Group mt="xl" position="apart">
+          {active > 0 ? (
+            <Button variant="light" color="gray" onClick={prevStep}>
+              Back
             </Button>
-          </Group>
-        </div>
+          ) : <div></div>}
+          <Button
+            variant="light"
+            color="blue"
+            onClick={nextStep}
+            disabled={loading !== -1}
+          >
+            {active >= 3 ? "Start Session" : "Next step"}
+          </Button>
+        </Group>
       )}
     </Stack>
   );
