@@ -16,6 +16,7 @@ import {
   Box,
   ScrollArea,
   Accordion,
+  Indicator,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { feedback } from "../../mock_data/mockPostSessionAnalysis";
@@ -51,13 +52,19 @@ function PostSessionAnalysisComponent() {
             backgroundColor: "rgba(40, 50, 63, 0.8)",
           }}
         >
-          <Box style={{ marginBottom: "20px", maxWidth: "800px" }}>
+          <Box mb={"20px"} style={{ maxWidth: "800px" }}>
             <Title order={3}>
               Well done for completing a Feynman session! 😁
             </Title>
             <Text size={"sm"} pt={5}>
               {feedback.qualitative_analysis.overall_comment}
             </Text>
+
+            <Indicator inline color={"yellow"} size={10} mt={"15px"}>
+              <Button variant={"light"} color={"blue"} size={"xs"}>
+                See Detailed Feedback
+              </Button>
+            </Indicator>
 
             <Box style={{ marginTop: "15px" }}>
               <Accordion>
@@ -139,12 +146,13 @@ function PostSessionAnalysisComponent() {
               </Text>
             )}
 
-            <Flex wrap={"wrap"} sx={{ maxWidth: "800px" }}>
+            <Flex wrap={"wrap"} sx={{ maxWidth: "600px" }}>
               {feedback.suggested_topics.map((topic: string) => (
                 <Button
-                  variant="light"
-                  color="blue"
+                  variant={"light"}
+                  color={"blue"}
                   style={{ marginTop: "10px", marginRight: "10px" }}
+                  size={"xs"}
                 >
                   {topic}
                 </Button>
