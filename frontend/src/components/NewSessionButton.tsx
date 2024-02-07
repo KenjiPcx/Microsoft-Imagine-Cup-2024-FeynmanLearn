@@ -1,5 +1,11 @@
-import { Button, createStyles } from "@mantine/core";
+import { Button, keyframes, createStyles } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
+
+const breathe = keyframes`
+  0% { transform: translate(0); filter: brightness(1); }
+  50% { transform: translate(0, -3px); filter: brightness(1.2); }
+  100% { transform: translate(0); filter: brightness(1); }
+`;
 
 const useStyles = createStyles((theme) => ({
   controls: {
@@ -20,6 +26,7 @@ const useStyles = createStyles((theme) => ({
       paddingRight: 18,
       flex: 1,
     },
+    animation: `${breathe} 6s ease-in-out infinite`,
   },
 }));
 

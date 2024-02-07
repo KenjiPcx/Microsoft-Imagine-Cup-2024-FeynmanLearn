@@ -459,9 +459,11 @@ function NewSessionConfigurationComponent() {
 
       {active < 4 && (
         <Group mt="xl" position="apart">
-          <Button variant="light" color="gray" onClick={prevStep}>
-            Back
-          </Button>
+          {active > 0 ? (
+            <Button variant="light" color="gray" onClick={prevStep}>
+              Back
+            </Button>
+          ) : <div></div>}
           <Button
             variant="light"
             color="blue"
