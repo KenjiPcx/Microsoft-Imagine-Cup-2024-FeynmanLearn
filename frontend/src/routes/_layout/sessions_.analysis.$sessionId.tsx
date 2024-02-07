@@ -235,12 +235,16 @@ function PostSessionAnalysisComponent() {
             onClose={closeQuestionFeedback}
             title={
               <Title order={3} mt={"10px"} mx={"10px"}>
-                Question Feedback
+                Feedback by Question
               </Title>
             }
             centered
             size={"850px"}
             radius={"lg"}
+            styles={{
+              header: { backgroundColor: "#242c3c" },
+              content: { backgroundColor: "#242c3c" },
+            }}
           >
             <Accordion p={"10px"}>
               {analysisByQuestionData.length > 1 &&
@@ -281,7 +285,6 @@ function PostSessionAnalysisComponent() {
                   }
                 )}
             </Accordion>
-            {/* {JSON.stringify(analysisByQuestionData)} */}
           </Modal>
         </>
       )}
