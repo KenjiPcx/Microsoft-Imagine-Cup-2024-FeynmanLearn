@@ -1,29 +1,3 @@
-export interface QualitativeAnalysis {
-  overall_comment: string;
-  strengths: string;
-  room_for_improvement: string;
-  suggestions_for_improvement: string;
-}
-
-export interface Scores {
-  clarity_score: number;
-  conciseness_score: number;
-  comprehensiveness_score: number;
-  correctness_score: number;
-  exemplification_score: number;
-  adaptation_score: number;
-  overall_score: number;
-}
-
-export interface Feedback {
-  concept_explored: string;
-  questions_asked: string[];
-  qualitative_analysis: QualitativeAnalysis;
-  scores: Scores;
-  suggested_topics: string[];
-  satisfactory_outcome: boolean;
-}
-
 export const feedback: Feedback = {
   concept_explored: "Algorithms",
   questions_asked: ["What is Merge Sort", "What is DFS"],

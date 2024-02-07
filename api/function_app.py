@@ -186,7 +186,7 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
         # Fetch the session data and process transcripts
         transcript = database_handler.get_transcript_by_question(user_id, question_id, session_id)
         if len(transcript) < 1:
-            return func.HttpResponse("Cannot find transcript by question_id", status_code=401)
+            return func.HttpResponse("Cannot find transcript by question_id", status_code=404)
 
         # Obtain transcript by question
         question_transcript = transcript[0]["session_transcript"]["question_transcript"]
@@ -200,7 +200,7 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
         session_analysis = session_data.get('session_analysis', [])
         check_if_analysis_exist = list(filter(lambda _: _['question_id'] == question_id, session_analysis))
         if len(check_if_analysis_exist) != 0:
-            return func.HttpResponse('Analysis already exist!', status_code=409)
+            return func.HttpResponse('Analysis already exist!', status_code=400)
 
         # Construct response schema and format instructions to use in prompt
         response_schemas = constants.QUESTION_RESPONSE_SCHEMARESPONSE_SCHEMA
@@ -270,7 +270,7 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         session_data = database_handler.get_analysis_by_session(user_id, session_id)
 
         if len(session_data) < 1:
-            return func.HttpResponse('Failed to get session data', status_code=401)
+            return func.HttpResponse('Failed to get session data', status_code=400)
 
         session_analysis = session_data[0].get('session_analysis', [])
         post_session_analysis = session_data[0].get('post_session_analysis', {})
@@ -278,9 +278,9 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
 
         # Error handling
         if len(session_analysis) == 0:
-            return func.HttpResponse('Session does not contain any analysis', status_code=401)
+            return func.HttpResponse('Session does not contain any analysis', status_code=404)
         if post_session_analysis != {}:
-            return func.HttpResponse('Post session analysis already exist', status_code=401)
+            return func.HttpResponse('Post session analysis already exist', status_code=400)
 
         # Aggregate scores across all questions
         scores = helper.get_overall_and_average_score_for_session(session_analysis)
