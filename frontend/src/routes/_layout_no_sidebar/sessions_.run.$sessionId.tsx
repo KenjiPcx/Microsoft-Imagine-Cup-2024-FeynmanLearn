@@ -3,10 +3,21 @@
 // Send Message to student agent
 
 import { FileRoute, redirect } from "@tanstack/react-router";
-import { Box, Drawer, Navbar, ScrollArea, Stack, Text, createStyles, Dialog, Group, Button, CloseButton } from "@mantine/core";
+import {
+  Box,
+  Drawer,
+  Navbar,
+  ScrollArea,
+  Stack,
+  Text,
+  createStyles,
+  Dialog,
+  Group,
+  Button,
+} from "@mantine/core";
 import TranscriptButton from "../../components/TranscriptButton";
 import { NavbarLink } from "../../components/NavbarLink";
-import { IconMessageCircle, IconSettings } from "@tabler/icons-react";
+import { IconMessageCircle, IconX } from "@tabler/icons-react";
 import { ResultReason } from "microsoft-cognitiveservices-speech-sdk";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
@@ -20,7 +31,6 @@ import { SessionErrorComponent } from "../../components/SessionErrorComponent";
 import { useDisclosure } from "@mantine/hooks";
 import { mockChatHistory } from "../../mock_data/mockChatHistoryData";
 import { notifications } from "@mantine/notifications";
-
 
 const useStyles = createStyles((theme) => ({
   wrapper: {
@@ -75,7 +85,6 @@ const useStyles = createStyles((theme) => ({
     },
   },
 }));
-
 
 export const Route = new FileRoute(
   "/_layout_no_sidebar/sessions/run/$sessionId"
@@ -257,14 +266,20 @@ function SessionComponent() {
         <Navbar.Section mt={"auto"}>
           <Stack m="auto" w="min-content">
             <NavbarLink
-              icon={CloseButton}
+              icon={IconX}
               tooltipLabel={"Quit Session"}
               tooltipPosition="right"
               onClick={toggle}
             />
           </Stack>
         </Navbar.Section>
-        <Dialog opened={opened} withCloseButton onClose={close} size="lg" radius="md">
+        <Dialog
+          opened={opened}
+          withCloseButton
+          onClose={close}
+          size="lg"
+          radius="md"
+        >
           <Text size="m" mb="xs" fw={500}>
             Do you really want to quit the session?
           </Text>
@@ -276,7 +291,8 @@ function SessionComponent() {
               gradient={{ from: "blue", to: "green" }}
               onClick={close}
             >
-              No</Button>
+              No
+            </Button>
             <Button
               size="xl"
               className={classes.control}
@@ -293,7 +309,7 @@ function SessionComponent() {
         justify="space-between"
         h={"85vh"}
         maw={"60%"}
-      // style={{ outline: "1px solid red" }}
+        // style={{ outline: "1px solid red" }}
       >
         <Text size={"xl"} align="center">
           {assistantMessage}
