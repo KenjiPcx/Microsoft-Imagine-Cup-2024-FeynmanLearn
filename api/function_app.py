@@ -191,11 +191,10 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
         # Obtain transcript by question
         question_transcript = transcript[0]["session_transcript"]["question_transcript"]
         audience_level = transcript[0]["student_persona"]
-        session_document_id = transcript[0]["id"]
         
         # Terminate if analysis is already generated for this question
         session_data = database_handler.sessions_container.read_item(
-            item=session_document_id, partition_key=user_id
+            item=session_id, partition_key=user_id
         )
         session_analysis = session_data.get('session_analysis', [])
         check_if_analysis_exist = list(filter(lambda _: _['question_id'] == question_id, session_analysis))
@@ -274,7 +273,6 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
 
         session_analysis = session_data[0].get('session_analysis', [])
         post_session_analysis = session_data[0].get('post_session_analysis', {})
-        session_document_id = session_data[0]["id"]
 
         # Error handling
         if len(session_analysis) == 0:
@@ -331,7 +329,7 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
 
         # Insert data into DB
         session_data = database_handler.sessions_container.read_item(
-            item=session_document_id, partition_key=user_id
+            item=session_id, partition_key=user_id
         )
         post_session_analysis = {
             'concept_explored': concept_explored,
@@ -343,7 +341,7 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         }
         session_data['post_session_analysis'] = post_session_analysis
         database_handler.sessions_container.replace_item(
-            item=session_document_id, body=session_data
+            item=session_id, body=session_data
         )
         logging.info(post_session_analysis)
         res = {"success": True, "user_data": post_session_analysis}
@@ -442,7 +440,6 @@ def get_session_summaries(req: func.HttpRequest) -> func.HttpResponse:
         return cosmos_404_error_response
     except Exception:
         return generic_server_error_response
-
 
 @app.route(route="verify_lesson_scope")
 def verify_lesson_scope(req: func.HttpRequest) -> func.HttpResponse:
