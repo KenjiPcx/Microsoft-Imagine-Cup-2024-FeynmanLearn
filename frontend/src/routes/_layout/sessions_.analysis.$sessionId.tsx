@@ -6,8 +6,20 @@
 // 5. Suggest next steps - resources to read, simpler concepts to explain
 
 import { FileRoute, redirect } from "@tanstack/react-router";
-import { Card, Text, Group, Title, Button, Flex, Box } from "@mantine/core";
+import {
+  Card,
+  Text,
+  Group,
+  Title,
+  Button,
+  Flex,
+  Box,
+  ScrollArea,
+  Accordion,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
+import { feedback } from "../../mock_data/mockPostSessionAnalysis";
+import { capitalizeFirstLetterForFeedback } from "../../utils/helper";
 
 export const Route = new FileRoute(
   "/_layout/sessions/analysis/$sessionId"
@@ -28,28 +40,11 @@ export const Route = new FileRoute(
 });
 
 function PostSessionAnalysisComponent() {
-  const session_feedback: string = `
-  You demonstrated strengths in using relevant analogies, technical
-  accuracy, identifying key properties, responsiveness to feedback,
-  and depth of understanding of concepts like eigenvalues and
-  eigenvectors. The main gap was the lack of details and examples
-  in explanations, but you improved significantly in these areas
-  through the session. Good job!`;
-
-  const session_score: number = 5;
-  const session_topic: string = "Diffusion models";
-  const session_game_mode: string = "Game mode";
-  const recommended_topics: string[] = [
-    "Computer Vision",
-    "Generative Adversarial Networks (GAN)",
-    "Generative Pre-trained Transformer (GPT)",
-  ];
-
   return (
     <>
       <Flex gap={"20px"}>
         <Card
-          padding={"60px"}
+          padding={"50px"}
           radius={"lg"}
           style={{
             backdropFilter: "blur(10px)",
@@ -60,47 +55,103 @@ function PostSessionAnalysisComponent() {
             <Title order={3}>
               Well done for completing a Feynman session! 😁
             </Title>
-            <Text>{session_feedback}</Text>
-          </Box>
-          <Box style={{ marginBottom: "20px" }}>
-            <Group style={{ margin: "md" }}>
-              <Text size={"lg"}>Score</Text>
-              <Text size={"lg"} weight={"bold"}>
-                {session_score}
-              </Text>
-            </Group>
+            <Text size={"sm"} pt={5}>
+              {feedback.qualitative_analysis.overall_comment}
+            </Text>
 
-            <Group style={{ margin: "md" }}>
-              <Text size={"lg"}>Topic</Text>
-              <Text size={"lg"} weight={"bold"}>
-                {session_topic}
-              </Text>
-            </Group>
-
-            <Group style={{ margin: "md" }}>
-              <Text size={"lg"}>Game</Text>
-              <Text size={"lg"} weight={"bold"}>
-                {session_game_mode}
-              </Text>
-            </Group>
+            <Box style={{ marginTop: "15px" }}>
+              <Accordion>
+                <Accordion.Item value={"1"} ml={"-10px"}>
+                  <Accordion.Control>
+                    <Group style={{ margin: "md" }}>
+                      <Text size={"lg"}>Concept Explored 🔍</Text>
+                      <Text size={"lg"} weight={"bold"}>
+                        {feedback.concept_explored}
+                      </Text>
+                    </Group>
+                  </Accordion.Control>
+                  <Accordion.Panel ml={"5px"}>
+                    {feedback.questions_asked.map((question) => {
+                      return <Text size={"sm"}>{question}</Text>;
+                    })}
+                  </Accordion.Panel>
+                </Accordion.Item>
+                <Accordion.Item value={"2"} ml={"-10px"}>
+                  <Accordion.Control>
+                    <Group style={{ margin: "md" }}>
+                      <Text size={"lg"}>Overall Score ⭐</Text>
+                      <Text size={"lg"} weight={"bold"}>
+                        {feedback.scores.overall_score}
+                      </Text>
+                    </Group>
+                  </Accordion.Control>
+                  <Accordion.Panel ml={"5px"}>
+                    <ScrollArea h={150} type={"hover"}>
+                      <Box pr={"15px"}>
+                        <Group mb={"15px"}>
+                          {Object.entries(feedback.scores)
+                            .filter(([key]) => key !== "overall_score")
+                            .map(([key, value]) => (
+                              <Text key={key} size={"md"}>
+                                {`${capitalizeFirstLetterForFeedback(key).replace(/_/g, " ")}: ${value}`}
+                              </Text>
+                            ))}
+                        </Group>
+                        <Box my={"15px"}>
+                          <Title order={5}>What went well! 💪</Title>
+                          <Text size={"sm"}>
+                            {feedback.qualitative_analysis.strengths}
+                          </Text>
+                        </Box>
+                        <Box my={"15px"}>
+                          <Title order={5}>Room for improvement 🚧</Title>
+                          <Text size={"sm"}>
+                            {feedback.qualitative_analysis.strengths}
+                          </Text>
+                        </Box>
+                        <Box my={"15px"}>
+                          <Title order={5}>What you could do 💡</Title>
+                          <Text size={"sm"}>
+                            {
+                              feedback.qualitative_analysis
+                                .suggestions_for_improvement
+                            }
+                          </Text>
+                        </Box>
+                      </Box>
+                    </ScrollArea>
+                  </Accordion.Panel>
+                </Accordion.Item>
+              </Accordion>
+            </Box>
           </Box>
 
           <Box>
-            <Text size={"md"}>
-              Perhaps you might want to look into these topics next...
-            </Text>
+            {feedback.satisfactory_outcome && (
+              <Text size={"md"}>
+                Perhaps you might want to look into these topics next...
+              </Text>
+            )}
+            {!feedback.satisfactory_outcome && (
+              <Text size={"md"}>
+                Consider these topics to strengthen your foundational
+                knowledge...
+              </Text>
+            )}
 
-            <Flex wrap={"wrap"} gap={"sm"} max-width={"200px"}>
-              {recommended_topics.map((topic: string) => (
-                <Button variant="light" color="blue" style={{ marginTop: 14 }}>
+            <Flex wrap={"wrap"} sx={{ maxWidth: "800px" }}>
+              {feedback.suggested_topics.map((topic: string) => (
+                <Button
+                  variant="light"
+                  color="blue"
+                  style={{ marginTop: "10px", marginRight: "10px" }}
+                >
                   {topic}
                 </Button>
               ))}
             </Flex>
           </Box>
         </Card>
-
-        {/* TODO: Add line by line commetary of the feedback */}
       </Flex>
     </>
   );
