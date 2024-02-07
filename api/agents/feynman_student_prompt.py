@@ -1,6 +1,7 @@
 from typing import Literal
 from langchain.prompts import PromptTemplate
 from langchain.output_parsers import PydanticOutputParser
+from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.pydantic_v1 import BaseModel, Field
 
 base_student_prompt = """
@@ -44,7 +45,7 @@ class FeynmanResponse(BaseModel):
     )
 
 
-feynman_student_prompt_parser = PydanticOutputParser(pydantic_object=FeynmanResponse)
+feynman_student_prompt_parser = JsonOutputParser(pydantic_object=FeynmanResponse)
 
 feynman_student_prompt_template = PromptTemplate(
     template=base_student_prompt,
