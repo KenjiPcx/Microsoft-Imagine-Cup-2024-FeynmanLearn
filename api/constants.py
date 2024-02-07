@@ -42,7 +42,7 @@ Audience (Adaptation to audience's Level)
 5: The explanation is exceptionally well-adapted to the audience's level, using language and concepts tailored to the audience's understanding, making it accessible and engaging for audiences at any level.
 """
 
-RESPONSE_SCHEMA = [
+QUESTION_RESPONSE_SCHEMA = [
     ResponseSchema(name="clarity_score", description="score of clarity of learner's explanation"),
     ResponseSchema(name="clarity_explanation", description="explanation of clarity score given"),
     ResponseSchema(name="conciseness_score", description="score of conciseness of learner's explanation"),
@@ -55,4 +55,20 @@ RESPONSE_SCHEMA = [
     ResponseSchema(name="exemplification_explanation", description="explanation on exemplification score given"),
     ResponseSchema(name="adaptation_score", description="score of how well learner adapts explanation"),
     ResponseSchema(name="adaptation_explanation", description="explanation of adaptation score given"),
+]
+
+POST_ANALYSIS_SCORE_TYPE = [
+    "clarity_score",
+    "conciseness_score",
+    "comprehensiveness_score",
+    "correctness_score",
+    "exemplification_score",
+    "adaptation_score"
+]
+
+POST_SESSION_ANALYSIS_SCHEMA = [
+    ResponseSchema(name="overall_comment", description="overall comment across all questions"),
+    ResponseSchema(name="strengths", description="areas where the user has excelled"),
+    ResponseSchema(name="room_for_improvement", description="areas the user can improve on"),
+    ResponseSchema(name="suggestions_for_improvement", description="suggestions to user on how to improve on explaining the concept"),
 ]
