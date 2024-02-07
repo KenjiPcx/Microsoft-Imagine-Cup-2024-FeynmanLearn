@@ -8,3 +8,4 @@ export const SEND_MESSAGE_ENDPOINT = `${baseUrl}/send_message`;
 export const VERIFY_LESSON_SCOPE_ENDPOINT = `${baseUrl}/verify_lesson_scope`;
 export const CREATE_QUESTION_ANALYSIS = `${baseUrl}/analyze_question_response`;
 export const CREATE_POST_SESSION_ANALYSIS = `${baseUrl}/analyze_session`;
+export const GET_POST_SESSION_ANALYSIS = `${baseUrl}/get_post_session_analysis`;
