@@ -1,12 +1,11 @@
-import * as React from "react";
-import { Outlet, FileRoute } from "@tanstack/react-router";
+import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { useDisclosure } from "@mantine/hooks";
 import Sidebar from "../components/Sidebar";
 import SettingsModal from "../components/SettingsModal";
 import LayoutContainer from "../components/LayoutContainer";
 import { useAuth } from "../utils/auth";
 
-export const Route = new FileRoute("/_layout").createRoute({
+export const Route = createFileRoute("/_layout")({
   component: LayoutComponent,
 });
 

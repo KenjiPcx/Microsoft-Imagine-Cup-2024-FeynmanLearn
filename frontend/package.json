@@ -20,8 +20,8 @@
     "@mantine/modals": "<7.0.0",
     "@mantine/notifications": "<7.0.0",
     "@tabler/icons-react": "^2.44.0",
-    "@tanstack/react-router": "^1.0.5",
-    "@tanstack/router-devtools": "^1.0.5",
+    "@tanstack/react-router": "^1.15.23",
+    "@tanstack/router-devtools": "^1.15.23",
     "@types/lodash": "^4.14.202",
     "axios": "^1.6.3",
     "framer-motion": "^11.0.3",
@@ -33,7 +33,7 @@
     "recoil": "^0.7.7"
   },
   "devDependencies": {
-    "@tanstack/router-vite-plugin": "^1.14.1",
+    "@tanstack/router-vite-plugin": "^1.15.22",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@types/react-speech-recognition": "^3.9.5",

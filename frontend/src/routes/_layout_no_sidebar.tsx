@@ -1,7 +1,7 @@
-import { Outlet, FileRoute } from "@tanstack/react-router";
+import { Outlet, createFileRoute } from "@tanstack/react-router";
 import LayoutContainer from "../components/LayoutContainer";
 
-export const Route = new FileRoute("/_layout_no_sidebar").createRoute({
+export const Route = createFileRoute("/_layout_no_sidebar")({
   component: LayoutNoSidebarComponent,
 });
 

@@ -1,31 +1,12 @@
 // Here is where we select the sessions based on a user's history
 
-import * as React from "react";
-import { FileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
-import {
-  SessionSummary,
-  fetchSessionSummaries,
-} from "../../utils/sessionsService";
-import { Box, Button, Center, NavLink, SimpleGrid, Stack } from "@mantine/core";
-import {
-  Title,
-  Flex,
-  Image,
-  Card,
-  Skeleton,
-  Container,
-  Text,
-  useMantineTheme,
-} from "@mantine/core";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { notifications } from "@mantine/notifications";
-import SessionSummaryCard from "../../components/SessionSummaryCard";
-import { mockSessionsSummaries } from "../../mock_data/mockSessionSummaryData";
-import NewSessionButton from "../../components/NewSessionButton";
+import { fetchSessionSummaries } from "../../utils/sessionsService";
 
-export const Route = new FileRoute("/_layout/sessions").createRoute({
-  // loader: async ({ context }) =>
-  //   fetchSessionSummaries(context.auth.getUserId()),
-  component: SessionsComponent,
+export const Route = createFileRoute("/_layout/sessions")({
+  loader: async ({ context }) =>
+    fetchSessionSummaries(context.auth.getUserId()),
   beforeLoad: ({ context }) => {
     if (!context.auth.isAuthenticated) {
       notifications.show({
@@ -39,45 +20,3 @@ export const Route = new FileRoute("/_layout/sessions").createRoute({
     }
   },
 });
-
-function SessionsComponent() {
-  // const data = Route.useLoaderData();
-  // const sessionSummaries = data.sessions;
-  const sessionSummaries = [];
-  console.log(sessionSummaries, "sessionSummaries");
-
-  return (
-    <Box w={"60vw"}>
-      {sessionSummaries.length === 0 ? (
-        <Center>
-          <Stack spacing={"xl"}>
-            <Text size={"xl"} fw={"bolder"} align="center">
-              No sessions found
-            </Text>
-            <NewSessionButton />
-          </Stack>
-        </Center>
-      ) : (
-        <SimpleGrid
-          cols={3}
-          spacing={"xl"}
-          breakpoints={[
-            { maxWidth: "md", cols: 3, spacing: "md" },
-            { maxWidth: "sm", cols: 2, spacing: "sm" },
-            { maxWidth: "xs", cols: 1, spacing: "sm" },
-          ]}
-        >
-          {sessionSummaries.map((session, key) => (
-            <SessionSummaryCard
-              key={key}
-              id={session.id}
-              label={session.lesson_concept}
-              image_url={session.image_url}
-              last_date_attempt={session.last_date_attempt}
-            />
-          ))}
-        </SimpleGrid>
-      )}
-    </Box>
-  );
-}
