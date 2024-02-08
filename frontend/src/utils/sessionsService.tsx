@@ -1,8 +1,18 @@
 import axios from "axios";
 import {
+  GET_POST_SESSION_ANALYSIS_ENDPOINT,
   GET_SESSION_DATA_ENDPOINT,
   GET_SESSION_SUMMARIES_ENDPOINT,
 } from "../backendEndpoints";
+
+export type Transcript = {
+  user: string;
+  assistant: {
+    message: string;
+    emotion: "happy" | "neutral" | "confused";
+    internal_thoughts: string;
+  };
+};
 
 export type Session = {
   id: string;
@@ -13,14 +23,7 @@ export type Session = {
   student_persona: string;
   session_plan: string;
   prompt: string;
-  transcripts: Array<{
-    user: string;
-    assistant: {
-      message: string;
-      emotion: "happy" | "confused";
-      internal_thoughts: string;
-    };
-  }>;
+  transcripts: Transcript[];
   thread_id: string;
   image_url?: string;
   _rid?: string;
@@ -45,6 +48,30 @@ export type GetSessionResponse = {
 export type GetSessionSummariesResponse = {
   sessions: SessionSummary[];
   session_count: number;
+  success: boolean;
+};
+
+export type SessionMetadata = {
+  lesson_concept: string;
+  lesson_objectives: string;
+  game_mode: string;
+  student_persona: string;
+};
+
+export type GetSessionAnalysisResponse = {
+  session_metadata: SessionMetadata;
+  post_session_analysis: {
+    overall_score: number;
+    session_passed: boolean;
+    assessment_summary: string;
+    general_assessment: string;
+    knowledge_gaps: string[];
+    constructive_feedback: string;
+    easier_topics: string[];
+    similar_topics: string[];
+    objective_reached: boolean;
+  };
+  annotated_transcripts: Transcript[];
   success: boolean;
 };
 
@@ -86,6 +113,31 @@ export const fetchSessionSummaries = async (userId: string) => {
   } catch (err) {
     if (err.response.status === 404) {
       throw new SessionNotFoundError(`Session not found!`);
+    }
+    throw err;
+  }
+};
+
+export const fetchSessionAnalysis = async (
+  sessionId: string,
+  userId: string
+) => {
+  const data = {
+    session_id: sessionId,
+    user_id: userId,
+  };
+
+  try {
+    const sessionAnalysis = await axios.post<GetSessionAnalysisResponse>(
+      GET_POST_SESSION_ANALYSIS_ENDPOINT,
+      data
+    );
+    return sessionAnalysis.data;
+  } catch (err) {
+    if (err.response.status === 404) {
+      throw new SessionNotFoundError(
+        `Session with id "${sessionId}" not found!`
+      );
     }
     throw err;
   }

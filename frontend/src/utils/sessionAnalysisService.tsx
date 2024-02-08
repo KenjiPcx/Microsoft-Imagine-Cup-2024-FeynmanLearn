@@ -2,7 +2,7 @@ import axios from "axios";
 import {
   CREATE_POST_SESSION_ANALYSIS,
   CREATE_QUESTION_ANALYSIS,
-  GET_POST_SESSION_ANALYSIS,
+  GET_POST_SESSION_ANALYSIS_ENDPOINT,
 } from "../backendEndpoints";
 
 export type CreatePostSessionAnalysisRequest = {
@@ -167,7 +167,7 @@ export const getPostSessionAnalysis = async (
 
   try {
     const analysis = await axios.post<GetPostSessionAnalysisResponse>(
-      GET_POST_SESSION_ANALYSIS,
+      GET_POST_SESSION_ANALYSIS_ENDPOINT,
       data
     );
     return analysis.data.post_session_analysis_data;
