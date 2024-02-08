@@ -6,7 +6,7 @@ import { FileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { Box, Drawer, Navbar, ScrollArea, Stack, Text } from "@mantine/core";
 import TranscriptButton from "../../components/TranscriptButton";
 import { NavbarLink } from "../../components/NavbarLink";
-import { IconCheck, IconMessageCircle, IconX } from "@tabler/icons-react";
+import { IconCheck, IconCross, IconMessageCircle, IconX } from "@tabler/icons-react";
 import { ResultReason } from "microsoft-cognitiveservices-speech-sdk";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
@@ -67,8 +67,8 @@ function SessionComponent() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const baseData = {
-    user_id: "Azure",
-    session_id: "a763d853-4345-4017-8265-2151c63c67ba",
+    user_id: "KenjiPcx",
+    session_id: "3dbf279a-0f4e-4616-a78f-262c0b54256f",
     // user_id: session.session_data.user_id,
     // session_id: session.session_data.id,
   };
@@ -89,8 +89,7 @@ function SessionComponent() {
 
   const closeSession = async () => {
     console.log("Closing session");
-    return;
-    // Run Joshua's code here to process the session
+    // return;
 
     try {
       const notificationId = "process-session";
@@ -98,31 +97,43 @@ function SessionComponent() {
         id: notificationId,
         loading: true,
         title: "Analyzing session",
-        message: "Session is being processed, this may take a minute, feel free to grab a coffee, don't close this tab",
+        message:
+          "Session is being processed, this may take a minute, feel free to grab a coffee, don't close this tab",
         autoClose: false,
         withCloseButton: false,
       });
-      const res = await axios.post(CREATE_POST_SESSION_ANALYSIS);
+      const res = await axios.post(CREATE_POST_SESSION_ANALYSIS, baseData);
+      if (res.status === 200) {
+        notifications.update({
+          id: notificationId,
+          color: "teal",
+          title: "Data was loaded",
+          message: "Redirecting to the analysis page",
+          icon: <IconCheck size="1rem" />,
+          autoClose: 2000,
+        });
+        setTimeout(() => {
+          navigate({
+            to: "/sessions/analysis/$sessionId",
+            params: { sessionId: session.session_data.id },
+          });
+        }, 3000);
+        return 
+      }
       notifications.update({
         id: notificationId,
-        color: "teal",
-        title: "Data was loaded",
-        message: "Redirecting to the analysis page",
-        icon: <IconCheck size="1rem" />,
+        color: "red",
+        title: "Error",
+        message: "Error processing the session, please try again later",
+        icon: <IconCross size="1rem" />,
         autoClose: 2000,
       });
-      setTimeout(() => {
-        navigate({
-          to: "/sessions/analysis/$sessionId",
-          params: { sessionId: session.session_data.id },
-        });
-      }, 3000);
     } catch (err) {
       console.error("Error", err);
       notifications.show({
         color: "red",
         title: "Error",
-        message: "There was an error processing the session",
+        message: "Error processing the session, please try again later",
       });
     }
   };
