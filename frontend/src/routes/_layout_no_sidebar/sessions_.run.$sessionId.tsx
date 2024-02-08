@@ -3,21 +3,10 @@
 // Send Message to student agent
 
 import { FileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import {
-  Box,
-  Drawer,
-  Navbar,
-  ScrollArea,
-  Stack,
-  Text,
-  createStyles,
-  Dialog,
-  Group,
-  Button,
-} from "@mantine/core";
+import { Box, Drawer, Navbar, ScrollArea, Stack, Text } from "@mantine/core";
 import TranscriptButton from "../../components/TranscriptButton";
 import { NavbarLink } from "../../components/NavbarLink";
-import { IconMessageCircle, IconX } from "@tabler/icons-react";
+import { IconCheck, IconMessageCircle, IconX } from "@tabler/icons-react";
 import { ResultReason } from "microsoft-cognitiveservices-speech-sdk";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
@@ -25,7 +14,10 @@ import { useDebounce } from "../../utils/hooks";
 import { isRecognizingState } from "../../recoil";
 import { useRecoilState } from "recoil";
 import { playMessage, speechRecognizer } from "../../utils/speech";
-import { SEND_MESSAGE_ENDPOINT } from "../../backendEndpoints";
+import {
+  CREATE_POST_SESSION_ANALYSIS,
+  SEND_MESSAGE_ENDPOINT,
+} from "../../backendEndpoints";
 import { fetchSession } from "../../utils/sessionsService";
 import { SessionErrorComponent } from "../../components/SessionErrorComponent";
 import { useDisclosure } from "@mantine/hooks";
@@ -77,6 +69,7 @@ function SessionComponent() {
   const baseData = {
     user_id: "Azure",
     session_id: "a763d853-4345-4017-8265-2151c63c67ba",
+    // user_id: session.session_data.user_id,
     // session_id: session.session_data.id,
   };
 
@@ -94,14 +87,44 @@ function SessionComponent() {
       onConfirm: () => closeSession(),
     });
 
-  const closeSession = () => {
+  const closeSession = async () => {
     console.log("Closing session");
     return;
     // Run Joshua's code here to process the session
-    navigate({
-      to: "/sessions/analysis/$sessionId",
-      params: { sessionId: session.session_data.id },
-    });
+
+    try {
+      const notificationId = "process-session";
+      notifications.show({
+        id: notificationId,
+        loading: true,
+        title: "Analyzing session",
+        message: "Session is being processed, this may take a minute, feel free to grab a coffee, don't close this tab",
+        autoClose: false,
+        withCloseButton: false,
+      });
+      const res = await axios.post(CREATE_POST_SESSION_ANALYSIS);
+      notifications.update({
+        id: notificationId,
+        color: "teal",
+        title: "Data was loaded",
+        message: "Redirecting to the analysis page",
+        icon: <IconCheck size="1rem" />,
+        autoClose: 2000,
+      });
+      setTimeout(() => {
+        navigate({
+          to: "/sessions/analysis/$sessionId",
+          params: { sessionId: session.session_data.id },
+        });
+      }, 3000);
+    } catch (err) {
+      console.error("Error", err);
+      notifications.show({
+        color: "red",
+        title: "Error",
+        message: "There was an error processing the session",
+      });
+    }
   };
 
   const debouncedUserTalk = useDebounce(async (newRecognizedText: string) => {
