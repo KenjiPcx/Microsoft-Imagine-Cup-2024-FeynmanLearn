@@ -573,6 +573,13 @@ def get_post_session_analysis(req: func.HttpRequest) -> func.HttpResponse:
         )
         res = {
             "success": True,
+            "session_metadata": {
+                "lesson_concept": session_data["lesson_concept"],
+                "lesson_objectives": session_data["lesson_objectives"],
+                "game_mode": session_data["game_mode"],
+                "student_persona": session_data["student_persona"],
+                "last_date_attempt": session_data["last_date_attempt"],
+            },
             "post_session_analysis": session_data["post_session_analysis"],
             "annotated_transcripts": session_data["transcripts"],
         }
