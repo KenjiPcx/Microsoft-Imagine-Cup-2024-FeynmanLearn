@@ -7,30 +7,24 @@
 
 import { FileRoute, Link, redirect } from "@tanstack/react-router";
 import {
-  Card,
   Text,
-  Group,
   Title,
   Button,
   Flex,
   Box,
   ScrollArea,
-  Accordion,
-  Indicator,
-  Skeleton,
-  Modal,
   Stack,
   Paper,
   Center,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useEffect, useState } from "react";
-import { useDisclosure } from "@mantine/hooks";
+import { useState } from "react";
 import { fetchSessionAnalysis } from "../../utils/sessionsService";
 import { SessionErrorComponent } from "../../components/SessionErrorComponent";
 import { mockPostSessionAnalysis } from "../../mock_data/mockPostSessionAnalysis";
 import LineByLineFeedback from "../../components/post_session_analysis/LineByLineFeedback";
 import SessionMetadataCard from "../../components/post_session_analysis/SessionMetadata";
+import { getRandomColor } from "../../utils/style_helper";
 
 export const Route = new FileRoute(
   "/_layout/sessions/analysis/$sessionId"
@@ -57,7 +51,20 @@ function PostSessionAnalysisComponent() {
   // const analysis = Route.useLoaderData();
   const analysis = mockPostSessionAnalysis;
   console.log(analysis);
-  const [error, setError] = useState(false);
+  const { post_session_analysis, session_metadata, annotated_transcripts } =
+    analysis;
+  const {
+    assessment_summary,
+    general_assessment,
+    overall_score,
+    objective_reached,
+    easier_topics,
+    similar_topics,
+    session_passed,
+    knowledge_gaps,
+    constructive_feedback,
+  } = post_session_analysis;
+  const haveKnowledgeGaps = knowledge_gaps.length > 0;
 
   return (
     <ScrollArea h={"80vh"} offsetScrollbars>
@@ -66,30 +73,81 @@ function PostSessionAnalysisComponent() {
           <Title order={2} color="blue">
             Session Overview
           </Title>
-          Overview, summary + score + objectives completed
+          <Paper radius={"lg"} p={"xs"} mt={"lg"}>
+            <Stack p={"md"} spacing={"xs"}>
+              <Text>{assessment_summary}</Text>
+              <Text>{general_assessment}</Text>
+              <Text>Overall Score: {overall_score}</Text>
+              <Text>Session Passed: {session_passed ? "True" : "False"}</Text>
+              <Text>
+                Objectives Reached: {objective_reached ? "True" : "False"}
+              </Text>
+            </Stack>
+          </Paper>
         </Box>
         <Box>
           <Title order={2} color="blue">
-            Identified Knowledge Gaps
+            Knowledge Gaps
           </Title>
-          Knowledge gaps + Easier topics
+          <Paper radius={"lg"} p={"xs"} mt={"lg"}>
+            <Stack p={"md"} spacing={"xs"}>
+              {haveKnowledgeGaps ? (
+                <>
+                  <Text>{knowledge_gaps}</Text>
+                  <Flex p={"md"} wrap={"wrap"} gap={"xl"} justify={"center"}>
+                    {easier_topics.map((topic, key) => (
+                      <Button
+                        key={`similar-topic-${key}`}
+                        component={Link}
+                        to={"/sessions/new"}
+                        search={{ topic: topic }}
+                        color={getRandomColor()}
+                      >
+                        {topic}
+                      </Button>
+                    ))}
+                  </Flex>
+                </>
+              ) : (
+                "None found, great job! 😊"
+              )}
+            </Stack>
+          </Paper>
         </Box>
 
         <SessionMetadataCard session_metadata={analysis.session_metadata} />
 
         <Box>
           <Title order={2} color="blue">
-            Session Metadata
+            Constructive Feedback
           </Title>
-          Constructive feedback
+          <Paper radius={"lg"} p={"xs"} mt={"lg"}>
+            <Stack p={"md"} spacing={"xs"}>
+              {constructive_feedback}
+            </Stack>
+          </Paper>
         </Box>
 
         <LineByLineFeedback transcripts={analysis.annotated_transcripts} />
         <Box>
           <Title order={2} color="blue">
-            Session Metadata
+            Try teaching these topics
           </Title>
-          Similar topics
+          <Paper radius={"lg"} p={"xs"} mt={"lg"}>
+            <Flex p={"md"} wrap={"wrap"} gap={"xl"} justify={"center"}>
+              {similar_topics.map((topic, key) => (
+                <Button
+                  key={`similar-topic-${key}`}
+                  component={Link}
+                  to={"/sessions/new"}
+                  search={{ topic: topic }}
+                  color={getRandomColor()}
+                >
+                  {topic}
+                </Button>
+              ))}
+            </Flex>
+          </Paper>
         </Box>
 
         <Center>

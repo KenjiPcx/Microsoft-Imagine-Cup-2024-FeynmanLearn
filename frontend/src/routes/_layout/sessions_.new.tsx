@@ -41,6 +41,11 @@ import { useAuth } from "../../utils/auth";
 
 export const Route = new FileRoute("/_layout/sessions/new").createRoute({
   component: NewSessionConfigurationComponent,
+  validateSearch: (search) => {
+    return {
+      topic: (search.topic as string) || "",
+    }
+  },
   beforeLoad: ({ context }) => {
     if (!context.auth.isAuthenticated) {
       notifications.show({
@@ -139,6 +144,7 @@ function NewSessionConfigurationComponent() {
   const [createSessionMsg, setCreateSessionMsg] = useState(
     "Creating session..."
   );
+  const { topic } = Route.useSearch();
 
   const nextStep = async () => {
     if (form.validate().hasErrors) {
@@ -272,7 +278,7 @@ function NewSessionConfigurationComponent() {
 
   const form = useForm<NewSessionConfigurationForm>({
     initialValues: {
-      lessonConcept: "",
+      lessonConcept: topic,
       lessonObjectives: "",
       // referenceUrl: "",
       // referenceType: "",
