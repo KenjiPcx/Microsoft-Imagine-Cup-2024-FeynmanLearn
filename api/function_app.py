@@ -18,6 +18,8 @@ import constants
 
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
 from langchain_openai import ChatOpenAI
+from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
+
 from agents.feynman_student_prompt_v6 import (
     feynman_student_prompt_template,
     feynman_student_prompt_parser,
@@ -25,6 +27,10 @@ from agents.feynman_student_prompt_v6 import (
 from agents.lesson_verification_prompt import (
     verify_lesson_prompt_template,
     verify_lesson_parser,
+)
+from agents.post_session_analysis_prompts import (
+    analyze_transcripts_prompt_template,
+    analyze_transcripts_parser,
 )
 from agents.assistant_ids import feynman_assistant_id
 from error_responses import (
@@ -256,13 +262,104 @@ def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
 def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("analyze_session HTTP trigger function processed a request.")
 
+    try:
+        req_body = req.get_json()
+        user_id = req_body.get("user_id")
+        session_id = req_body.get("session_id")
+
+        # Fetch the session data and process analysis
+        session_data = database_handler.sessions_container.read_item(
+            item=session_id, partition_key=user_id
+        )
+
+        transcripts = session_data.get("transcripts")
+
+        if len(transcripts) == 0:
+            return func.HttpResponse(
+                "Session does not contain any transcripts", status_code=404
+            )
+
+        # Process the transcripts
+        formatted_transcript = ""
+        confused_sections, happy_sections = 0, 0
+        for transcript in transcripts:
+            user_msg = transcript.get("user")
+            assistant_res = transcript.get("assistant")
+            assistant_msg = assistant_res.get("message")
+            assistant_emotion = assistant_res.get("emotion")
+
+            # Group happy and confused sections
+            if assistant_emotion == "confused":
+                confused_sections += 1
+            elif assistant_emotion == "happy":
+                happy_sections += 1
+
+            # Add transcript to formatted_transcript
+            formatted_transcript += f"User: {user_msg}\nStudent: {assistant_msg} (emotion={assistant_emotion})\n"
+
+        # Calculate the overall score
+        overall_score = int((happy_sections / len(transcripts)) * 100)
+
+        # Call the LLM to generate the post session analysis
+        chain = (
+            analyze_transcripts_prompt_template
+            | langchain_llm
+            | analyze_transcripts_parser
+        )
+        output = chain.invoke(
+            {
+                "concept": session_data["lesson_concept"],
+                "objectives": session_data["lesson_objectives"],
+                "student_persona": session_data["student_persona"],
+                "transcripts": formatted_transcript,
+            }
+        )
+
+        post_session_analysis = {
+            "overall_score": overall_score,
+            "session_passed": overall_score >= 0.5,
+            "assessment_summary": output.general_assessment_summary,
+            "general_assessment": output.general_assessment,
+            "knowledge_gaps": output.knowledge_gaps,
+            "constructive_feedback": output.constructive_feedback,
+            "easier_topics": output.easier_topics,
+            "similar_topics": output.similar_topics,
+            "objective_reached": output.objective_reached,
+        }
+
+        # Save post session analysis to the session data
+        session_data["post_session_analysis"] = post_session_analysis
+        session_data["image_prompt"] = output.image_prompt
+
+        database_handler.sessions_container.replace_item(
+            item=session_id, body=session_data
+        )
+
+        # Generate the image over here and save it to the session data
+        image_url = DallEAPIWrapper().run(output.image_prompt)
+        session_data["image_url"] = image_url
+
+        database_handler.sessions_container.replace_item(
+            item=session_id, body=session_data
+        )
+
+        return func.HttpResponse(json.dumps(post_session_analysis), status_code=200)
+
+    except ValueError:
+        # Handle JSON parsing error
+        return value_error_response
+    except CosmosResourceNotFoundError:
+        return cosmos_404_error_response
+    except Exception:
+        return generic_server_error_response
+
+
+@app.route(route="analyze_session_v2")
+def analyze_session_v2(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("analyze_session HTTP trigger function processed a request.")
+
     # # Some dall e code from ventus
     # dalle_api_wrapper = DallEAPIWrapper()
-
-    # # # loop through sessions and generate image based on each sessions
-    # for session in sessions:
-    #     student_persona = session.get("student_persona", "")
-    #     concept = session.get("concept","")
 
     #     # Create a prompt for the current session
     #     dall_e_prompt = f"Can you create an image to illustrate a student having the following persona: {student_persona}, while learning: {concept}"
@@ -464,6 +561,36 @@ def verify_lesson_scope(req: func.HttpRequest) -> func.HttpResponse:
 @app.route(route="get_post_session_analysis")
 def get_post_session_analysis(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("get_post_session_analysis HTTP trigger function processed a request.")
+
+    try:
+        req_body = req.get_json()
+        session_id = req_body.get("session_id")
+        user_id = req_body.get("user_id")
+
+        session_data = database_handler.sessions_container.read_item(
+            item=session_id, partition_key=user_id
+        )
+        res = {
+            "success": True,
+            "post_session_analysis": session_data["post_session_analysis"],
+            "annotated_transcripts": session_data["transcripts"],
+        }
+        return func.HttpResponse(json.dumps(res), status_code=200)
+
+    except ValueError:
+        # Handle JSON parsing error
+        return value_error_response
+    except CosmosResourceNotFoundError:
+        return cosmos_404_error_response
+    except Exception:
+        return generic_server_error_response
+
+
+@app.route(route="get_post_session_analysis_v2")
+def get_post_session_analysis_v2(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info(
+        "get_post_session_analysis_v2 HTTP trigger function processed a request."
+    )
 
     try:
         req_body = req.get_json()
