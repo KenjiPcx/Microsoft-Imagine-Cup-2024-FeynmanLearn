@@ -3,6 +3,7 @@ import os
 import uuid
 import logging
 import helper
+import time
 
 import azure.functions as func
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
@@ -330,6 +331,7 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         # Save post session analysis to the session data
         session_data["post_session_analysis"] = post_session_analysis
         session_data["image_prompt"] = output.image_prompt
+        session_data["last_date_attempt"] = time.time()
 
         database_handler.sessions_container.replace_item(
             item=session_id, body=session_data
