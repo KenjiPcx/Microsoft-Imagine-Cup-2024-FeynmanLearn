@@ -2,9 +2,10 @@ import axios from "axios";
 import {
   CREATE_POST_SESSION_ANALYSIS,
   CREATE_QUESTION_ANALYSIS,
+  GET_POST_SESSION_ANALYSIS,
 } from "../backendEndpoints";
 
-export type CreatePostSessionAnaysisRequest = {
+export type CreatePostSessionAnalysisRequest = {
   session_id: string;
   user_id: string;
 };
@@ -49,17 +50,17 @@ export const createPostSessionAnalysis = async (
   session_id: string,
   user_id: string
 ) => {
-  const data: CreatePostSessionAnaysisRequest = {
+  const data: CreatePostSessionAnalysisRequest = {
     session_id: session_id,
     user_id: user_id,
   };
 
   try {
-    const session = await axios.post<CreatePostSessionAnalysisResponse>(
+    const analysis = await axios.post<CreatePostSessionAnalysisResponse>(
       CREATE_POST_SESSION_ANALYSIS,
       data
     );
-    return session.data;
+    return analysis.data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
       const status = err.response?.status;
@@ -115,11 +116,11 @@ export const createQuestionAnalysis = async (
   };
 
   try {
-    const session = await axios.post<CreateQuestionAnalysisResponse>(
+    const analysis = await axios.post<CreateQuestionAnalysisResponse>(
       CREATE_QUESTION_ANALYSIS,
       data
     );
-    return session.data;
+    return analysis.data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
       const status = err.response?.status;
@@ -135,6 +136,46 @@ export const createQuestionAnalysis = async (
       if (status === 400 || status === 404) {
         throw new SessionAnalysisError(message);
       }
+    }
+    throw err;
+  }
+};
+
+export type GetPostSessionAnalysisRequest = CreatePostSessionAnalysisRequest;
+
+export type GetPostSessionAnalysisResponse = {
+  success: boolean;
+  post_session_analysis_data: PostSessionAnalysisData;
+};
+
+export type PostSessionAnalysis = CreatePostSessionAnalysisResponse;
+export type AnalysisByQuestion = CreateQuestionAnalysisResponse;
+
+export type PostSessionAnalysisData = {
+  analysis_by_question: AnalysisByQuestion[];
+  post_session_analysis: PostSessionAnalysis;
+};
+
+export const getPostSessionAnalysis = async (
+  user_id: string,
+  session_id: string
+) => {
+  const data: GetPostSessionAnalysisRequest = {
+    session_id: session_id,
+    user_id: user_id,
+  };
+
+  try {
+    const analysis = await axios.post<GetPostSessionAnalysisResponse>(
+      GET_POST_SESSION_ANALYSIS,
+      data
+    );
+    return analysis.data.post_session_analysis_data;
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response?.status === 400) {
+      throw new SessionAnalysisError(
+        `Session with id "${session_id}" not found.`
+      );
     }
     throw err;
   }
