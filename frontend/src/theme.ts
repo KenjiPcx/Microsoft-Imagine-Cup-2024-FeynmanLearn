@@ -24,7 +24,7 @@ export const theme = {
       (string | undefined)?,
     ]
   >,
-  primaryColor: "convoscopeBlue",
+  primaryColor: "blue",
 
   defaultGradient: {
     from: "hsla(174, 78%, 49%, 1)",
