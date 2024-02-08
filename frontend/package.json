@@ -17,6 +17,7 @@
     "@mantine/core": "<7.0.0",
     "@mantine/form": "<7.0.0",
     "@mantine/hooks": "<7.0.0",
+    "@mantine/modals": "<7.0.0",
     "@mantine/notifications": "<7.0.0",
     "@tabler/icons-react": "^2.44.0",
     "@tanstack/react-router": "^1.0.5",
