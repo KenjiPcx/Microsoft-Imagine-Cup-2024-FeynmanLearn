@@ -67,6 +67,13 @@ function IndexComponent() {
             Login with GitHub
           </Button>
         )}
+        <Button
+          component={Link}
+          to={"/sessions/run/$sessionId"}
+          params={{ sessionId: "3dbf279a-0f4e-4616-a78f-262c0b54256f" }}
+        >
+          Navigate to run session for dev purposes
+        </Button>
       </Group>
     </Stack>
   );

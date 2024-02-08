@@ -2,7 +2,7 @@
 // Basically App.tsx is run here
 // Send Message to student agent
 
-import { FileRoute, redirect } from "@tanstack/react-router";
+import { FileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import {
   Box,
   Drawer,
@@ -31,60 +31,7 @@ import { SessionErrorComponent } from "../../components/SessionErrorComponent";
 import { useDisclosure } from "@mantine/hooks";
 import { mockChatHistory } from "../../mock_data/mockChatHistoryData";
 import { notifications } from "@mantine/notifications";
-
-const useStyles = createStyles((theme) => ({
-  wrapper: {
-    position: "relative",
-    boxSizing: "border-box",
-  },
-  inner: {
-    position: "relative",
-    paddingTop: 200,
-    paddingBottom: 120,
-    [`@media (max-width: ${theme.breakpoints.sm}px)`]: {
-      paddingBottom: 80,
-      paddingTop: 80,
-    },
-  },
-  title: {
-    fontFamily: `Greycliff CF, ${theme.fontFamily}`,
-    fontSize: 62,
-    fontWeight: 900,
-    lineHeight: 1.1,
-    margin: 0,
-    padding: 0,
-    color:
-      theme.colorScheme === "dark" ? theme.colors.white : theme.colors.black,
-    [`@media (max-width: ${theme.breakpoints.sm}px)`]: {
-      fontSize: 42,
-      lineHeight: 1.2,
-    },
-  },
-  description: {
-    marginTop: theme.spacing.xl,
-    fontSize: 24,
-    [`@media (max-width: ${theme.breakpoints.sm}px)`]: {
-      fontSize: 18,
-    },
-  },
-  controls: {
-    marginTop: theme.spacing.xl,
-    [`@media (max-width: ${theme.breakpoints.sm}px)`]: {
-      marginTop: theme.spacing.xl,
-    },
-  },
-  control: {
-    height: 44,
-    paddingLeft: 32,
-    paddingRight: 32,
-    [`@media (max-width: ${theme.breakpoints.sm}px)`]: {
-      height: 54,
-      paddingLeft: 18,
-      paddingRight: 18,
-      flex: 1,
-    },
-  },
-}));
+import { modals } from "@mantine/modals";
 
 export const Route = new FileRoute(
   "/_layout_no_sidebar/sessions/run/$sessionId"
@@ -114,6 +61,7 @@ type Message = {
 
 function SessionComponent() {
   const session = Route.useLoaderData();
+  const navigate = useNavigate();
 
   const [userMessage, setUserMessage] = useState("");
   const [assistantMessage, setAssistantMessage] = useState("");
@@ -132,11 +80,28 @@ function SessionComponent() {
     // session_id: session.session_data.id,
   };
 
-  const [opened, { toggle, close }] = useDisclosure(false);
-  const { classes } = useStyles();
+  const openExitSessionModal = () =>
+    modals.openConfirmModal({
+      title: "Exit Session",
+      centered: true,
+      children: (
+        <Text size="md">Are you sure you want to exit the session?</Text>
+      ),
+
+      labels: { confirm: "Exit Session", cancel: "Back" },
+      confirmProps: { color: "blue" },
+      onCancel: () => console.log("Cancel"),
+      onConfirm: () => closeSession(),
+    });
 
   const closeSession = () => {
-    console.log("Session closed");
+    console.log("Closing session");
+    return;
+    // Run Joshua's code here to process the session
+    navigate({
+      to: "/sessions/analysis/$sessionId",
+      params: { sessionId: session.session_data.id },
+    });
   };
 
   const debouncedUserTalk = useDebounce(async (newRecognizedText: string) => {
@@ -261,49 +226,14 @@ function SessionComponent() {
                 }, 500);
               }}
             />
-          </Stack>
-        </Navbar.Section>
-        <Navbar.Section mt={"auto"}>
-          <Stack m="auto" w="min-content">
             <NavbarLink
               icon={IconX}
               tooltipLabel={"Quit Session"}
               tooltipPosition="right"
-              onClick={toggle}
+              onClick={openExitSessionModal}
             />
           </Stack>
         </Navbar.Section>
-        <Dialog
-          opened={opened}
-          withCloseButton
-          onClose={close}
-          size="lg"
-          radius="md"
-        >
-          <Text size="m" mb="xs" fw={500}>
-            Do you really want to quit the session?
-          </Text>
-          <Group align="center">
-            <Button
-              size="xl"
-              className={classes.control}
-              variant="gradient"
-              gradient={{ from: "blue", to: "green" }}
-              onClick={close}
-            >
-              No
-            </Button>
-            <Button
-              size="xl"
-              className={classes.control}
-              variant="gradient"
-              gradient={{ from: "blue", to: "red" }}
-              onClick={closeSession}
-            >
-              Yes
-            </Button>
-          </Group>
-        </Dialog>
       </Navbar>
       <Stack
         justify="space-between"
