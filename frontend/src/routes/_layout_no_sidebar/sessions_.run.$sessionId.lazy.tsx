@@ -2,10 +2,7 @@
 // Basically App.tsx is run here
 // Send Message to student agent
 
-import {
-  createLazyFileRoute,
-  useNavigate,
-} from "@tanstack/react-router";
+import { createLazyFileRoute, useNavigate } from "@tanstack/react-router";
 import { Box, Drawer, Navbar, ScrollArea, Stack, Text } from "@mantine/core";
 import TranscriptButton from "../../components/TranscriptButton";
 import { NavbarLink } from "../../components/NavbarLink";
@@ -31,6 +28,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { mockChatHistory } from "../../mock_data/mockChatHistoryData";
 import { notifications } from "@mantine/notifications";
 import { modals } from "@mantine/modals";
+import CountdownTimer from "../../components/Countdown";
 
 export const Route = createLazyFileRoute(
   "/_layout_no_sidebar/sessions/run/$sessionId"
@@ -77,15 +75,19 @@ function SessionComponent() {
       labels: { confirm: "Exit Session", cancel: "Back" },
       confirmProps: { color: "blue" },
       onCancel: () => console.log("Cancel"),
-      onConfirm: () => closeSession(),
+      onConfirm: async () => await closeSession("user_quit"),
     });
 
-  const closeSession = async () => {
+  const closeSession = async (termination_reason: string) => {
     console.log("Closing session");
     // return;
 
     try {
       const notificationId = "process-session";
+      const data = {
+        ...baseData,
+        termination_reason,
+      };
       notifications.show({
         id: notificationId,
         loading: true,
@@ -95,7 +97,7 @@ function SessionComponent() {
         autoClose: false,
         withCloseButton: false,
       });
-      const res = await axios.post(CREATE_POST_SESSION_ANALYSIS, baseData);
+      const res = await axios.post(CREATE_POST_SESSION_ANALYSIS, data);
       if (res.status === 200) {
         notifications.update({
           id: notificationId,
@@ -147,7 +149,25 @@ function SessionComponent() {
       return;
       setRecognizing(false);
       handleUserMessage(userMsg);
+      const notificationId = "send-message";
+      notifications.show({
+        id: notificationId,
+        loading: true,
+        title: "Agent is thinking",
+        message:
+          "Agent is processing your lesson, give it a quick break, it should take a few seconds",
+        autoClose: false,
+        withCloseButton: false,
+      });
       const res = await axios.post(SEND_MESSAGE_ENDPOINT, data);
+      notifications.update({
+        id: notificationId,
+        color: "teal",
+        title: "Agent has got a response",
+        message: "Agent is gonna speak now",
+        icon: <IconCheck size="1rem" />,
+        autoClose: 2000,
+      });
       handleAssistantResponse(res.data.message);
     } catch (err) {
       console.log("Error", err);
@@ -307,6 +327,19 @@ function SessionComponent() {
         ))}
         <div ref={scrollRef}></div>
       </Drawer>
+      <Box p={"xl"} sx={{ position: "absolute", top: 0, right: 0 }}>
+        <CountdownTimer
+          minutes={1}
+          onTimeUp={async () => {
+            notifications.show({
+              title: "Time's up",
+              message: "Session has ended",
+              color: "red",
+            });
+            await closeSession("timeout");
+          }}
+        />
+      </Box>
     </>
   );
 }
