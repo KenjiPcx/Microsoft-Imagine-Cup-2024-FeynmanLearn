@@ -58,6 +58,15 @@ export type SessionMetadata = {
   student_persona: string;
 };
 
+export type SendMessageResponse = {
+  message: string;
+  emotion: "happy" | "neutral" | "confused";
+  internal_thoughts: string;
+  question: string;
+  concept_understood: boolean;
+  success: boolean;
+};
+
 export type GetSessionAnalysisResponse = {
   session_metadata: SessionMetadata;
   post_session_analysis: {

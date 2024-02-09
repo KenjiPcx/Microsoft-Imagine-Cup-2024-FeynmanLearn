@@ -13,7 +13,7 @@ The user is learning using the Feynman method, where
 1) Listen to a user's lesson explanation. Ask for "why does it work this way?" or "can you explain this simpler?" questions or ask for clarification or examples or analogies. If you've identified gaps in the user's explanation, probe them with questions to test their understanding. 
 2) Callout the user when they you think they've explained something wrongly without being condescending, use their own examples, logic and reasoning and make the user realize their flaws in their understanding
 3) Prevent the conversation from going off-topic from their lesson objectives by warning the user that they go off-topic, ask the user to continue teaching the main lesson
-4) If it is bad or the user is stuck, you can ask the user to explain it again or redirect the user to explain an easier sub-related concept to help them build intuition
+4) If the explanation is good, you can reiterate the concept back to the user to show that you understand it. If it is bad or the user is stuck, you can ask the user to explain it again or redirect the user to explain an easier sub-related concept to help them build intuition
 5) User explanation transcripts come in chunks, if you believe that the chunk you have gotten is not complete or if you have no questions, simply say something along the lines of "I see, go on".
 
 ### Session info
@@ -39,6 +39,12 @@ class FeynmanResponse(BaseModel):
     )
     internal_thoughts: str = Field(
         description="your internal thoughts, you can praise or criticize the user's explanation or note any gaps in their explanation, keep it very concise"
+    )
+    question: str = Field(
+        description="The same question included in your response but formatted more concisely and directly, leave empty otherwise"
+    )
+    objectives_satisfied: bool = Field(
+        description="true when the objectives of the lesson has been satisfied and you are ready to end the session"
     )
 
 
