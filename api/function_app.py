@@ -153,12 +153,14 @@ def send_message(req: func.HttpRequest) -> func.HttpResponse:
         )
         output = assistant.invoke({"content": message, "thread_id": thread_id})
         assistant_res = output.return_values["output"]
-        assistant_res = json.loads(assistant_res)
+        assistant_res = feynman_student_prompt_parser.parse(assistant_res)
 
         # Update session data
         session_data["transcripts"].append(
             {"user": message, "assistant": assistant_res}
         )
+        if assistant_res["objectives_satisfied"]:
+            session_data["concept_understood"] = True
         database_handler.sessions_container.upsert_item(body=session_data)
 
         # Build the response
@@ -166,6 +168,8 @@ def send_message(req: func.HttpRequest) -> func.HttpResponse:
             "message": assistant_res["message"],
             "emotion": assistant_res["emotion"],
             "internal_thoughts": assistant_res["internal_thoughts"],
+            "question": assistant_res["question"],
+            "concept_understood": assistant_res["objectives_satisfied"],
             "success": True,
         }
         return func.HttpResponse(json.dumps(res), status_code=200)
@@ -267,6 +271,8 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         req_body = req.get_json()
         user_id = req_body.get("user_id")
         session_id = req_body.get("session_id")
+        termination_reason = req_body.get("termination_reason")
+        session_duration = req_body.get("session_duration")
 
         # Fetch the session data and process analysis
         session_data = database_handler.sessions_container.read_item(
@@ -331,6 +337,9 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         # Save post session analysis to the session data
         session_data["post_session_analysis"] = post_session_analysis
         session_data["image_prompt"] = output.image_prompt
+        session_data["termination_reason"] = termination_reason
+        session_duration = time.strftime("%M:%S", time.gmtime(int(session_duration)))
+        session_data["session_duration"] = session_duration
         session_data["last_date_attempt"] = time.time()
 
         database_handler.sessions_container.replace_item(
@@ -581,6 +590,8 @@ def get_post_session_analysis(req: func.HttpRequest) -> func.HttpResponse:
                 "game_mode": session_data["game_mode"],
                 "student_persona": session_data["student_persona"],
                 "last_date_attempt": session_data["last_date_attempt"],
+                "session_duration": session_data["session_duration"],
+                "termination_reason": session_data["termination_reason"],
             },
             "post_session_analysis": session_data["post_session_analysis"],
             "annotated_transcripts": session_data["transcripts"],

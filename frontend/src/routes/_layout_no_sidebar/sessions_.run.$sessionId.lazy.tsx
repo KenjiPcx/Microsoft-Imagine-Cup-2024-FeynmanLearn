@@ -29,6 +29,7 @@ import { mockChatHistory } from "../../mock_data/mockChatHistoryData";
 import { notifications } from "@mantine/notifications";
 import { modals } from "@mantine/modals";
 import CountdownTimer from "../../components/Countdown";
+import { SendMessageResponse } from "../../utils/sessionsService";
 
 export const Route = createLazyFileRoute(
   "/_layout_no_sidebar/sessions/run/$sessionId"
@@ -45,12 +46,18 @@ type Message = {
 function SessionComponent() {
   const session = Route.useLoaderData();
   const navigate = useNavigate();
+  const startTime = new Date().getTime();
 
   const [userMessage, setUserMessage] = useState("");
   const [assistantMessage, setAssistantMessage] = useState("");
   const [recognizing, setRecognizing] = useRecoilState(isRecognizingState);
   const [userMessageCache, setUserMessageCache] = useState<string[]>([]);
-  const [chatHistory, setChatHistory] = useState<Message[]>(mockChatHistory);
+  const [chatHistory, setChatHistory] = useState<Message[]>([]);
+  const [assistantEmotion, setAssistantEmotion] = useState<
+    "happy" | "neutral" | "confused"
+  >("neutral");
+  const [conceptUnderstood, setConceptUnderstood] = useState(false);
+  const [questions, setQuestions] = useState<string[]>([]);
   const [
     chatHistoryOpened,
     { open: openChatHistory, close: closeChatHistory },
@@ -80,6 +87,7 @@ function SessionComponent() {
 
   const closeSession = async (termination_reason: string) => {
     console.log("Closing session");
+    const session_duration = new Date().getTime() - startTime;
     // return;
 
     try {
@@ -87,6 +95,7 @@ function SessionComponent() {
       const data = {
         ...baseData,
         termination_reason,
+        session_duration,
       };
       notifications.show({
         id: notificationId,
@@ -146,7 +155,7 @@ function SessionComponent() {
 
     try {
       console.log(data);
-      return;
+      // return;
       setRecognizing(false);
       handleUserMessage(userMsg);
       const notificationId = "send-message";
@@ -159,7 +168,10 @@ function SessionComponent() {
         autoClose: false,
         withCloseButton: false,
       });
-      const res = await axios.post(SEND_MESSAGE_ENDPOINT, data);
+      const res = await axios.post<SendMessageResponse>(
+        SEND_MESSAGE_ENDPOINT,
+        data
+      );
       notifications.update({
         id: notificationId,
         color: "teal",
@@ -168,7 +180,7 @@ function SessionComponent() {
         icon: <IconCheck size="1rem" />,
         autoClose: 2000,
       });
-      handleAssistantResponse(res.data.message);
+      handleAssistantResponse(res.data);
     } catch (err) {
       console.log("Error", err);
     }
@@ -185,30 +197,42 @@ function SessionComponent() {
     setUserMessage("");
   };
 
-  const handleAssistantResponse = (asstResp: string) => {
-    setAssistantMessage(asstResp);
+  const handleAssistantResponse = (asstResp: SendMessageResponse) => {
+    const { message, concept_understood, question, emotion } = asstResp;
+    setAssistantMessage(message);
+    setAssistantEmotion(emotion);
+    if (question) {
+      setQuestions((questions) => [...questions, question]);
+    }
     setChatHistory((chatHistory) => {
       chatHistory.push({
         role: "assistant",
-        message: asstResp,
+        message: message,
       });
       return chatHistory;
     });
-    playMessage(asstResp, () => {
+    playMessage(message, () => {
       setRecognizing(true);
       setAssistantMessage("");
+      if (conceptUnderstood) {
+        setConceptUnderstood(concept_understood);
+      }
     });
   };
 
   useEffect(() => {
-    // const assistantStartMessage =
-    //   session.session_data.transcripts[0].assistant.message;
-    // setAssistantMessage(assistantStartMessage);
-    // setRecognizing(false);
-    // playMessage(assistantStartMessage, () => {
-    //   setAssistantMessage("");
-    //   setRecognizing(true);
-    // });
+    const assistantStartMessage =
+      session.session_data.transcripts[0].assistant.message;
+    setAssistantMessage(assistantStartMessage);
+    setRecognizing(false);
+    chatHistory.push({
+      role: "assistant",
+      message: assistantStartMessage,
+    });
+    playMessage(assistantStartMessage, () => {
+      setAssistantMessage("");
+      setRecognizing(true);
+    });
     speechRecognizer.recognizing = (s, e) => {
       setUserMessage(e.result.text);
       console.log(`RECOGNIZING: Text=${e.result.text}`);
@@ -245,6 +269,17 @@ function SessionComponent() {
       behavior: "smooth",
     });
   }, [chatHistory]);
+
+  useEffect(() => {
+    if (conceptUnderstood) {
+      notifications.show({
+        title: "Concept Understood",
+        message: "Student has understood the concept, ending the session",
+        color: "green",
+      });
+      closeSession("concept_understood");
+    }
+  }, [conceptUnderstood]);
 
   return (
     <>
@@ -288,10 +323,13 @@ function SessionComponent() {
         maw={"60%"}
         // style={{ outline: "1px solid red" }}
       >
-        <Text size={"xl"} align="center">
+        <Text size={"lg"} align="center">
           {assistantMessage}
         </Text>
         <Text size={"xl"} align="center">
+          {questions[questions.length - 1]}
+        </Text>
+        <Text size={"lg"} align="center">
           {userMessage}
         </Text>
       </Stack>
@@ -328,17 +366,39 @@ function SessionComponent() {
         <div ref={scrollRef}></div>
       </Drawer>
       <Box p={"xl"} sx={{ position: "absolute", top: 0, right: 0 }}>
-        <CountdownTimer
-          minutes={1}
-          onTimeUp={async () => {
-            notifications.show({
-              title: "Time's up",
-              message: "Session has ended",
-              color: "red",
-            });
-            await closeSession("timeout");
-          }}
-        />
+        <Stack>
+          <CountdownTimer
+            minutes={10}
+            onTimeUp={async () => {
+              notifications.show({
+                title: "Time's up",
+                message: "Session has ended",
+                color: "red",
+              });
+              await closeSession("timeout");
+            }}
+          />
+          <Box>
+            <Text size={"lg"} fw={"bold"}>
+              Student status
+            </Text>
+            <Box>
+              <Text
+                size={"xl"}
+                fw={"bold"}
+                color={
+                  assistantEmotion === "happy"
+                    ? "green"
+                    : assistantEmotion === "confused"
+                      ? "orange"
+                      : "gray"
+                }
+              >
+                {assistantEmotion}
+              </Text>
+            </Box>
+          </Box>
+        </Stack>
       </Box>
     </>
   );
