@@ -78,10 +78,10 @@ function SessionComponent() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const baseData = {
-    user_id: "KenjiPcx",
-    session_id: "3dbf279a-0f4e-4616-a78f-262c0b54256f",
-    // user_id: session.session_data.user_id,
-    // session_id: session.session_data.id,
+    // user_id: "KenjiPcx",
+    // session_id: "fae5f009-7599-4740-9fbf-f79d7355071b",
+    user_id: session.session_data.user_id,
+    session_id: session.session_data.id,
   };
 
   const openExitSessionModal = () =>
@@ -124,7 +124,7 @@ function SessionComponent() {
         notifications.update({
           id: notificationId,
           color: "teal",
-          title: "Data was loaded",
+          title: "Analysis Completed",
           message: "Redirecting to the analysis page",
           icon: <IconCheck size="1rem" />,
           autoClose: 2000,
@@ -185,19 +185,30 @@ function SessionComponent() {
         SEND_MESSAGE_ENDPOINT,
         data
       );
-      notifications.update({
-        id: notificationId,
-        color: "teal",
-        title: "Agent has got a response",
-        message: "Agent is gonna speak now",
-        icon: <IconCheck size="1rem" />,
-        autoClose: 2000,
-      });
-      handleAssistantResponse(res.data);
+      if (res.status === 200) {
+        notifications.update({
+          id: notificationId,
+          color: "teal",
+          title: "Agent has got a response",
+          message: "Agent is gonna speak now",
+          icon: <IconCheck size="1rem" />,
+          autoClose: 2000,
+        });
+        handleAssistantResponse(res.data);
+      } else {
+        notifications.update({
+          id: notificationId,
+          color: "red",
+          title: "Error processing",
+          message: "There is a bug, please contact developer",
+          icon: <IconCross size="1rem" />,
+          autoClose: 2000,
+        });
+      }
     } catch (err) {
       console.log("Error", err);
     }
-  }, 7500);
+  }, 4000);
 
   const handleUserMessage = (userMsg: string) => {
     setChatHistory((chatHistory) => {
@@ -211,12 +222,16 @@ function SessionComponent() {
   };
 
   const handleAssistantResponse = (asstResp: SendMessageResponse) => {
-    const { message, concept_understood, question, emotion } = asstResp;
+    const {
+      message,
+      concept_understood: understood,
+      question,
+      emotion,
+    } = asstResp;
+
     setAssistantMessage(message);
     setAssistantEmotion(emotion);
-    if (question) {
-      setQuestions((questions) => [...questions, question]);
-    }
+    setQuestions((questions) => [...questions, question]);
     setChatHistory((chatHistory) => {
       chatHistory.push({
         role: "assistant",
@@ -227,11 +242,34 @@ function SessionComponent() {
     playMessage(message, () => {
       setRecognizing(true);
       setAssistantMessage("");
-      if (conceptUnderstood) {
-        setConceptUnderstood(concept_understood);
+      if (understood) {
+        notifications.show({
+          title: "Concept Understood",
+          message: "Student has understood the concept, ending the session",
+          color: "green",
+        });
+        closeSession("concept_understood");
       }
     });
   };
+
+  // const handleSideQuestionChainProcess = async () => {
+  //   const lastQuestion = questions[questions.length - 1];
+  //   const data = {
+  //     ...baseData,
+  //     message: lastQuestion,
+  //   };
+
+  //   try {
+  //     const res = await axios.post<SendMessageResponse>(
+  //       SEND_MESSAGE_ENDPOINT,
+  //       data
+  //     );
+  //     handleAssistantResponse(res.data);
+  //   } catch (err) {
+  //     console.log("Error", err);
+  //   }
+  // };
 
   useEffect(() => {
     speechRecognizer.recognizing = (s, e) => {
@@ -259,7 +297,7 @@ function SessionComponent() {
   useEffect(() => {
     if (introDone) {
       const assistantStartMessage =
-        session.session_data.transcripts[0].assistant.message;
+        session.session_data.session_transcripts[0].assistant.message;
       setAssistantMessage(assistantStartMessage);
       setRecognizing(false);
       chatHistory.push({
@@ -269,6 +307,11 @@ function SessionComponent() {
       playMessage(assistantStartMessage, () => {
         setAssistantMessage("");
         setRecognizing(true);
+      });
+      notifications.show({
+        title: "Session Started",
+        message: "Session has started, you have 10 minutes",
+        color: "green",
       });
     }
   }, [introDone]);
@@ -291,16 +334,7 @@ function SessionComponent() {
     });
   }, [chatHistory]);
 
-  useEffect(() => {
-    if (conceptUnderstood) {
-      notifications.show({
-        title: "Concept Understood",
-        message: "Student has understood the concept, ending the session",
-        color: "green",
-      });
-      closeSession("concept_understood");
-    }
-  }, [conceptUnderstood]);
+  useEffect(() => {}, [conceptUnderstood]);
 
   return (
     <>

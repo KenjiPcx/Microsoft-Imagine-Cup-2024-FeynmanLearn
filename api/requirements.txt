@@ -4,6 +4,7 @@
 
 azure-functions
 azure-cosmos
+azure-storage-blob
 openai
 langchain
 langchain_openai

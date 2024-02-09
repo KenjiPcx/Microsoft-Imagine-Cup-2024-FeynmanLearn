@@ -11,9 +11,9 @@ export const Route = createLazyFileRoute("/_layout/sessions")({
 });
 
 function SessionsComponent() {
-  // const data = Route.useLoaderData();
-  // const sessionSummaries = data.sessions;
-  const sessionSummaries = [];
+  const data = Route.useLoaderData();
+  const sessionSummaries = data.sessions;
+  // const sessionSummaries = [];
   console.log(sessionSummaries, "sessionSummaries");
 
   return (
@@ -42,7 +42,7 @@ function SessionsComponent() {
               key={key}
               id={session.id}
               label={session.lesson_concept}
-              image_url={session.image_url}
+              image_url={"ex"}
               last_date_attempt={session.last_date_attempt}
             />
           ))}
