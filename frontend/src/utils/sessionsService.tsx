@@ -23,7 +23,7 @@ export type Session = {
   student_persona: string;
   session_plan: string;
   prompt: string;
-  transcripts: Transcript[];
+  session_transcripts: Transcript[];
   thread_id: string;
   image_url?: string;
   _rid?: string;

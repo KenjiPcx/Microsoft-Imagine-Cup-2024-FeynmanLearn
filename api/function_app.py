@@ -63,19 +63,17 @@ def create_session(req: func.HttpRequest) -> func.HttpResponse:
         difficulty = req_body.get("difficulty")
         student_persona = req_body.get("student_persona")
 
-        # Hard code for now
-        lesson_concept = "Diffusion Models in AI"
-        lesson_objectives = "Understand the basic principles of diffusion models and be able to apply them to solve simple problems."
-        student_persona = "None"
-        game_mode = "Explain to a 5 year old - you will act as a 5 year old student, user needs to explain using very simple language and examples, otherwise you don't understand"
-        difficulty = "beginner - just ask really basic information"
-        student_persona = "None"
+        if game_mode == "Explain to a kid":
+            student_persona = "5 year old, you don't know a lot of things, if the user mentions something a 5 year old wouldn't know, you ask them to explain again in the words of a 5 year old. Additionally, " + student_persona
+
+        if student_persona == "":
+            student_persona = "None"
 
         feynman_student_instructions_prompt = feynman_student_prompt_template.format(
             concept=lesson_concept,
             objectives=lesson_objectives,
             game_mode=game_mode,
-            difficulty=difficulty,
+            # difficulty=difficulty,
             student_persona=student_persona,
         )
 
@@ -111,6 +109,7 @@ def create_session(req: func.HttpRequest) -> func.HttpResponse:
                     "assistant": assistant_output,
                 }
             ],
+            "objectives_satisfied": False,
             "thread_id": thread_id,
         }
         database_handler.sessions_container.create_item(body=session_data)
@@ -156,9 +155,10 @@ def send_message(req: func.HttpRequest) -> func.HttpResponse:
         assistant_res = feynman_student_prompt_parser.parse(assistant_res)
 
         # Update session data
-        session_data["transcripts"].append(
+        session_data["session_transcripts"].append(
             {"user": message, "assistant": assistant_res}
         )
+        # Add objective satisfied it doesnt exist
         if assistant_res["objectives_satisfied"]:
             session_data["concept_understood"] = True
         database_handler.sessions_container.upsert_item(body=session_data)
@@ -279,7 +279,7 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
             item=session_id, partition_key=user_id
         )
 
-        transcripts = session_data.get("transcripts")
+        transcripts = session_data.get("session_transcripts")
 
         if len(transcripts) == 0:
             return func.HttpResponse(
@@ -338,7 +338,10 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         session_data["post_session_analysis"] = post_session_analysis
         session_data["image_prompt"] = output.image_prompt
         session_data["termination_reason"] = termination_reason
-        session_duration = time.strftime("%M:%S", time.gmtime(int(session_duration)))
+        seconds = session_duration // 1000
+        minutes = seconds // 60
+        remaining_seconds = seconds % 60
+        session_duration = f"{minutes}m {remaining_seconds}s"
         session_data["session_duration"] = session_duration
         session_data["last_date_attempt"] = time.time()
 
@@ -594,7 +597,7 @@ def get_post_session_analysis(req: func.HttpRequest) -> func.HttpResponse:
                 "termination_reason": session_data["termination_reason"],
             },
             "post_session_analysis": session_data["post_session_analysis"],
-            "annotated_transcripts": session_data["transcripts"],
+            "annotated_transcripts": session_data["session_transcripts"],
         }
         return func.HttpResponse(json.dumps(res), status_code=200)
 

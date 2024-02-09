@@ -43,6 +43,7 @@ import {
   LessonVerificationResponse,
 } from "../../apiResponseTypes";
 import { useAuth } from "../../utils/auth";
+import { IconCheck, IconCross } from "@tabler/icons-react";
 
 export const Route = createLazyFileRoute("/_layout/sessions/new")({
   component: NewSessionConfigurationComponent,
@@ -221,13 +222,22 @@ function NewSessionConfigurationComponent() {
       lesson_objectives: form.values.lessonObjectives,
       game_mode: form.values.gameMode,
       difficulty: form.values.difficulty,
-      persona: form.values.persona,
+      student_persona: form.values.persona,
       user_id: auth.getUserId(),
     };
 
     try {
       setLoading(4);
       setActive((current) => (current < noOfSteps ? current + 1 : current));
+      const notificationId = "create-session-notification";
+      notifications.show({
+        id: notificationId,
+        loading: true,
+        title: "Creating session",
+        message: "Creating session, it will take a few moments",
+        autoClose: false,
+        withCloseButton: false,
+      });
       const res = await axios.post<CreateNewSessionResponse>(
         CREATE_SESSION_ENDPOINT,
         data
@@ -235,6 +245,14 @@ function NewSessionConfigurationComponent() {
       setLoading(-1);
       console.log(res.data);
       if (res.data.success) {
+        notifications.update({
+          id: notificationId,
+          color: "teal",
+          title: "Session Created Successfully!",
+          message: "Redirecting to the analysis page",
+          icon: <IconCheck size="1rem" />,
+          autoClose: 2000,
+        });
         setCreateSessionMsg("Session created successfully! Redirecting...");
         // Redirect to new session id after 1s
         setTimeout(() => {
@@ -242,13 +260,16 @@ function NewSessionConfigurationComponent() {
             to: "/sessions/run/$sessionId",
             params: { sessionId: res.data.session_id },
           });
-        }, 1000);
+        }, 2000);
         return;
       } else {
-        notifications.show({
-          title: "Error",
-          message: `Failed to create session. Please try again. ${res.data.error}`,
+        notifications.update({
+          id: notificationId,
           color: "red",
+          title: "Error Creating Session",
+          message: `Failed to create session, please contact developer. ${res.data.error}`,
+          icon: <IconCross size="1rem" />,
+          autoClose: 2000,
         });
         prevStep();
         return;

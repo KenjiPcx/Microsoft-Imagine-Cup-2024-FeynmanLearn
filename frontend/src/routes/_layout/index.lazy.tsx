@@ -57,7 +57,7 @@ function IndexComponent() {
         <Button
           component={Link}
           to={"/sessions/run/$sessionId"}
-          params={{ sessionId: "3dbf279a-0f4e-4616-a78f-262c0b54256f" }}
+          params={{ sessionId: "fae5f009-7599-4740-9fbf-f79d7355071b" }}
         >
           Navigate to run session for dev purposes
         </Button>
