@@ -3,7 +3,16 @@
 // Send Message to student agent
 
 import { createLazyFileRoute, useNavigate } from "@tanstack/react-router";
-import { Box, Drawer, Navbar, ScrollArea, Stack, Text } from "@mantine/core";
+import {
+  Box,
+  Button,
+  Drawer,
+  Modal,
+  Navbar,
+  ScrollArea,
+  Stack,
+  Text,
+} from "@mantine/core";
 import TranscriptButton from "../../components/TranscriptButton";
 import { NavbarLink } from "../../components/NavbarLink";
 import {
@@ -30,6 +39,7 @@ import { notifications } from "@mantine/notifications";
 import { modals } from "@mantine/modals";
 import CountdownTimer from "../../components/Countdown";
 import { SendMessageResponse } from "../../utils/sessionsService";
+import SessionIntroGuide from "../../components/SessionIntroGuide";
 
 export const Route = createLazyFileRoute(
   "/_layout_no_sidebar/sessions/run/$sessionId"
@@ -48,6 +58,7 @@ function SessionComponent() {
   const navigate = useNavigate();
   const startTime = new Date().getTime();
 
+  const [introDone, setIntroDone] = useState(false);
   const [userMessage, setUserMessage] = useState("");
   const [assistantMessage, setAssistantMessage] = useState("");
   const [recognizing, setRecognizing] = useRecoilState(isRecognizingState);
@@ -62,6 +73,8 @@ function SessionComponent() {
     chatHistoryOpened,
     { open: openChatHistory, close: closeChatHistory },
   ] = useDisclosure(false);
+  const [introModalOpened, { open: openIntroModal, close: closeIntroModal }] =
+    useDisclosure(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const baseData = {
@@ -221,18 +234,6 @@ function SessionComponent() {
   };
 
   useEffect(() => {
-    const assistantStartMessage =
-      session.session_data.transcripts[0].assistant.message;
-    setAssistantMessage(assistantStartMessage);
-    setRecognizing(false);
-    chatHistory.push({
-      role: "assistant",
-      message: assistantStartMessage,
-    });
-    playMessage(assistantStartMessage, () => {
-      setAssistantMessage("");
-      setRecognizing(true);
-    });
     speechRecognizer.recognizing = (s, e) => {
       setUserMessage(e.result.text);
       console.log(`RECOGNIZING: Text=${e.result.text}`);
@@ -247,10 +248,30 @@ function SessionComponent() {
         console.log(`RECOGNIZED: Text=${e.result.text}`);
       }
     };
+
+    openIntroModal();
+
     return () => {
       debouncedUserTalk.cancel();
     };
   }, []);
+
+  useEffect(() => {
+    if (introDone) {
+      const assistantStartMessage =
+        session.session_data.transcripts[0].assistant.message;
+      setAssistantMessage(assistantStartMessage);
+      setRecognizing(false);
+      chatHistory.push({
+        role: "assistant",
+        message: assistantStartMessage,
+      });
+      playMessage(assistantStartMessage, () => {
+        setAssistantMessage("");
+        setRecognizing(true);
+      });
+    }
+  }, [introDone]);
 
   useEffect(() => {
     if (recognizing) {
@@ -366,40 +387,69 @@ function SessionComponent() {
         <div ref={scrollRef}></div>
       </Drawer>
       <Box p={"xl"} sx={{ position: "absolute", top: 0, right: 0 }}>
-        <Stack>
-          <CountdownTimer
-            minutes={10}
-            onTimeUp={async () => {
-              notifications.show({
-                title: "Time's up",
-                message: "Session has ended",
-                color: "red",
-              });
-              await closeSession("timeout");
-            }}
-          />
-          <Box>
-            <Text size={"lg"} fw={"bold"}>
-              Student status
-            </Text>
+        {introDone && (
+          <Stack>
+            <CountdownTimer
+              minutes={10}
+              onTimeUp={async () => {
+                notifications.show({
+                  title: "Time's up",
+                  message: "Session has ended",
+                  color: "red",
+                });
+                await closeSession("timeout");
+              }}
+            />
             <Box>
-              <Text
-                size={"xl"}
-                fw={"bold"}
-                color={
-                  assistantEmotion === "happy"
-                    ? "green"
-                    : assistantEmotion === "confused"
-                      ? "orange"
-                      : "gray"
-                }
-              >
-                {assistantEmotion}
+              <Text size={"lg"} fw={"bold"}>
+                Emotion:
               </Text>
+              <Box>
+                <Text
+                  size={"xl"}
+                  fw={"bold"}
+                  color={
+                    assistantEmotion === "happy"
+                      ? "green"
+                      : assistantEmotion === "confused"
+                        ? "orange"
+                        : "white"
+                  }
+                >
+                  {assistantEmotion}
+                </Text>
+              </Box>
             </Box>
-          </Box>
-        </Stack>
+          </Stack>
+        )}
       </Box>
+      <Modal
+        opened={introModalOpened}
+        onClose={() => {
+          closeIntroModal();
+          setIntroDone(true);
+        }}
+        size="auto"
+        withCloseButton={false}
+        closeOnClickOutside={false}
+        closeOnEscape={false}
+        title="Tutorial 🚀"
+        centered
+      >
+        <SessionIntroGuide />
+        <Box mt={"sm"} p={"xs"}>
+          <Button
+            w={"100%"}
+            size="lg"
+            onClick={() => {
+              closeIntroModal();
+              setIntroDone(true);
+            }}
+          >
+            Start
+          </Button>
+        </Box>
+      </Modal>
     </>
   );
 }
