@@ -14,7 +14,7 @@ const SessionIntroGuide = () => {
           <List.Item>
             Session will end
             <List>
-              <List.Item>whenthe agent understands</List.Item>
+              <List.Item>when the agent understands</List.Item>
               <List.Item>or when you run out of time</List.Item>
               <List.Item>or when you voluntarily quit the session</List.Item>
             </List>
@@ -26,7 +26,7 @@ const SessionIntroGuide = () => {
         <Text size={"lg"} fw={"bold"}>
           Here is a quick UI guide 🎨
         </Text>
-        
+
         <List>
           <List.Item>
             On the left, there are 3 buttons
