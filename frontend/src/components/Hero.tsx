@@ -69,7 +69,7 @@ export function HeroTitle() {
         setCurrentWord(words[(words.indexOf(currentWord) + 1) % words.length]);
         setIsTransitioning(false);
       }, 700); // Half the interval time to change the word after fade out
-    }, 4000); // Interval for the whole cycle (fade out + change word + fade in)
+    }, 1000); // Interval for the whole cycle (fade out + change word + fade in)
 
     return () => clearInterval(intervalId); // Clean up on unmount
   }, [currentWord, words]);

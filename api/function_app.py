@@ -17,26 +17,26 @@ from langchain.agents.openai_assistant import OpenAIAssistantRunnable
 from langchain_openai import ChatOpenAI
 from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 
-from agents.feynman_student_prompt_v6 import (
-    feynman_student_prompt_template,
-    feynman_student_prompt_parser,
-)
-from agents.lesson_verification_prompt import (
-    verify_lesson_prompt_template,
-    verify_lesson_parser,
-)
-from agents.post_session_analysis_prompts import (
-    analyze_transcripts_prompt_template,
-    analyze_transcripts_parser,
-)
-from agents.assistant_ids import feynman_assistant_id
-from error_responses import (
-    cosmos_404_error_response,
-    generic_server_error_response,
-    value_error_response,
-)
+# from agents.feynman_student_prompt_v6 import (
+#     feynman_student_prompt_template,
+#     feynman_student_prompt_parser,
+# )
+# from agents.lesson_verification_prompt import (
+#     verify_lesson_prompt_template,
+#     verify_lesson_parser,
+# )
+# from agents.post_session_analysis_prompts import (
+#     analyze_transcripts_prompt_template,
+#     analyze_transcripts_parser,
+# )
+# from agents.assistant_ids import feynman_assistant_id
+# from error_responses import (
+#     cosmos_404_error_response,
+#     generic_server_error_response,
+#     value_error_response,
+# )
 
-from databaseHandler import DatabaseHandler
+# from databaseHandler import DatabaseHandler
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 

@@ -33,6 +33,7 @@
     "recoil": "^0.7.7"
   },
   "devDependencies": {
+    "@azure/static-web-apps-cli": "^1.1.6",
     "@tanstack/router-vite-plugin": "^1.15.22",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",

@@ -27,7 +27,7 @@ const devAuthData: AuthData = {
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [authData, setAuthData] = React.useState<AuthData | null>(null);
+  const [authData, setAuthData] = React.useState<AuthData | null>(devAuthData);
   const isAuthenticated = !!authData;
   const getUserId = () => {
     if (authData) {
