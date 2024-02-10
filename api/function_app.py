@@ -30,11 +30,11 @@ import azure.functions as func
 #     analyze_transcripts_parser,
 # )
 # from agents.assistant_ids import feynman_assistant_id
-# from error_responses import (
-#     cosmos_404_error_response,
-#     generic_server_error_response,
-#     value_error_response,
-# )
+from error_responses import (
+    cosmos_404_error_response,
+    generic_server_error_response,
+    value_error_response,
+)
 
 # from databaseHandler import DatabaseHandler
 
