@@ -7,44 +7,44 @@ import time
 import azure.functions as func
 
 # from azure.storage.blob import BlobServiceClient
-from azure.cosmos.exceptions import CosmosResourceNotFoundError
-from langchain_openai import ChatOpenAI
-from langchain.chat_models import ChatOpenAI
-from langchain_openai import ChatOpenAI
-import openai
+# from azure.cosmos.exceptions import CosmosResourceNotFoundError
+# from langchain_openai import ChatOpenAI
+# from langchain.chat_models import ChatOpenAI
+# from langchain_openai import ChatOpenAI
+# import openai
 
-from langchain.agents.openai_assistant import OpenAIAssistantRunnable
-from langchain_openai import ChatOpenAI
-from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
+# from langchain.agents.openai_assistant import OpenAIAssistantRunnable
+# from langchain_openai import ChatOpenAI
+# from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 
-from agents.feynman_student_prompt_v6 import (
-    feynman_student_prompt_template,
-    feynman_student_prompt_parser,
-)
-from agents.lesson_verification_prompt import (
-    verify_lesson_prompt_template,
-    verify_lesson_parser,
-)
-from agents.post_session_analysis_prompts import (
-    analyze_transcripts_prompt_template,
-    analyze_transcripts_parser,
-)
-from agents.assistant_ids import feynman_assistant_id
-from error_responses import (
-    cosmos_404_error_response,
-    generic_server_error_response,
-    value_error_response,
-)
+# from agents.feynman_student_prompt_v6 import (
+#     feynman_student_prompt_template,
+#     feynman_student_prompt_parser,
+# )
+# from agents.lesson_verification_prompt import (
+#     verify_lesson_prompt_template,
+#     verify_lesson_parser,
+# )
+# from agents.post_session_analysis_prompts import (
+#     analyze_transcripts_prompt_template,
+#     analyze_transcripts_parser,
+# )
+# from agents.assistant_ids import feynman_assistant_id
+# from error_responses import (
+#     cosmos_404_error_response,
+#     generic_server_error_response,
+#     value_error_response,
+# )
 
-from databaseHandler import DatabaseHandler
+# from databaseHandler import DatabaseHandler
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
-openai_key = os.getenv("OPENAI_API_KEY")
+# openai_key = os.getenv("OPENAI_API_KEY")
 # azure_blob_key = os.getenv("AZURE_BLOB_KEY")
-openai_client = openai.OpenAI(api_key=openai_key)
-langchain_llm = ChatOpenAI(api_key=openai_key, model="gpt-4-turbo-preview")
-database_handler = DatabaseHandler()
+# openai_client = openai.OpenAI(api_key=openai_key)
+# langchain_llm = ChatOpenAI(api_key=openai_key, model="gpt-4-turbo-preview")
+# database_handler = DatabaseHandler()
 # blob_service_client = BlobServiceClient.from_connection_string(azure_blob_key)
 
 # @app.route(route="create_session")
