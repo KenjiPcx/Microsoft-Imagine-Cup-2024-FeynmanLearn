@@ -44,7 +44,7 @@ openai_key = os.getenv("OPENAI_API_KEY")
 # azure_blob_key = os.getenv("AZURE_BLOB_KEY")
 openai_client = openai.OpenAI(api_key=openai_key)
 langchain_llm = ChatOpenAI(api_key=openai_key, model="gpt-4-turbo-preview")
-database_handler = DatabaseHandler()
+# database_handler = DatabaseHandler()
 # blob_service_client = BlobServiceClient.from_connection_string(azure_blob_key)
 
 # @app.route(route="create_session")
