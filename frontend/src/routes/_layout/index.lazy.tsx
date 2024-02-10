@@ -4,6 +4,9 @@ import { HeroTitle } from "../../components/Hero";
 import { useAuth } from "../../utils/auth";
 import { IconBrandGithub } from "@tabler/icons-react";
 import NewSessionButton from "../../components/NewSessionButton";
+import { useEffect } from "react";
+import axios from "axios";
+import { notifications } from "@mantine/notifications";
 
 const useStyles = createStyles((theme) => ({
   controls: {
@@ -60,6 +63,22 @@ function IndexComponent() {
           params={{ sessionId: "fae5f009-7599-4740-9fbf-f79d7355071b" }}
         >
           Navigate to run session for dev purposes
+        </Button>
+        <Button
+          onClick={async () => {
+            try {
+              const res = await axios.get("/api/say_hello");
+              console.log(res.data);
+              notifications.show({
+                title: "Success Hello",
+                message: res.data,
+              });
+            } catch (e) {
+              console.error(e);
+            }
+          }}
+        >
+          Get hello api
         </Button>
       </Group>
     </Stack>

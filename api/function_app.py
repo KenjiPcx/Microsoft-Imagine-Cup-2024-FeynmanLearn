@@ -45,6 +45,7 @@ langchain_llm = ChatOpenAI(api_key=openai_key, model="gpt-4-turbo-preview")
 database_handler = DatabaseHandler()
 blob_service_client = BlobServiceClient.from_connection_string(azure_blob_key)
 
+
 @app.route(route="create_session")
 def create_session(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("create_session HTTP trigger function processed a request.")
@@ -180,6 +181,7 @@ def send_message(req: func.HttpRequest) -> func.HttpResponse:
     except Exception:
         return generic_server_error_response
 
+
 @app.route(route="analyze_session")
 def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("analyze_session HTTP trigger function processed a request.")
@@ -285,6 +287,7 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
     except Exception:
         return generic_server_error_response
 
+
 @app.route(route="get_session_data")
 def get_session_data(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("get_session_data HTTP trigger function processed a request.")
@@ -339,9 +342,9 @@ def get_session_summaries(req: func.HttpRequest) -> func.HttpResponse:
         return generic_server_error_response
 
 
-@app.route(route="verify_lesson_scope")
-def verify_lesson_scope(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("verify_lesson_scope HTTP trigger function processed a request.")
+@app.route(route="say_hello")
+def say_hello(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("say_hello HTTP trigger function processed a request.")
 
     try:
         req_body = req.get_json()
@@ -357,6 +360,20 @@ def verify_lesson_scope(req: func.HttpRequest) -> func.HttpResponse:
             "feedback": llm_res.feedback,
             "suggestion": llm_res.suggestion,
             "success": True,
+        }
+        return func.HttpResponse(json.dumps(res), status_code=200)
+
+    except Exception:
+        return generic_server_error_response
+
+
+@app.route(route="say_hello")
+def say_hello(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("say_hello HTTP trigger function processed a request.")
+
+    try:
+        res = {
+            "message": "Hello, welcome to the Langchain API",
         }
         return func.HttpResponse(json.dumps(res), status_code=200)
 
