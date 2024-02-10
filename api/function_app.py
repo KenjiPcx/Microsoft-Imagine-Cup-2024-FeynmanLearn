@@ -6,7 +6,7 @@ import time
 
 import azure.functions as func
 
-from azure.storage.blob import BlobServiceClient
+# from azure.storage.blob import BlobServiceClient
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from langchain_openai import ChatOpenAI
 from langchain.chat_models import ChatOpenAI
@@ -41,7 +41,7 @@ from databaseHandler import DatabaseHandler
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
 openai_key = os.getenv("OPENAI_API_KEY")
-azure_blob_key = os.getenv("AZURE_BLOB_KEY")
+# azure_blob_key = os.getenv("AZURE_BLOB_KEY")
 openai_client = openai.OpenAI(api_key=openai_key)
 langchain_llm = ChatOpenAI(api_key=openai_key, model="gpt-4-turbo-preview")
 database_handler = DatabaseHandler()
@@ -182,110 +182,110 @@ database_handler = DatabaseHandler()
 #     except Exception:
 #         return generic_server_error_response
 
-@app.route(route="analyze_session")
-def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("analyze_session HTTP trigger function processed a request.")
+# @app.route(route="analyze_session")
+# def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
+#     logging.info("analyze_session HTTP trigger function processed a request.")
 
-    try:
-        req_body = req.get_json()
-        user_id = req_body.get("user_id")
-        session_id = req_body.get("session_id")
-        termination_reason = req_body.get("termination_reason")
-        session_duration = req_body.get("session_duration")
+#     try:
+#         req_body = req.get_json()
+#         user_id = req_body.get("user_id")
+#         session_id = req_body.get("session_id")
+#         termination_reason = req_body.get("termination_reason")
+#         session_duration = req_body.get("session_duration")
 
-        # Fetch the session data and process analysis
-        session_data = database_handler.sessions_container.read_item(
-            item=session_id, partition_key=user_id
-        )
+#         # Fetch the session data and process analysis
+#         session_data = database_handler.sessions_container.read_item(
+#             item=session_id, partition_key=user_id
+#         )
 
-        transcripts = session_data.get("session_transcripts")
+#         transcripts = session_data.get("session_transcripts")
 
-        if len(transcripts) == 0:
-            return func.HttpResponse(
-                "Session does not contain any transcripts", status_code=404
-            )
+#         if len(transcripts) == 0:
+#             return func.HttpResponse(
+#                 "Session does not contain any transcripts", status_code=404
+#             )
 
-        # Process the transcripts
-        formatted_transcript = ""
-        confused_sections, happy_sections = 0, 0
-        for transcript in transcripts:
-            user_msg = transcript.get("user")
-            assistant_res = transcript.get("assistant")
-            assistant_msg = assistant_res.get("message")
-            assistant_emotion = assistant_res.get("emotion")
+#         # Process the transcripts
+#         formatted_transcript = ""
+#         confused_sections, happy_sections = 0, 0
+#         for transcript in transcripts:
+#             user_msg = transcript.get("user")
+#             assistant_res = transcript.get("assistant")
+#             assistant_msg = assistant_res.get("message")
+#             assistant_emotion = assistant_res.get("emotion")
 
-            # Group happy and confused sections
-            if assistant_emotion == "confused":
-                confused_sections += 1
-            elif assistant_emotion == "happy":
-                happy_sections += 1
+#             # Group happy and confused sections
+#             if assistant_emotion == "confused":
+#                 confused_sections += 1
+#             elif assistant_emotion == "happy":
+#                 happy_sections += 1
 
-            # Add transcript to formatted_transcript
-            formatted_transcript += f"User: {user_msg}\nStudent: {assistant_msg} (emotion={assistant_emotion})\n"
+#             # Add transcript to formatted_transcript
+#             formatted_transcript += f"User: {user_msg}\nStudent: {assistant_msg} (emotion={assistant_emotion})\n"
 
-        # Calculate the overall score
-        overall_score = int((happy_sections / len(transcripts)) * 100)
+#         # Calculate the overall score
+#         overall_score = int((happy_sections / len(transcripts)) * 100)
 
-        # Call the LLM to generate the post session analysis
-        chain = (
-            analyze_transcripts_prompt_template
-            | langchain_llm
-            | analyze_transcripts_parser
-        )
-        output = chain.invoke(
-            {
-                "concept": session_data["lesson_concept"],
-                "objectives": session_data["lesson_objectives"],
-                "student_persona": session_data["student_persona"],
-                "transcripts": formatted_transcript,
-            }
-        )
+#         # Call the LLM to generate the post session analysis
+#         chain = (
+#             analyze_transcripts_prompt_template
+#             | langchain_llm
+#             | analyze_transcripts_parser
+#         )
+#         output = chain.invoke(
+#             {
+#                 "concept": session_data["lesson_concept"],
+#                 "objectives": session_data["lesson_objectives"],
+#                 "student_persona": session_data["student_persona"],
+#                 "transcripts": formatted_transcript,
+#             }
+#         )
 
-        post_session_analysis = {
-            "overall_score": overall_score,
-            "session_passed": overall_score >= 0.5,
-            "assessment_summary": output.general_assessment_summary,
-            "general_assessment": output.general_assessment,
-            "knowledge_gaps": output.knowledge_gaps,
-            "constructive_feedback": output.constructive_feedback,
-            "easier_topics": output.easier_topics,
-            "similar_topics": output.similar_topics,
-            "objective_reached": output.objective_reached,
-        }
+#         post_session_analysis = {
+#             "overall_score": overall_score,
+#             "session_passed": overall_score >= 0.5,
+#             "assessment_summary": output.general_assessment_summary,
+#             "general_assessment": output.general_assessment,
+#             "knowledge_gaps": output.knowledge_gaps,
+#             "constructive_feedback": output.constructive_feedback,
+#             "easier_topics": output.easier_topics,
+#             "similar_topics": output.similar_topics,
+#             "objective_reached": output.objective_reached,
+#         }
 
-        # Save post session analysis to the session data
-        session_data["post_session_analysis"] = post_session_analysis
-        session_data["image_prompt"] = output.image_prompt
-        session_data["termination_reason"] = termination_reason
-        seconds = session_duration // 1000
-        minutes = seconds // 60
-        remaining_seconds = seconds % 60
-        session_duration = f"{minutes}m {remaining_seconds}s"
-        session_data["session_duration"] = session_duration
-        session_data["last_date_attempt"] = time.time()
+#         # Save post session analysis to the session data
+#         session_data["post_session_analysis"] = post_session_analysis
+#         session_data["image_prompt"] = output.image_prompt
+#         session_data["termination_reason"] = termination_reason
+#         seconds = session_duration // 1000
+#         minutes = seconds // 60
+#         remaining_seconds = seconds % 60
+#         session_duration = f"{minutes}m {remaining_seconds}s"
+#         session_data["session_duration"] = session_duration
+#         session_data["last_date_attempt"] = time.time()
 
-        database_handler.sessions_container.replace_item(
-            item=session_id, body=session_data
-        )
+#         database_handler.sessions_container.replace_item(
+#             item=session_id, body=session_data
+#         )
 
-        # Generate the image over here and save it to the session data
-        image_url = DallEAPIWrapper().run(output.image_prompt)
-        session_data["image_url"] = image_url
+#         # Generate the image over here and save it to the session data
+#         image_url = DallEAPIWrapper().run(output.image_prompt)
+#         session_data["image_url"] = image_url
 
-        database_handler.sessions_container.replace_item(
-            item=session_id, body=session_data
-        )
+#         database_handler.sessions_container.replace_item(
+#             item=session_id, body=session_data
+#         )
 
-        res = {"success": True}
-        return func.HttpResponse(json.dumps(res), status_code=200)
+#         res = {"success": True}
+#         return func.HttpResponse(json.dumps(res), status_code=200)
 
-    except ValueError:
-        # Handle JSON parsing error
-        return value_error_response
-    except CosmosResourceNotFoundError:
-        return cosmos_404_error_response
-    except Exception:
-        return generic_server_error_response
+#     except ValueError:
+#         # Handle JSON parsing error
+#         return value_error_response
+#     except CosmosResourceNotFoundError:
+#         return cosmos_404_error_response
+#     except Exception:
+#         return generic_server_error_response
 
 # @app.route(route="get_session_data")
 # def get_session_data(req: func.HttpRequest) -> func.HttpResponse:
