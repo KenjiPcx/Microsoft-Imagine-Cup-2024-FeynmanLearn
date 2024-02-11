@@ -2,7 +2,7 @@ import json
 import os
 import uuid
 import logging
-import helper
+# import helper
 import time
 
 import azure.functions as func
@@ -15,31 +15,455 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 import openai
-import constants
+# import constants
 
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
 from langchain_openai import ChatOpenAI
 from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 
-from agents.feynman_student_prompt_v6 import (
-    feynman_student_prompt_template,
-    feynman_student_prompt_parser,
+# from agents.feynman_student_prompt_v6 import (
+#     feynman_student_prompt_template,
+#     feynman_student_prompt_parser,
+# )
+# from agents.lesson_verification_prompt import (
+#     verify_lesson_prompt_template,
+#     verify_lesson_parser,
+# )
+# from agents.post_session_analysis_prompts import (
+#     analyze_transcripts_prompt_template,
+#     analyze_transcripts_parser,
+# )
+# from agents.assistant_ids import feynman_assistant_id
+# from error_responses import (
+#     cosmos_404_error_response,
+#     generic_server_error_response,
+#     value_error_response,
+# )
+# from databaseHandler import DatabaseHandler
+
+import constants
+from typing import Dict, List, Union
+
+def get_overall_and_average_score_for_session(
+        session_analysis: List[Dict[str, Union[int, str]]]
+    ) -> Dict[str, float]:
+    """Averages and aggregates scores across all questions.
+    
+    Parameters:
+        - session_analysis: A list of dictionaries, each dictionary contain the scores for each question.
+    
+    Return:
+        - scores: A dictionary containing the average and overall score.
+    """
+    # Initialise scores
+    scores = {score_type: 0 for score_type in constants.POST_ANALYSIS_SCORE_TYPE}
+    
+    # Aggregate scores for each score type
+    for question in session_analysis:
+        for score_type in constants.POST_ANALYSIS_SCORE_TYPE:
+            scores[score_type] += int(question[score_type])
+    
+    # Calculate average for each score type
+    for score_type in scores:
+        scores[score_type] = round(scores[score_type] / len(session_analysis), 1)
+    
+    # Calculate overall average score
+    scores['overall_score'] = round(sum(scores.values()) / len(scores), 1)
+
+    return scores
+
+
+import json
+import azure.functions as func
+
+
+value_error_response = func.HttpResponse(
+    json.dumps(
+        {
+            "success": False,
+            "error": "Bad request. Request body is missing or not in JSON format.",
+        }
+    ),
+    status_code=400,
 )
-from agents.lesson_verification_prompt import (
-    verify_lesson_prompt_template,
-    verify_lesson_parser,
+cosmos_404_error_response = func.HttpResponse(
+    json.dumps({"success": False, "error": "Resource not found error."}),
+    status_code=404,
 )
-from agents.post_session_analysis_prompts import (
-    analyze_transcripts_prompt_template,
-    analyze_transcripts_parser,
+generic_server_error_response = func.HttpResponse(
+    json.dumps(
+        {
+            "success": False,
+            "error": "Internal server error.",
+        }
+    ),
+    status_code=500,
 )
-from agents.assistant_ids import feynman_assistant_id
-from error_responses import (
-    cosmos_404_error_response,
-    generic_server_error_response,
-    value_error_response,
+
+
+import os
+
+from azure.cosmos import CosmosClient
+
+cosmos_endpoint, cosmos_key = os.getenv("COSMOS_ENDPOINT"), os.getenv("COSMOS_KEY")
+
+class DatabaseHandler:
+    """
+    We only store custom sql queries here
+    Otherwise use dbHandler.container to interact with the database
+    """
+
+    def __init__(self):
+        self.cosmos_client = CosmosClient(cosmos_endpoint, cosmos_key)
+        self.db = self.cosmos_client.get_database_client("feynman_db")
+        self.users_container = self.db.get_container_client("users")
+        self.sessions_container = self.db.get_container_client("sessions")
+
+    def fetch_session_summaries_by_user(self, user_id: str) -> list:
+        try:
+            # Query session summaries for the given user_id
+            query = f"SELECT c.id, c.lesson_concept, c.image_url, c.last_date_attempt FROM c WHERE c.user_id = '{user_id}'"
+            # query = f"SELECT c.id, c.concept, c.student_persona FROM c WHERE c.user_id = '{user_id}'" # For ventus testing purposes
+            sessions = self.sessions_container.query_items(
+                query, enable_cross_partition_query=True
+            )
+            sessions = list(sessions)
+            return sessions
+
+        except Exception as e:
+            raise
+
+    def fetch_sessions_by_user(self, user_id: str) -> list:
+        try:
+            # Query sessions for the given user_id
+            query = f"SELECT * FROM c WHERE c.user_id = '{user_id}'"
+            sessions = list(
+                self.sessions_container.query_items(
+                    query, enable_cross_partition_query=True
+                )
+            )
+            return sessions
+
+        except Exception as e:
+            raise
+
+    def get_transcript_by_question(self, user_id: str, question_id: int, session_id: str) -> list:
+        try:
+            # Query transcripts of a specific question using user_id and question_id 
+            query = f"SELECT c.id, c.user_id, st AS session_transcript, c.student_persona FROM c JOIN st IN c.session_transcripts WHERE c.user_id='{user_id}' AND st.question_id={question_id} AND c.id='{session_id}'"
+            sessions = list(
+                self.sessions_container.query_items(
+                    query, enable_cross_partition_query=True
+                )
+            )
+            return sessions
+
+        except Exception as e:
+            raise
+
+    def get_analysis_by_session(self, user_id: str, session_id: str) -> list:
+        try:
+            # Query transcripts of a specific question using user_id and question_id 
+            query = f"SELECT * FROM c WHERE c.user_id='{user_id}' AND c.id='{session_id}'"
+            sessions = list(
+                self.sessions_container.query_items(
+                    query, enable_cross_partition_query=True
+                )
+            )
+            return sessions
+
+        except Exception as e:
+            raise
+
+
+from typing import Literal
+from langchain.prompts import PromptTemplate
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.pydantic_v1 import BaseModel, Field
+
+base_student_prompt = """
+### Context
+The user is learning using the Feynman method, where
+- User will teach you something
+- You act as a student who knows nothing about the topic. Further on, you will be provided with a persona and an assumed knowledge level as a student.
+
+### Your role is to
+1) Listen to a user's lesson explanation. Ask for "why does it work this way?" or "can you explain this simpler?" questions or ask for clarification or examples or analogies. If you've identified gaps in the user's explanation, probe them with questions to test their understanding. 
+2) Callout the user when they you think they've explained something wrongly without being condescending, use their own examples, logic and reasoning and make the user realize their flaws in their understanding
+3) Prevent the conversation from going off-topic from their lesson objectives by warning the user that they go off-topic, ask the user to continue teaching the main lesson
+4) If the explanation is good, you can reiterate the concept back to the user to show that you understand it. If it is bad or the user is stuck, you can ask the user to explain it again or redirect the user to explain an easier sub-related concept to help them build intuition
+5) User explanation transcripts come in chunks, if you believe that the chunk you have gotten is not complete or if you have no questions, simply say something along the lines of "I see, go on".
+
+### Session info
+Additionally, you should adapt your responses based on the session configuration:
+Concept being explained: {concept}
+Lesson objectives: {objectives}
+Game mode: {game_mode}
+Your persona: {student_persona}
+
+### Ending the session
+When the objectives of the lesson has been satisfied, you can reply with "I now understand" and summarize the concept back to the user, and tell the user that they are done
+
+### Output format
+Output a json object containing a message, emotion, internal thoughts in the following format
+{output_format}
+"""
+
+
+class FeynmanResponse(BaseModel):
+    message: str = Field(description="response message to the user")
+    emotion: Literal["happy", "neutral", "confused"] = Field(
+        description="return happy if the explanation is going well, confused if it is going bad, otherwise neutral"
+    )
+    internal_thoughts: str = Field(
+        description="your internal thoughts, you can praise or criticize the user's explanation or note any gaps in their explanation, keep it very concise"
+    )
+    question: str = Field(
+        description="The same question included in your response but formatted more concisely and directly, leave empty otherwise"
+    )
+    objectives_satisfied: bool = Field(
+        description="true when the objectives of the lesson has been satisfied and you are ready to end the session"
+    )
+
+feynman_student_prompt_parser = JsonOutputParser(pydantic_object=FeynmanResponse)
+
+feynman_student_prompt_template = PromptTemplate(
+    template=base_student_prompt,
+    input_variables=[
+        "concept",
+        "objectives",
+        "game_mode",
+        "student_persona",
+    ],
+    partial_variables={
+        "output_format": feynman_student_prompt_parser.get_format_instructions()
+    },
 )
-from databaseHandler import DatabaseHandler
+feynman_student_prompt = feynman_student_prompt_template.format(
+    concept="Diffusion Models in AI",
+    objectives="Understand the basic principles of diffusion models and be able to apply them to solve simple problems.",
+    game_mode="Explain to a 5 year old, user needs to explain using very simple language and examples",
+    student_persona="5 year old, you don't know a lot of things, if the user mentions something a 5 year old wouldn't know, you ask them to explain again in the words of a 5 year old",
+    # game_mode="Explain to a 5 year old, user needs to explain using very simple language and examples",
+    # student_persona="5 year old, you don't know a lot of things, if the user mentions something a 5 year old wouldn't know, you ask them to explain again in the words of a 5 year old",
+)
+
+
+from langchain.prompts import PromptTemplate
+from langchain.output_parsers import PydanticOutputParser
+from langchain_core.pydantic_v1 import BaseModel, Field
+
+verify_lesson_base_prompt = """
+Concept to explain: {concept}
+Lesson objectives: {objectives}
+
+Assess if the provided lesson objectives for the concept above are scoped specifically and narrowly enough to be covered in a 15-minute session and can be done fully through speech explanations alone. 
+
+Reject the objectives if:
+1. There are too many goals to be covered within 15 minutes.
+2. Goals are not specific enough to form a clear, focused lesson plan.
+3. Explanation really requires visual aids, only speech explanations are supported currently.
+
+Feedback should be concise, include whether the objectives meet these criteria and concise suggestions for refinement.
+
+Example 1 (Too Many Goals):
+Concept: Mathematics - Basic Algebra
+Lesson Objectives: Introduce variables, solving linear equations, quadratic equations, graphing functions, and polynomials.
+feedback: Too many objectives
+suggestion: Consider focusing on one topic, such as "solving linear equations."
+
+Example 2 (Goals Not Specific Enough):
+Concept: Mathematics - Geometry
+Lesson Objectives: Understand shapes and their properties
+feedback: Objectives are too vague
+suggestion: A more specific objective could be "Identify and compare properties of 2D shapes, ie triangles and rectangles."
+
+Output Format:
+{format_instructions}
+"""
+
+
+class ConceptVerificationResponse(BaseModel):
+    feasible: bool = Field(
+        description="whether the concept and objectives are feasible to teach within the timeframe"
+    )
+    feedback: str = Field(
+        description="concise reason for failure, leave empty if feasible"
+    )
+    suggestion: str = Field(
+        description="concise suggestions for improvement, leave empty if feasible"
+    )
+
+
+verify_lesson_parser = PydanticOutputParser(pydantic_object=ConceptVerificationResponse)
+
+verify_lesson_prompt_template = PromptTemplate(
+    template=verify_lesson_base_prompt,
+    input_variables=["concept", "objectives"],
+    partial_variables={
+        "format_instructions": verify_lesson_parser.get_format_instructions()
+    },
+)
+verify_lesson_prompt = verify_lesson_prompt_template.format(
+    concept="Quantum Mechanics",
+    objectives="Students will understand the basic principles of quantum mechanics and be able to apply them to solve simple problems.",
+    format_instructions=verify_lesson_parser.get_format_instructions(),
+)
+
+
+from langchain.prompts import PromptTemplate
+from langchain.output_parsers import PydanticOutputParser
+from langchain_core.pydantic_v1 import BaseModel, Field
+
+analyze_transcripts_base_prompt = """
+The following is a transcript of a user using the Feynman method to explain a concept to a student. Your task is to analyze the transcript and output the following:
+1. A short paragraph general assessment of the user's explanation
+2. A sentence to summarize the user's performance
+3. Knowledge gaps in the user's explanation, if any.
+4. Constructive feedback on how the explanation could be improved.
+5. Similar relevant topics for lessons the user can focus on next
+6. Simpler subtopics for building stronger intuition
+7. A prompt for a personalized 16:9 wallpaper image representing how the lesson went. For example, if I was explaining "Diffusion models" and the lesson went well, the prompt would be "An 16:9 majestic wallpaper image of a water droplet diffusing in a liquid." Make the prompts more creative the better the explanation was.
+
+Follow these instructions to reach your final output
+1. Identify if there is anything wrongly explained in the lesson
+2. Identify if the user managed to reach the lesson objectives or get carried away with irrelevant information
+2. Identify if there are any knowledge gaps in the user's explanation
+3. Identify the top 3 things that went well in the explanations, such as being clear and concise, using examples, analogies, simple language, adapting lesson to fit the student's knowledge level etc.
+4. Identify what didn't go well in the explanations, such as being unclear, using jargon, being too complex, not adapting lesson to fit the student's knowledge level etc.
+5. Identify the most memorable thing about the explanation, this will be used to customize the image prompt
+6. Finalize output
+
+### Lesson details
+Concept being explained: {concept}
+Lesson objectives: {objectives}
+Student persona: {student_persona}
+
+<Transcripts of the lesson>
+For the student's response, their emotion is also recorded, happy if the explanation is going well, confused if it is not, neutral otherwise.
+{transcripts}
+<End of transcripts>
+
+Output Format:
+Return a json object, the thought_process item should be the first item in the object
+{format_instructions}
+"""
+
+
+class AnalyzeTranscriptsResponse(BaseModel):
+    thought_process: str = Field(
+        description="your thought process on coming up with the assessment following the instructions"
+    )
+    general_assessment: str = Field(description="general assessment of the user's performance in their explanation")
+    general_assessment_summary: str = Field(description="sentence to summarize the user's performance")
+    knowledge_gaps: list[str] = Field(description="knowledge gaps relevant to the concept being explained, not the user's explanation skills")
+    constructive_feedback: str = Field(
+        description="constructive feedback on what could be improved"
+    )
+    easier_topics: list[str] = Field(
+        description="list of 5 easier and relevant topics under the concept being explained to explain"
+    )
+    similar_topics: list[str] = Field(description="list of 5 similar topics to explain")
+    image_prompt: str = Field(
+        description="prompt for a personalized 16:9 wallpaper image representing how the lesson went"
+    )
+    objective_reached: bool = Field(
+        description="whether the user managed to reach the lesson objectives"
+    )
+
+
+analyze_transcripts_parser = PydanticOutputParser(pydantic_object=AnalyzeTranscriptsResponse)
+
+analyze_transcripts_prompt_template = PromptTemplate(
+    template=analyze_transcripts_base_prompt,
+    input_variables=["concept", "objectives", "student_persona", "transcripts"],
+    partial_variables={
+        "format_instructions": analyze_transcripts_parser.get_format_instructions()
+    },
+)
+analyze_transcripts_prompt = analyze_transcripts_prompt_template.format(
+    concept="Quantum Mechanics",
+    objectives="Students will understand the basic principles of quantum mechanics and be able to apply them to solve simple problems.",
+    student_persona="5 year old, you don't know a lot of things, if the user mentions something a 5 year old wouldn't know, you ask them to explain again in the words of a 5 year old",
+    transcripts="The user started by explaining the basic principles of quantum mechanics, then moved on to explaining how to apply them to solve simple problems. The user was clear and concise, using examples and simple language. The student was happy with the explanation.",
+)
+
+feynman_assistant_id = "asst_x5n4gyjHJHZKwPhcnUSgXDv8"
+
+# Library for storing global constants
+
+from langchain.output_parsers import ResponseSchema
+
+# Marking rubric for a learner's explanation
+MARKING_RUBRIC = """
+Clarity (Understanding and simplicity of language)
+1: The explanation is confusing, uses complex or technical language excessively, and lacks a logical flow.
+2: The explanation has moments of clarity but is often difficult to follow, with some use of technical language that is not well-explained.
+3: The explanation is clear for the most part, with a reasonable use of simple language and logical flow, though minor areas may benefit from simplification.
+4: The explanation is very clear, with a logical flow and occasional use of technical language that is well-explained. Minor improvements could be made for simplicity.
+5: The explanation is exceptionally clear, uses simple and accessible language throughout, and follows a logical and intuitive flow, making the concept easy to understand for all audiences.
+Conciseness (Brevity and efficiency of language)
+1: The explanation is overly lengthy and filled with unnecessary details or repetition.
+2: The explanation is longer than necessary with some repetition, but key points are identifiable.
+3: The explanation is moderately concise, with a good balance between detail and brevity, though some sections could be more streamlined.
+4: The explanation is concise, with information presented efficiently. Minor areas could be condensed further without losing clarity.
+5: The explanation is exceptionally concise, delivering all necessary information in the most efficient manner possible without any unnecessary detail or repetition.
+Comprehensiveness (Coverage of key aspects and concepts)
+1: The explanation misses several key aspects of the concept, leaving significant gaps in understanding.
+2: The explanation covers some aspects of the concept but omits important details or considerations.
+3: The explanation covers most key aspects, though it could provide more examples or details for a fuller understanding.
+4: The explanation is comprehensive, covering all key aspects and including relevant examples. Minor details may be omitted but do not significantly impact understanding.
+5: The explanation is exceptionally comprehensive, thoroughly covering all aspects of the concept, including examples and addressing potential questions or misunderstandings.
+Correctness (Accuracy of information)
+1: The explanation contains multiple inaccuracies or misconceptions that significantly misrepresent the concept.
+2: The explanation has some inaccuracies or oversimplifications that affect the overall understanding of the concept.
+3: The explanation is mostly accurate, with minor errors or simplifications that do not significantly impact the overall understanding.
+4: The explanation is accurate, with all key aspects correctly explained. There might be extremely minor inaccuracies that do not detract from the overall understanding.
+5: The explanation is exceptionally accurate, with all information presented correctly and precisely, reflecting a deep understanding of the concept.
+Exemplification (Use and Quality of Examples)
+1: The explanation lacks examples, or the examples provided are irrelevant or do not effectively illustrate the concept.
+2: The explanation includes examples, but they are minimally effective, only partially relevant, or not well-integrated into the explanation.
+3: The explanation includes a reasonable number of relevant examples that contribute to understanding, though some may lack clarity or full integration with the concept.
+4: The explanation uses several well-chosen examples that are relevant and effectively integrated into the explanation, enhancing understanding.
+5: The explanation excels in using a variety of highly relevant, clear, and well-integrated examples that significantly enhance comprehension and engagement.
+Audience (Adaptation to audience's Level)
+1: The explanation does not consider the audience's level of understanding; it is either too simplistic for advanced audiences or too complex for beginners.
+2: The explanation shows minimal effort to adapt to the audience's level, with occasional adjustments that do not significantly aid comprehension.
+3: The explanation is moderately adapted to the audience's level, with a balance of complexity and simplicity that suits an intermediate audience but may not fully cater to beginners or advanced audiences.
+4: The explanation shows a good effort to adapt to the audience's level, using appropriate terminology and complexity for the intended audience, though minor improvements could be made for better accessibility or depth.
+5: The explanation is exceptionally well-adapted to the audience's level, using language and concepts tailored to the audience's understanding, making it accessible and engaging for audiences at any level.
+"""
+
+QUESTION_RESPONSE_SCHEMA = [
+    ResponseSchema(name="clarity_score", description="score of clarity of learner's explanation"),
+    ResponseSchema(name="clarity_explanation", description="explanation of clarity score given"),
+    ResponseSchema(name="conciseness_score", description="score of conciseness of learner's explanation"),
+    ResponseSchema(name="conciseness_explanation", description="explanation of conciseness score given"),
+    ResponseSchema(name="comprehensiveness_score", description="score of comprehensiveness of learner's explanation"),
+    ResponseSchema(name="comprehensiveness_explanation", description="explanation of comprehensiveness score given"),
+    ResponseSchema(name="correctness_score", description="score of correctness of learner's explanation"),
+    ResponseSchema(name="correctness_explanation", description="explanation of correctness score given"),
+    ResponseSchema(name="exemplification_score", description="score of learner's examples in their explanation"),
+    ResponseSchema(name="exemplification_explanation", description="explanation on exemplification score given"),
+    ResponseSchema(name="adaptation_score", description="score of how well learner adapts explanation"),
+    ResponseSchema(name="adaptation_explanation", description="explanation of adaptation score given"),
+]
+
+POST_ANALYSIS_SCORE_TYPE = [
+    "clarity_score",
+    "conciseness_score",
+    "comprehensiveness_score",
+    "correctness_score",
+    "exemplification_score",
+    "adaptation_score"
+]
+
+POST_SESSION_ANALYSIS_SCHEMA = [
+    ResponseSchema(name="overall_comment", description="overall comment across all questions"),
+    ResponseSchema(name="strengths", description="areas where the user has excelled"),
+    ResponseSchema(name="room_for_improvement", description="areas the user can improve on"),
+    ResponseSchema(name="suggestions_for_improvement", description="suggestions to user on how to improve on explaining the concept"),
+]
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
@@ -416,7 +840,7 @@ def analyze_session_v2(req: func.HttpRequest) -> func.HttpResponse:
             )
 
         # Aggregate scores across all questions
-        scores = helper.get_overall_and_average_score_for_session(session_analysis)
+        scores = get_overall_and_average_score_for_session(session_analysis)
         logging.info(scores)
 
         # Structure output schema
