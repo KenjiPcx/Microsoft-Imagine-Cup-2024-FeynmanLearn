@@ -49,6 +49,12 @@ langchain_llm = ChatOpenAI(api_key=openai_key, model="gpt-4-turbo-preview")
 database_handler = DatabaseHandler()
 
 
+@app.route(route="say_hello")
+def say_hello(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("Python HTTP trigger function processed a request.")
+    return func.HttpResponse("Hello, World!")
+
+
 @app.route(route="create_session")
 def create_session(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("create_session HTTP trigger function processed a request.")
@@ -64,7 +70,10 @@ def create_session(req: func.HttpRequest) -> func.HttpResponse:
         student_persona = req_body.get("student_persona")
 
         if game_mode == "Explain to a kid":
-            student_persona = "5 year old, you don't know a lot of things, if the user mentions something a 5 year old wouldn't know, you ask them to explain again in the words of a 5 year old. Additionally, " + student_persona
+            student_persona = (
+                "5 year old, you don't know a lot of things, if the user mentions something a 5 year old wouldn't know, you ask them to explain again in the words of a 5 year old. Additionally, "
+                + student_persona
+            )
 
         if student_persona == "":
             student_persona = "None"
