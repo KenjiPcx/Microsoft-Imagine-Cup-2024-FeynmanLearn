@@ -8,10 +8,8 @@ import azure.functions as func
 
 # from azure.storage.blob import BlobServiceClient
 # from azure.cosmos.exceptions import CosmosResourceNotFoundError
-# from langchain_openai import ChatOpenAI
-# from langchain.chat_models import ChatOpenAI
-# from langchain_openai import ChatOpenAI
-# import openai
+from langchain_openai import ChatOpenAI
+import openai
 
 # from langchain.agents.openai_assistant import OpenAIAssistantRunnable
 # from langchain_openai import ChatOpenAI
@@ -21,10 +19,10 @@ import azure.functions as func
 #     feynman_student_prompt_template,
 #     feynman_student_prompt_parser,
 # )
-# from agents.lesson_verification_prompt import (
-#     verify_lesson_prompt_template,
-#     verify_lesson_parser,
-# )
+from agents.lesson_verification_prompt import (
+    verify_lesson_prompt_template,
+    verify_lesson_parser,
+)
 # from agents.post_session_analysis_prompts import (
 #     analyze_transcripts_prompt_template,
 #     analyze_transcripts_parser,
@@ -40,10 +38,10 @@ from error_responses import (
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
-# openai_key = os.getenv("OPENAI_API_KEY")
+openai_key = os.getenv("OPENAI_API_KEY")
 # azure_blob_key = os.getenv("AZURE_BLOB_KEY")
-# openai_client = openai.OpenAI(api_key=openai_key)
-# langchain_llm = ChatOpenAI(api_key=openai_key, model="gpt-4-turbo-preview")
+openai_client = openai.OpenAI(api_key=openai_key)
+langchain_llm = ChatOpenAI(api_key=openai_key, model="gpt-4-turbo-preview")
 # database_handler = DatabaseHandler()
 # blob_service_client = BlobServiceClient.from_connection_string(azure_blob_key)
 
@@ -341,29 +339,29 @@ app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 #         return generic_server_error_response
 
 
-# @app.route(route="verify_lesson_scope")
-# def verify_lesson_scope(req: func.HttpRequest) -> func.HttpResponse:
-#     logging.info("verify_lesson_scope HTTP trigger function processed a request.")
+@app.route(route="verify_lesson_scope")
+def verify_lesson_scope(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("verify_lesson_scope HTTP trigger function processed a request.")
 
-#     try:
-#         req_body = req.get_json()
-#         concept = req_body.get("lesson_concept")
-#         objectives = req_body.get("lesson_objectives")
+    try:
+        req_body = req.get_json()
+        concept = req_body.get("lesson_concept")
+        objectives = req_body.get("lesson_objectives")
 
-#         chain = verify_lesson_prompt_template | langchain_llm | verify_lesson_parser
-#         llm_res = chain.invoke({"concept": concept, "objectives": objectives})
+        chain = verify_lesson_prompt_template | langchain_llm | verify_lesson_parser
+        llm_res = chain.invoke({"concept": concept, "objectives": objectives})
 
-#         # Build the response
-#         res = {
-#             "passed_verification": llm_res.feasible,
-#             "feedback": llm_res.feedback,
-#             "suggestion": llm_res.suggestion,
-#             "success": True,
-#         }
-#         return func.HttpResponse(json.dumps(res), status_code=200)
+        # Build the response
+        res = {
+            "passed_verification": llm_res.feasible,
+            "feedback": llm_res.feedback,
+            "suggestion": llm_res.suggestion,
+            "success": True,
+        }
+        return func.HttpResponse(json.dumps(res), status_code=200)
 
-#     except Exception:
-#         return generic_server_error_response
+    except Exception:
+        return generic_server_error_response
 
 
 @app.route(route="say_hello")
