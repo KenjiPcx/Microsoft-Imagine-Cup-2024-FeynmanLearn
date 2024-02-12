@@ -10,7 +10,7 @@ import openai
 
 import azure.functions as func
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
-from azure.storage.blob import BlobServiceClient
+from azure.storage.blob import BlobServiceClient, ContentSettings
 from langchain_openai import ChatOpenAI
 from langchain.output_parsers import StructuredOutputParser
 from langchain.prompts import PromptTemplate
@@ -358,13 +358,19 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         )
 
         # Generate the image over here and save it to the session data
-        image_url = DallEAPIWrapper().run(output.image_prompt)
+        image_url = DallEAPIWrapper(model="dall-e-3").run(output.image_prompt)
+        session_data["oai_image_url"] = image_url
 
         # Download image to blob storage
         blob_name = f"{user_id}/{session_id}.png"
         blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
-        image = requests.get(image_url, stream=True)
-        blob_client.upload_blob(image.raw, blob_type="BlockBlob", overwrite=True)
+        image = requests.get(image_url)
+        blob_client.upload_blob(
+            image.content,
+            blob_type="BlockBlob",
+            overwrite=True,
+            content_settings=ContentSettings(content_type="image/png"),
+        )
 
         # Update the session data with the image blob url
         blob_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{container_name}/{blob_name}"
