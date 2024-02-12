@@ -343,8 +343,7 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
             item=session_id, body=session_data
         )
 
-        res = {"success": True}
-        return func.HttpResponse(json.dumps(res), status_code=200)
+        return func.HttpResponse(json.dumps(post_session_analysis), status_code=200)
 
     except ValueError:
         # Handle JSON parsing error
