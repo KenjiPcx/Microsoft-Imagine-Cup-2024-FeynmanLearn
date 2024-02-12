@@ -1,6 +1,7 @@
 from langchain.prompts import PromptTemplate
 from langchain.output_parsers import PydanticOutputParser
 from langchain_core.pydantic_v1 import BaseModel, Field
+from typing import List
 
 analyze_transcripts_base_prompt = """
 The following is a transcript of a user using the Feynman method to explain a concept to a student. Your task is to analyze the transcript and output the following:
@@ -43,14 +44,14 @@ class AnalyzeTranscriptsResponse(BaseModel):
     )
     general_assessment: str = Field(description="general assessment of the user's performance in their explanation")
     general_assessment_summary: str = Field(description="sentence to summarize the user's performance")
-    knowledge_gaps: list[str] = Field(description="knowledge gaps relevant to the concept being explained, not the user's explanation skills")
+    knowledge_gaps: List[str] = Field(description="knowledge gaps relevant to the concept being explained, not the user's explanation skills")
     constructive_feedback: str = Field(
         description="constructive feedback on what could be improved"
     )
-    easier_topics: list[str] = Field(
+    easier_topics: List[str] = Field(
         description="list of 5 easier and relevant topics under the concept being explained to explain"
     )
-    similar_topics: list[str] = Field(description="list of 5 similar topics to explain")
+    similar_topics: List[str] = Field(description="list of 5 similar topics to explain")
     image_prompt: str = Field(
         description="prompt for a personalized 16:9 wallpaper image representing how the lesson went"
     )
