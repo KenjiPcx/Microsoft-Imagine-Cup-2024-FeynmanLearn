@@ -24,7 +24,7 @@ from langchain_openai import ChatOpenAI
 from agents.feynman_student_prompt_v6 import (
     feynman_student_prompt_template,
     feynman_student_prompt_parser,
-    analyze_transcripts_prompt_template,
+    # analyze_transcripts_prompt_template,
     analyze_transcripts_parser,
 )
 from agents.lesson_verification_prompt import (
