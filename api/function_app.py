@@ -45,6 +45,12 @@ langchain_llm = ChatOpenAI(api_key=openai_key, model="gpt-4-turbo-preview")
 database_handler = DatabaseHandler()
 # blob_service_client = BlobServiceClient.from_connection_string(azure_blob_key)
 
+@app.route(route="say_hello")
+def say_hello(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("Python HTTP trigger function processed a request.")
+    return func.HttpResponse("Hello, World!")
+
+
 @app.route(route="create_session")
 def create_session(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("create_session HTTP trigger function processed a request.")
@@ -364,19 +370,19 @@ def verify_lesson_scope(req: func.HttpRequest) -> func.HttpResponse:
         return generic_server_error_response
 
 
-@app.route(route="say_hello")
-def say_hello(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("say_hello HTTP trigger function processed a request.")
+# @app.route(route="say_hello")
+# def say_hello(req: func.HttpRequest) -> func.HttpResponse:
+#     logging.info("say_hello HTTP trigger function processed a request.")
 
-    try:
-        res = {
-            "message": "Hello, World!",
-            "success": True,
-        }
-        return func.HttpResponse(json.dumps(res), status_code=200)
+#     try:
+#         res = {
+#             "message": "Hello, World!",
+#             "success": True,
+#         }
+#         return func.HttpResponse(json.dumps(res), status_code=200)
 
-    except Exception:
-        return generic_server_error_response
+#     except Exception:
+#         return generic_server_error_response
 
 
 # @app.route(route="get_post_session_analysis")
