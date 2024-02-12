@@ -18,7 +18,7 @@ import constants
 
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
 from langchain_openai import ChatOpenAI
-from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
+# from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 
 from agents.feynman_student_prompt_v6 import (
     feynman_student_prompt_template,
@@ -335,9 +335,9 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
             item=session_id, body=session_data
         )
 
-        # Generate the image over here and save it to the session data
-        image_url = DallEAPIWrapper().run(output.image_prompt)
-        session_data["image_url"] = image_url
+        # # Generate the image over here and save it to the session data
+        # image_url = DallEAPIWrapper().run(output.image_prompt)
+        # session_data["image_url"] = image_url
 
         database_handler.sessions_container.replace_item(
             item=session_id, body=session_data
@@ -354,129 +354,129 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         return generic_server_error_response
 
 
-@app.route(route="analyze_session_v2")
-def analyze_session_v2(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("analyze_session HTTP trigger function processed a request.")
+# @app.route(route="analyze_session_v2")
+# def analyze_session_v2(req: func.HttpRequest) -> func.HttpResponse:
+#     logging.info("analyze_session HTTP trigger function processed a request.")
 
-    # # Some dall e code from ventus
-    # dalle_api_wrapper = DallEAPIWrapper()
+#     # # Some dall e code from ventus
+#     # dalle_api_wrapper = DallEAPIWrapper()
 
-    #     # Create a prompt for the current session
-    #     dall_e_prompt = f"Can you create an image to illustrate a student having the following persona: {student_persona}, while learning: {concept}"
+#     #     # Create a prompt for the current session
+#     #     dall_e_prompt = f"Can you create an image to illustrate a student having the following persona: {student_persona}, while learning: {concept}"
 
-    #     # Add the generated image information to the current session dictionary
-    #     session["image_url"] = dalle_api_wrapper.run(dall_e_prompt)
+#     #     # Add the generated image information to the current session dictionary
+#     #     session["image_url"] = dalle_api_wrapper.run(dall_e_prompt)
 
-    try:
-        req_body = req.get_json()
-        user_id = req_body.get("user_id")
-        session_id = req_body.get("session_id")
+#     try:
+#         req_body = req.get_json()
+#         user_id = req_body.get("user_id")
+#         session_id = req_body.get("session_id")
 
-        # Fetch the session data and process analysis
-        session_data = database_handler.get_analysis_by_session(user_id, session_id)
+#         # Fetch the session data and process analysis
+#         session_data = database_handler.get_analysis_by_session(user_id, session_id)
 
-        if len(session_data) < 1:
-            return func.HttpResponse("Failed to get session data", status_code=400)
+#         if len(session_data) < 1:
+#             return func.HttpResponse("Failed to get session data", status_code=400)
 
-        session_analysis = session_data[0].get("session_analysis", [])
-        post_session_analysis = session_data[0].get("post_session_analysis", {})
+#         session_analysis = session_data[0].get("session_analysis", [])
+#         post_session_analysis = session_data[0].get("post_session_analysis", {})
 
-        # Error handling
-        if len(session_analysis) == 0:
-            return func.HttpResponse(
-                "Session does not contain any analysis", status_code=404
-            )
-        if post_session_analysis != {}:
-            return func.HttpResponse(
-                "Post session analysis already exist", status_code=400
-            )
+#         # Error handling
+#         if len(session_analysis) == 0:
+#             return func.HttpResponse(
+#                 "Session does not contain any analysis", status_code=404
+#             )
+#         if post_session_analysis != {}:
+#             return func.HttpResponse(
+#                 "Post session analysis already exist", status_code=400
+#             )
 
-        # Aggregate scores across all questions
-        scores = helper.get_overall_and_average_score_for_session(session_analysis)
-        logging.info(scores)
+#         # Aggregate scores across all questions
+#         scores = helper.get_overall_and_average_score_for_session(session_analysis)
+#         logging.info(scores)
 
-        # Structure output schema
-        output_parser = StructuredOutputParser.from_response_schemas(
-            constants.POST_SESSION_ANALYSIS_SCHEMA
-        )
-        format_instructions = output_parser.get_format_instructions()
+#         # Structure output schema
+#         output_parser = StructuredOutputParser.from_response_schemas(
+#             constants.POST_SESSION_ANALYSIS_SCHEMA
+#         )
+#         format_instructions = output_parser.get_format_instructions()
 
-        # Create prompt and run analysis on prompt
-        template = "Using this instruction {format_instructions}, aggregate the feedback for this session using the analysis on different questions, use an encouraging tone and address using a second person perspective. Aggregated scores across all questions in this session is: {aggregated_score}. Structure your feedback using the following in the following order: overall_comment, strengths, room_for_improvement, suggestions_for_improvement. \n Session data: {session}"
-        prompt = PromptTemplate(
-            template=template,
-            input_variables=["session", "aggregated_score", "format_instructions"],
-        )
-        _input = prompt.format_prompt(
-            session=session_analysis,
-            rubric=constants.MARKING_RUBRIC,
-            aggregated_score=scores,
-            format_instructions=format_instructions,
-        )
+#         # Create prompt and run analysis on prompt
+#         template = "Using this instruction {format_instructions}, aggregate the feedback for this session using the analysis on different questions, use an encouraging tone and address using a second person perspective. Aggregated scores across all questions in this session is: {aggregated_score}. Structure your feedback using the following in the following order: overall_comment, strengths, room_for_improvement, suggestions_for_improvement. \n Session data: {session}"
+#         prompt = PromptTemplate(
+#             template=template,
+#             input_variables=["session", "aggregated_score", "format_instructions"],
+#         )
+#         _input = prompt.format_prompt(
+#             session=session_analysis,
+#             rubric=constants.MARKING_RUBRIC,
+#             aggregated_score=scores,
+#             format_instructions=format_instructions,
+#         )
 
-        # Build response
-        output = langchain_llm(_input.to_messages())
-        qualitative_analysis = output_parser.parse(output.content)
-        logging.info(qualitative_analysis)
+#         # Build response
+#         output = langchain_llm(_input.to_messages())
+#         qualitative_analysis = output_parser.parse(output.content)
+#         logging.info(qualitative_analysis)
 
-        # Construct content dictionary to use as input to find new topic suggestions
-        concept_explored = session_data[0].get("concept", [])
-        question_asked = [question_obj["question"] for question_obj in session_analysis]
-        content = {
-            "overall_score": scores["overall_score"],
-            "concept": concept_explored,
-            "question": question_asked,
-        }
+#         # Construct content dictionary to use as input to find new topic suggestions
+#         concept_explored = session_data[0].get("concept", [])
+#         question_asked = [question_obj["question"] for question_obj in session_analysis]
+#         content = {
+#             "overall_score": scores["overall_score"],
+#             "concept": concept_explored,
+#             "question": question_asked,
+#         }
 
-        # Suggest new topics depending on performance:
-        student_did_poorly = scores["overall_score"] < 3.5
-        topic_list = []
-        topic_type = "related and at a similar or slightly higher level of difficulty"
-        if student_did_poorly:
-            topic_type = "at a lower level of difficulty"
+#         # Suggest new topics depending on performance:
+#         student_did_poorly = scores["overall_score"] < 3.5
+#         topic_list = []
+#         topic_type = "related and at a similar or slightly higher level of difficulty"
+#         if student_did_poorly:
+#             topic_type = "at a lower level of difficulty"
 
-        # Generate sugggestions for new topics in subsequent feynman sessions
-        prompt = ChatPromptTemplate.from_template(
-            "Suggest 5 topics that are {topic_type} for a student to learn about, based on the content the student explored in the session. Return just the topics as a list of strings (the output should be parsable by json.loads in python) and nothing extra. \n Questions, score and concept explored in current learning session: \n {content}"
-        )
-        output_parser = StrOutputParser()
-        chain = prompt | langchain_llm | output_parser
-        topics_str = chain.invoke({"content": content, "topic_type": topic_type})
-        topic_list = json.loads(topics_str)
-        logging.info(topic_list)
+#         # Generate sugggestions for new topics in subsequent feynman sessions
+#         prompt = ChatPromptTemplate.from_template(
+#             "Suggest 5 topics that are {topic_type} for a student to learn about, based on the content the student explored in the session. Return just the topics as a list of strings (the output should be parsable by json.loads in python) and nothing extra. \n Questions, score and concept explored in current learning session: \n {content}"
+#         )
+#         output_parser = StrOutputParser()
+#         chain = prompt | langchain_llm | output_parser
+#         topics_str = chain.invoke({"content": content, "topic_type": topic_type})
+#         topic_list = json.loads(topics_str)
+#         logging.info(topic_list)
 
-        # Insert data into DB
-        session_data = database_handler.sessions_container.read_item(
-            item=session_id, partition_key=user_id
-        )
-        post_session_analysis = {
-            "concept_explored": concept_explored,
-            "questions_asked": question_asked,
-            "qualitative_analysis": qualitative_analysis,
-            "scores": scores,
-            "suggested_topics": topic_list,
-            "satisfactory_outcome": scores["overall_score"] >= 3.5,
-        }
-        session_data["post_session_analysis"] = post_session_analysis
-        database_handler.sessions_container.replace_item(
-            item=session_id, body=session_data
-        )
-        logging.info(post_session_analysis)
-        res = {"success": True, "post_session_analysis_data": post_session_analysis}
-        return func.HttpResponse(json.dumps(res), status_code=200)
+#         # Insert data into DB
+#         session_data = database_handler.sessions_container.read_item(
+#             item=session_id, partition_key=user_id
+#         )
+#         post_session_analysis = {
+#             "concept_explored": concept_explored,
+#             "questions_asked": question_asked,
+#             "qualitative_analysis": qualitative_analysis,
+#             "scores": scores,
+#             "suggested_topics": topic_list,
+#             "satisfactory_outcome": scores["overall_score"] >= 3.5,
+#         }
+#         session_data["post_session_analysis"] = post_session_analysis
+#         database_handler.sessions_container.replace_item(
+#             item=session_id, body=session_data
+#         )
+#         logging.info(post_session_analysis)
+#         res = {"success": True, "post_session_analysis_data": post_session_analysis}
+#         return func.HttpResponse(json.dumps(res), status_code=200)
 
-        # session_data["session_aggregated_score"] = scores
-        # session_data["last_date_attempt"] = time.time()
-        # session_data["image_url"] = ""
-        # database_handler.sessions_container.upsert_item(body=session_data)
+#         # session_data["session_aggregated_score"] = scores
+#         # session_data["last_date_attempt"] = time.time()
+#         # session_data["image_url"] = ""
+#         # database_handler.sessions_container.upsert_item(body=session_data)
 
-    except ValueError:
-        # Handle JSON parsing error
-        return value_error_response
-    except CosmosResourceNotFoundError:
-        return cosmos_404_error_response
-    except Exception:
-        return generic_server_error_response
+#     except ValueError:
+#         # Handle JSON parsing error
+#         return value_error_response
+#     except CosmosResourceNotFoundError:
+#         return cosmos_404_error_response
+#     except Exception:
+#         return generic_server_error_response
 
 
 @app.route(route="get_session_data")
@@ -586,34 +586,34 @@ def get_post_session_analysis(req: func.HttpRequest) -> func.HttpResponse:
         return generic_server_error_response
 
 
-@app.route(route="get_post_session_analysis_v2")
-def get_post_session_analysis_v2(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info(
-        "get_post_session_analysis_v2 HTTP trigger function processed a request."
-    )
+# @app.route(route="get_post_session_analysis_v2")
+# def get_post_session_analysis_v2(req: func.HttpRequest) -> func.HttpResponse:
+#     logging.info(
+#         "get_post_session_analysis_v2 HTTP trigger function processed a request."
+#     )
 
-    try:
-        req_body = req.get_json()
-        session_id = req_body.get("session_id")
-        user_id = req_body.get("user_id")
+#     try:
+#         req_body = req.get_json()
+#         session_id = req_body.get("session_id")
+#         user_id = req_body.get("user_id")
 
-        session_data = database_handler.sessions_container.read_item(
-            item=session_id, partition_key=user_id
-        )
-        post_session_analysis_data = {
-            "post_session_analysis": session_data["post_session_analysis"],
-            "analysis_by_question": session_data["session_analysis"],
-        }
-        res = {
-            "success": True,
-            "post_session_analysis_data": post_session_analysis_data,
-        }
-        return func.HttpResponse(json.dumps(res), status_code=200)
+#         session_data = database_handler.sessions_container.read_item(
+#             item=session_id, partition_key=user_id
+#         )
+#         post_session_analysis_data = {
+#             "post_session_analysis": session_data["post_session_analysis"],
+#             "analysis_by_question": session_data["session_analysis"],
+#         }
+#         res = {
+#             "success": True,
+#             "post_session_analysis_data": post_session_analysis_data,
+#         }
+#         return func.HttpResponse(json.dumps(res), status_code=200)
 
-    except ValueError:
-        # Handle JSON parsing error
-        return value_error_response
-    except CosmosResourceNotFoundError:
-        return cosmos_404_error_response
-    except Exception:
-        return generic_server_error_response
+#     except ValueError:
+#         # Handle JSON parsing error
+#         return value_error_response
+#     except CosmosResourceNotFoundError:
+#         return cosmos_404_error_response
+#     except Exception:
+#         return generic_server_error_response
