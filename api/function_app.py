@@ -28,10 +28,10 @@ from agents.lesson_verification_prompt import (
     verify_lesson_prompt_template,
     verify_lesson_parser,
 )
-from agents.post_session_analysis_prompts import (
-    analyze_transcripts_prompt_template,
-    analyze_transcripts_parser,
-)
+# from agents.post_session_analysis_prompts import (
+#     analyze_transcripts_prompt_template,
+#     analyze_transcripts_parser,
+# )
 from agents.assistant_ids import feynman_assistant_id
 from error_responses import (
     cosmos_404_error_response,
