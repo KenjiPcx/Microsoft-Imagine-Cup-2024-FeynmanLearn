@@ -31,8 +31,8 @@ export const Route = createLazyFileRoute(
 });
 
 function PostSessionAnalysisComponent() {
-  // const analysis = Route.useLoaderData();
-  const analysis = mockPostSessionAnalysis;
+  const analysis = Route.useLoaderData();
+  // const analysis = mockPostSessionAnalysis;
   console.log(analysis);
   const { post_session_analysis, session_metadata, annotated_transcripts } =
     analysis;
