@@ -6,35 +6,35 @@ import time
 
 import azure.functions as func
 
-# from azure.storage.blob import BlobServiceClient
-# from azure.cosmos.exceptions import CosmosResourceNotFoundError
+from azure.storage.blob import BlobServiceClient
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
 from langchain_openai import ChatOpenAI
 import openai
 
-# from langchain.agents.openai_assistant import OpenAIAssistantRunnable
-# from langchain_openai import ChatOpenAI
+from langchain.agents.openai_assistant import OpenAIAssistantRunnable
+from langchain_openai import ChatOpenAI
 # from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 
-# from agents.feynman_student_prompt_v6 import (
-#     feynman_student_prompt_template,
-#     feynman_student_prompt_parser,
-# )
+from agents.feynman_student_prompt_v6 import (
+    feynman_student_prompt_template,
+    feynman_student_prompt_parser,
+)
 from agents.lesson_verification_prompt import (
     verify_lesson_prompt_template,
     verify_lesson_parser,
 )
-# from agents.post_session_analysis_prompts import (
-#     analyze_transcripts_prompt_template,
-#     analyze_transcripts_parser,
-# )
-# from agents.assistant_ids import feynman_assistant_id
+from agents.post_session_analysis_prompts import (
+    analyze_transcripts_prompt_template,
+    analyze_transcripts_parser,
+)
+from agents.assistant_ids import feynman_assistant_id
 from error_responses import (
     cosmos_404_error_response,
     generic_server_error_response,
     value_error_response,
 )
 
-# from databaseHandler import DatabaseHandler
+from databaseHandler import DatabaseHandler
 
 app = func.FunctionApp(http_auth_level=func.AuthLevel.FUNCTION)
 
@@ -42,90 +42,90 @@ openai_key = os.getenv("OPENAI_API_KEY")
 # azure_blob_key = os.getenv("AZURE_BLOB_KEY")
 openai_client = openai.OpenAI(api_key=openai_key)
 langchain_llm = ChatOpenAI(api_key=openai_key, model="gpt-4-turbo-preview")
-# database_handler = DatabaseHandler()
+database_handler = DatabaseHandler()
 # blob_service_client = BlobServiceClient.from_connection_string(azure_blob_key)
 
-# @app.route(route="create_session")
-# def create_session(req: func.HttpRequest) -> func.HttpResponse:
-#     logging.info("create_session HTTP trigger function processed a request.")
+@app.route(route="create_session")
+def create_session(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("create_session HTTP trigger function processed a request.")
 
-#     try:
-#         # Extract the request body
-#         req_body = req.get_json()
-#         user_id = req_body.get("user_id")
-#         lesson_concept = req_body.get("lesson_concept")
-#         lesson_objectives = req_body.get("lesson_objectives")
-#         game_mode = req_body.get("game_mode")
-#         difficulty = req_body.get("difficulty")
-#         student_persona = req_body.get("student_persona")
+    try:
+        # Extract the request body
+        req_body = req.get_json()
+        user_id = req_body.get("user_id")
+        lesson_concept = req_body.get("lesson_concept")
+        lesson_objectives = req_body.get("lesson_objectives")
+        game_mode = req_body.get("game_mode")
+        difficulty = req_body.get("difficulty")
+        student_persona = req_body.get("student_persona")
 
-#         if game_mode == "Explain to a kid":
-#             student_persona = (
-#                 "5 year old, you don't know a lot of things, if the user mentions something a 5 year old wouldn't know, you ask them to explain again in the words of a 5 year old. Additionally, "
-#                 + student_persona
-#             )
+        if game_mode == "Explain to a kid":
+            student_persona = (
+                "5 year old, you don't know a lot of things, if the user mentions something a 5 year old wouldn't know, you ask them to explain again in the words of a 5 year old. Additionally, "
+                + student_persona
+            )
 
-#         if student_persona == "":
-#             student_persona = "None"
+        if student_persona == "":
+            student_persona = "None"
 
-#         feynman_student_instructions_prompt = feynman_student_prompt_template.format(
-#             concept=lesson_concept,
-#             objectives=lesson_objectives,
-#             game_mode=game_mode,
-#             # difficulty=difficulty,
-#             student_persona=student_persona,
-#         )
+        feynman_student_instructions_prompt = feynman_student_prompt_template.format(
+            concept=lesson_concept,
+            objectives=lesson_objectives,
+            game_mode=game_mode,
+            # difficulty=difficulty,
+            student_persona=student_persona,
+        )
 
-#         # Send the first message to create a thread
-#         assistant = OpenAIAssistantRunnable(
-#             assistant_id=feynman_assistant_id, as_agent=True
-#         )
+        # Send the first message to create a thread
+        assistant = OpenAIAssistantRunnable(
+            assistant_id=feynman_assistant_id, as_agent=True
+        )
 
-#         start_msg = f"Tell me you're excited to learn about {lesson_concept} in a very brief way, and I'll proceed to teach"
-#         output = assistant.invoke(
-#             {
-#                 "instructions": feynman_student_instructions_prompt,
-#                 "content": start_msg,
-#             }
-#         )
-#         assistant_output = output.return_values["output"]
-#         assistant_output = feynman_student_prompt_parser.parse(assistant_output)
-#         thread_id = output.return_values["thread_id"]
+        start_msg = f"Tell me you're excited to learn about {lesson_concept} in a very brief way, and I'll proceed to teach"
+        output = assistant.invoke(
+            {
+                "instructions": feynman_student_instructions_prompt,
+                "content": start_msg,
+            }
+        )
+        assistant_output = output.return_values["output"]
+        assistant_output = feynman_student_prompt_parser.parse(assistant_output)
+        thread_id = output.return_values["thread_id"]
 
-#         # Create the session data and store it in the database
-#         session_data = {
-#             "id": str(uuid.uuid4()),
-#             "user_id": user_id,
-#             "lesson_concept": lesson_concept,
-#             "lesson_objectives": lesson_objectives,
-#             "game_mode": game_mode,
-#             "difficulty": difficulty,
-#             "student_persona": student_persona,
-#             "prompt": feynman_student_instructions_prompt,
-#             "session_transcripts": [
-#                 {
-#                     "user": start_msg,
-#                     "assistant": assistant_output,
-#                 }
-#             ],
-#             "objectives_satisfied": False,
-#             "thread_id": thread_id,
-#         }
-#         database_handler.sessions_container.create_item(body=session_data)
+        # Create the session data and store it in the database
+        session_data = {
+            "id": str(uuid.uuid4()),
+            "user_id": user_id,
+            "lesson_concept": lesson_concept,
+            "lesson_objectives": lesson_objectives,
+            "game_mode": game_mode,
+            "difficulty": difficulty,
+            "student_persona": student_persona,
+            "prompt": feynman_student_instructions_prompt,
+            "session_transcripts": [
+                {
+                    "user": start_msg,
+                    "assistant": assistant_output,
+                }
+            ],
+            "objectives_satisfied": False,
+            "thread_id": thread_id,
+        }
+        database_handler.sessions_container.create_item(body=session_data)
 
-#         # Build the response
-#         res = {
-#             "session_id": session_data["id"],
-#             "success": True,
-#         }
-#         return func.HttpResponse(json.dumps(res), status_code=200)
+        # Build the response
+        res = {
+            "session_id": session_data["id"],
+            "success": True,
+        }
+        return func.HttpResponse(json.dumps(res), status_code=200)
 
-#     except ValueError:
-#         return value_error_response
-#     except CosmosResourceNotFoundError:
-#         return cosmos_404_error_response
-#     except Exception:
-#         return generic_server_error_response
+    except ValueError:
+        return value_error_response
+    except CosmosResourceNotFoundError:
+        return cosmos_404_error_response
+    except Exception:
+        return generic_server_error_response
 
 
 # @app.route(route="send_message")
