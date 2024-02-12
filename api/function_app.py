@@ -4,9 +4,13 @@ import uuid
 import logging
 import helper
 import time
+import requests
+import constants
+import openai
 
 import azure.functions as func
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
+from azure.storage.blob import BlobServiceClient, ContentSettings
 from langchain_openai import ChatOpenAI
 from langchain.output_parsers import StructuredOutputParser
 from langchain.prompts import PromptTemplate
@@ -14,8 +18,6 @@ from langchain.chat_models import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-import openai
-import constants
 
 from langchain.agents.openai_assistant import OpenAIAssistantRunnable
 from langchain_openai import ChatOpenAI
@@ -48,12 +50,9 @@ openai_client = openai.OpenAI(api_key=openai_key)
 langchain_llm = ChatOpenAI(api_key=openai_key, model="gpt-4-turbo-preview")
 database_handler = DatabaseHandler()
 
-
-@app.route(route="say_hello")
-def say_hello(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("Python HTTP trigger function processed a request.")
-    return func.HttpResponse("Hello, World!")
-
+connect_str = os.getenv("BLOB_CONN_STR")
+container_name = "feynmanlearn"
+blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
 @app.route(route="create_session")
 def create_session(req: func.HttpRequest) -> func.HttpResponse:
@@ -359,8 +358,23 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
         )
 
         # Generate the image over here and save it to the session data
-        image_url = DallEAPIWrapper().run(output.image_prompt)
-        session_data["image_url"] = image_url
+        image_url = DallEAPIWrapper(model="dall-e-3").run(output.image_prompt)
+        session_data["oai_image_url"] = image_url
+
+        # Download image to blob storage
+        blob_name = f"{user_id}/{session_id}.png"
+        blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+        image = requests.get(image_url)
+        blob_client.upload_blob(
+            image.content,
+            blob_type="BlockBlob",
+            overwrite=True,
+            content_settings=ContentSettings(content_type="image/png"),
+        )
+
+        # Update the session data with the image blob url
+        blob_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{container_name}/{blob_name}"
+        session_data["image_url"] = blob_url
 
         database_handler.sessions_container.replace_item(
             item=session_id, body=session_data

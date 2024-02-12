@@ -42,7 +42,7 @@ function SessionsComponent() {
               key={key}
               id={session.id}
               label={session.lesson_concept}
-              image_url={"ex"}
+              image_url={session.image_url || ""}
               last_date_attempt={session.last_date_attempt}
             />
           ))}
