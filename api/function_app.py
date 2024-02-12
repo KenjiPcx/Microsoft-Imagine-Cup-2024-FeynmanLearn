@@ -28,10 +28,10 @@ from agents.lesson_verification_prompt import (
     verify_lesson_prompt_template,
     verify_lesson_parser,
 )
-from agents.post_session_analysis_prompts import (
-    analyze_transcripts_prompt_template,
-    analyze_transcripts_parser,
-)
+# from agents.post_session_analysis_prompts import (
+#     analyze_transcripts_prompt_template,
+#     analyze_transcripts_parser,
+# )
 from agents.assistant_ids import feynman_assistant_id
 from error_responses import (
     cosmos_404_error_response,
@@ -177,181 +177,181 @@ def send_message(req: func.HttpRequest) -> func.HttpResponse:
         return generic_server_error_response
 
 
-@app.route(route="analyze_question_response")
-def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("analyze_question_response HTTP trigger function processed a request.")
+# @app.route(route="analyze_question_response")
+# def analyze_question_response(req: func.HttpRequest) -> func.HttpResponse:
+#     logging.info("analyze_question_response HTTP trigger function processed a request.")
 
-    try:
-        req_body = req.get_json()
-        user_id = req_body.get("user_id")
-        question_id = req_body.get("question_id")
-        session_id = req_body.get("session_id")
+#     try:
+#         req_body = req.get_json()
+#         user_id = req_body.get("user_id")
+#         question_id = req_body.get("question_id")
+#         session_id = req_body.get("session_id")
 
-        # Fetch the session data and process transcripts
-        transcript = database_handler.get_transcript_by_question(
-            user_id, question_id, session_id
-        )
-        if len(transcript) < 1:
-            return func.HttpResponse(
-                "Cannot find transcript by question_id", status_code=404
-            )
+#         # Fetch the session data and process transcripts
+#         transcript = database_handler.get_transcript_by_question(
+#             user_id, question_id, session_id
+#         )
+#         if len(transcript) < 1:
+#             return func.HttpResponse(
+#                 "Cannot find transcript by question_id", status_code=404
+#             )
 
-        # Obtain transcript by question
-        question_transcript = transcript[0]["session_transcript"]["question_transcript"]
-        audience_level = transcript[0]["student_persona"]
+#         # Obtain transcript by question
+#         question_transcript = transcript[0]["session_transcript"]["question_transcript"]
+#         audience_level = transcript[0]["student_persona"]
 
-        # Terminate if analysis is already generated for this question
-        session_data = database_handler.sessions_container.read_item(
-            item=session_id, partition_key=user_id
-        )
-        session_analysis = session_data.get("session_analysis", [])
-        check_if_analysis_exist = list(
-            filter(lambda _: _["question_id"] == question_id, session_analysis)
-        )
-        if len(check_if_analysis_exist) != 0:
-            return func.HttpResponse("Analysis already exist!", status_code=400)
+#         # Terminate if analysis is already generated for this question
+#         session_data = database_handler.sessions_container.read_item(
+#             item=session_id, partition_key=user_id
+#         )
+#         session_analysis = session_data.get("session_analysis", [])
+#         check_if_analysis_exist = list(
+#             filter(lambda _: _["question_id"] == question_id, session_analysis)
+#         )
+#         if len(check_if_analysis_exist) != 0:
+#             return func.HttpResponse("Analysis already exist!", status_code=400)
 
-        # Construct response schema and format instructions to use in prompt
-        response_schemas = constants.QUESTION_RESPONSE_SCHEMARESPONSE_SCHEMA
-        output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
-        format_instructions = output_parser.get_format_instructions()
+#         # Construct response schema and format instructions to use in prompt
+#         response_schemas = constants.QUESTION_RESPONSE_SCHEMARESPONSE_SCHEMA
+#         output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
+#         format_instructions = output_parser.get_format_instructions()
 
-        # Create prompt and run analysis on prompt
-        template = "You are a helpful assistant that takes a transcript and scores the user's explanation to a learner and provides a detailed explanation for the score using the evidence available. You will score using this rubric: {rubric} and you can use the learner's response to support your case but remember that you are scoring the user's explanations. \n{format_instructions}\n{question}. Your response is directed towards the user, so do address them as from a second person perspective, that is, phrasing your feedback with 'You/ Your explanation/ You did well'. Use evidence and quotation in your explanation where possible.  Also, try to be encouraging, and make sure to score in whole numbers between 1 and 5 inclusive. The audience level you will evaluate for is '{audience_level}'."
-        prompt = PromptTemplate(
-            template=template,
-            input_variables=["question", "rubric"],
-            partial_variables={"format_instructions": format_instructions},
-        )
-        _input = prompt.format_prompt(
-            question=question_transcript,
-            rubric=constants.MARKING_RUBRIC,
-            audience_level=audience_level,
-        )
+#         # Create prompt and run analysis on prompt
+#         template = "You are a helpful assistant that takes a transcript and scores the user's explanation to a learner and provides a detailed explanation for the score using the evidence available. You will score using this rubric: {rubric} and you can use the learner's response to support your case but remember that you are scoring the user's explanations. \n{format_instructions}\n{question}. Your response is directed towards the user, so do address them as from a second person perspective, that is, phrasing your feedback with 'You/ Your explanation/ You did well'. Use evidence and quotation in your explanation where possible.  Also, try to be encouraging, and make sure to score in whole numbers between 1 and 5 inclusive. The audience level you will evaluate for is '{audience_level}'."
+#         prompt = PromptTemplate(
+#             template=template,
+#             input_variables=["question", "rubric"],
+#             partial_variables={"format_instructions": format_instructions},
+#         )
+#         _input = prompt.format_prompt(
+#             question=question_transcript,
+#             rubric=constants.MARKING_RUBRIC,
+#             audience_level=audience_level,
+#         )
 
-        # Build response
-        output = langchain_llm(_input.to_messages())
-        question_transcript_analysis = output_parser.parse(output.content)
-        question_transcript_analysis["question"] = transcript[0]["session_transcript"][
-            "question"
-        ]
-        question_transcript_analysis["question_id"] = transcript[0][
-            "session_transcript"
-        ]["question_id"]
-        res = {"success": True, "analysis_data": question_transcript_analysis}
-        logging.info(question_transcript_analysis)
+#         # Build response
+#         output = langchain_llm(_input.to_messages())
+#         question_transcript_analysis = output_parser.parse(output.content)
+#         question_transcript_analysis["question"] = transcript[0]["session_transcript"][
+#             "question"
+#         ]
+#         question_transcript_analysis["question_id"] = transcript[0][
+#             "session_transcript"
+#         ]["question_id"]
+#         res = {"success": True, "analysis_data": question_transcript_analysis}
+#         logging.info(question_transcript_analysis)
 
-        # Update session data
-        session_analysis.append(question_transcript_analysis)
-        session_data["session_analysis"] = session_analysis
-        database_handler.sessions_container.replace_item(
-            item=session_id, body=session_data
-        )
-        return func.HttpResponse(json.dumps(res), status_code=200)
+#         # Update session data
+#         session_analysis.append(question_transcript_analysis)
+#         session_data["session_analysis"] = session_analysis
+#         database_handler.sessions_container.replace_item(
+#             item=session_id, body=session_data
+#         )
+#         return func.HttpResponse(json.dumps(res), status_code=200)
 
-    except ValueError:
-        # Handle JSON parsing error
-        return value_error_response
-    except CosmosResourceNotFoundError:
-        return cosmos_404_error_response
-    except Exception:
-        return generic_server_error_response
+#     except ValueError:
+#         # Handle JSON parsing error
+#         return value_error_response
+#     except CosmosResourceNotFoundError:
+#         return cosmos_404_error_response
+#     except Exception:
+#         return generic_server_error_response
 
 
-@app.route(route="analyze_session")
-def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("analyze_session HTTP trigger function processed a request.")
+# @app.route(route="analyze_session")
+# def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
+#     logging.info("analyze_session HTTP trigger function processed a request.")
 
-    try:
-        req_body = req.get_json()
-        user_id = req_body.get("user_id")
-        session_id = req_body.get("session_id")
+#     try:
+#         req_body = req.get_json()
+#         user_id = req_body.get("user_id")
+#         session_id = req_body.get("session_id")
 
-        # Fetch the session data and process analysis
-        session_data = database_handler.sessions_container.read_item(
-            item=session_id, partition_key=user_id
-        )
+#         # Fetch the session data and process analysis
+#         session_data = database_handler.sessions_container.read_item(
+#             item=session_id, partition_key=user_id
+#         )
 
-        transcripts = session_data.get("transcripts")
+#         transcripts = session_data.get("transcripts")
 
-        if len(transcripts) == 0:
-            return func.HttpResponse(
-                "Session does not contain any transcripts", status_code=404
-            )
+#         if len(transcripts) == 0:
+#             return func.HttpResponse(
+#                 "Session does not contain any transcripts", status_code=404
+#             )
 
-        # Process the transcripts
-        formatted_transcript = ""
-        confused_sections, happy_sections = 0, 0
-        for transcript in transcripts:
-            user_msg = transcript.get("user")
-            assistant_res = transcript.get("assistant")
-            assistant_msg = assistant_res.get("message")
-            assistant_emotion = assistant_res.get("emotion")
+#         # Process the transcripts
+#         formatted_transcript = ""
+#         confused_sections, happy_sections = 0, 0
+#         for transcript in transcripts:
+#             user_msg = transcript.get("user")
+#             assistant_res = transcript.get("assistant")
+#             assistant_msg = assistant_res.get("message")
+#             assistant_emotion = assistant_res.get("emotion")
 
-            # Group happy and confused sections
-            if assistant_emotion == "confused":
-                confused_sections += 1
-            elif assistant_emotion == "happy":
-                happy_sections += 1
+#             # Group happy and confused sections
+#             if assistant_emotion == "confused":
+#                 confused_sections += 1
+#             elif assistant_emotion == "happy":
+#                 happy_sections += 1
 
-            # Add transcript to formatted_transcript
-            formatted_transcript += f"User: {user_msg}\nStudent: {assistant_msg} (emotion={assistant_emotion})\n"
+#             # Add transcript to formatted_transcript
+#             formatted_transcript += f"User: {user_msg}\nStudent: {assistant_msg} (emotion={assistant_emotion})\n"
 
-        # Calculate the overall score
-        overall_score = int((happy_sections / len(transcripts)) * 100)
+#         # Calculate the overall score
+#         overall_score = int((happy_sections / len(transcripts)) * 100)
 
-        # Call the LLM to generate the post session analysis
-        chain = (
-            analyze_transcripts_prompt_template
-            | langchain_llm
-            | analyze_transcripts_parser
-        )
-        output = chain.invoke(
-            {
-                "concept": session_data["lesson_concept"],
-                "objectives": session_data["lesson_objectives"],
-                "student_persona": session_data["student_persona"],
-                "transcripts": formatted_transcript,
-            }
-        )
+#         # Call the LLM to generate the post session analysis
+#         chain = (
+#             analyze_transcripts_prompt_template
+#             | langchain_llm
+#             | analyze_transcripts_parser
+#         )
+#         output = chain.invoke(
+#             {
+#                 "concept": session_data["lesson_concept"],
+#                 "objectives": session_data["lesson_objectives"],
+#                 "student_persona": session_data["student_persona"],
+#                 "transcripts": formatted_transcript,
+#             }
+#         )
 
-        post_session_analysis = {
-            "overall_score": overall_score,
-            "session_passed": overall_score >= 0.5,
-            "assessment_summary": output.general_assessment_summary,
-            "general_assessment": output.general_assessment,
-            "knowledge_gaps": output.knowledge_gaps,
-            "constructive_feedback": output.constructive_feedback,
-            "easier_topics": output.easier_topics,
-            "similar_topics": output.similar_topics,
-            "objective_reached": output.objective_reached,
-        }
+#         post_session_analysis = {
+#             "overall_score": overall_score,
+#             "session_passed": overall_score >= 0.5,
+#             "assessment_summary": output.general_assessment_summary,
+#             "general_assessment": output.general_assessment,
+#             "knowledge_gaps": output.knowledge_gaps,
+#             "constructive_feedback": output.constructive_feedback,
+#             "easier_topics": output.easier_topics,
+#             "similar_topics": output.similar_topics,
+#             "objective_reached": output.objective_reached,
+#         }
 
-        # Save post session analysis to the session data
-        session_data["post_session_analysis"] = post_session_analysis
-        session_data["image_prompt"] = output.image_prompt
+#         # Save post session analysis to the session data
+#         session_data["post_session_analysis"] = post_session_analysis
+#         session_data["image_prompt"] = output.image_prompt
 
-        database_handler.sessions_container.replace_item(
-            item=session_id, body=session_data
-        )
+#         database_handler.sessions_container.replace_item(
+#             item=session_id, body=session_data
+#         )
 
-        # # Generate the image over here and save it to the session data
-        # image_url = DallEAPIWrapper().run(output.image_prompt)
-        # session_data["image_url"] = image_url
+#         # # Generate the image over here and save it to the session data
+#         # image_url = DallEAPIWrapper().run(output.image_prompt)
+#         # session_data["image_url"] = image_url
 
-        database_handler.sessions_container.replace_item(
-            item=session_id, body=session_data
-        )
+#         database_handler.sessions_container.replace_item(
+#             item=session_id, body=session_data
+#         )
 
-        return func.HttpResponse(json.dumps(post_session_analysis), status_code=200)
+#         return func.HttpResponse(json.dumps(post_session_analysis), status_code=200)
 
-    except ValueError:
-        # Handle JSON parsing error
-        return value_error_response
-    except CosmosResourceNotFoundError:
-        return cosmos_404_error_response
-    except Exception:
-        return generic_server_error_response
+#     except ValueError:
+#         # Handle JSON parsing error
+#         return value_error_response
+#     except CosmosResourceNotFoundError:
+#         return cosmos_404_error_response
+#     except Exception:
+#         return generic_server_error_response
 
 
 # @app.route(route="analyze_session_v2")
