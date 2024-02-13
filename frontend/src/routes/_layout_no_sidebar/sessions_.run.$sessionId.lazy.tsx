@@ -79,8 +79,6 @@ function SessionComponent() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const baseData = {
-    // user_id: "KenjiPcx",
-    // session_id: "fae5f009-7599-4740-9fbf-f79d7355071b",
     user_id: session.session_data.user_id,
     session_id: session.session_data.id,
   };
@@ -105,24 +103,23 @@ function SessionComponent() {
     console.log("Closing session");
     setPauseTimer(true);
     const session_duration = new Date().getTime() - startTime;
-    // return;
 
+    const notificationId = "process-session";
+    const data = {
+      ...baseData,
+      termination_reason,
+      session_duration,
+    };
+    notifications.show({
+      id: notificationId,
+      loading: true,
+      title: "Analyzing session",
+      message:
+        "Session is being processed, this may take a minute, feel free to grab a coffee, don't close this tab",
+      autoClose: false,
+      withCloseButton: false,
+    });
     try {
-      const notificationId = "process-session";
-      const data = {
-        ...baseData,
-        termination_reason,
-        session_duration,
-      };
-      notifications.show({
-        id: notificationId,
-        loading: true,
-        title: "Analyzing session",
-        message:
-          "Session is being processed, this may take a minute, feel free to grab a coffee, don't close this tab",
-        autoClose: false,
-        withCloseButton: false,
-      });
       const res = await axios.post(CREATE_POST_SESSION_ANALYSIS, data);
       if (res.status === 200) {
         notifications.update({
@@ -151,7 +148,8 @@ function SessionComponent() {
       });
     } catch (err) {
       console.error("Error", err);
-      notifications.show({
+      notifications.update({
+        id: notificationId,
         color: "red",
         title: "Error",
         message: "Error processing the session, please try again later",
@@ -170,21 +168,19 @@ function SessionComponent() {
       message: userMsg,
     };
 
+    setRecognizing(false);
+    handleUserMessage(userMsg);
+    const notificationId = "send-message";
+    notifications.show({
+      id: notificationId,
+      loading: true,
+      title: "Agent is thinking",
+      message:
+        "Agent is processing your lesson, give it a quick break, it should take a few seconds",
+      autoClose: false,
+      withCloseButton: false,
+    });
     try {
-      console.log(data);
-      // return;
-      setRecognizing(false);
-      handleUserMessage(userMsg);
-      const notificationId = "send-message";
-      notifications.show({
-        id: notificationId,
-        loading: true,
-        title: "Agent is thinking",
-        message:
-          "Agent is processing your lesson, give it a quick break, it should take a few seconds",
-        autoClose: false,
-        withCloseButton: false,
-      });
       const res = await axios.post<SendMessageResponse>(
         SEND_MESSAGE_ENDPOINT,
         data
@@ -199,18 +195,23 @@ function SessionComponent() {
           autoClose: 2000,
         });
         handleAssistantResponse(res.data);
-      } else {
-        notifications.update({
-          id: notificationId,
-          color: "red",
-          title: "Error processing",
-          message: "There is a bug, please contact developer",
-          icon: <IconCross size="1rem" />,
-          autoClose: 2000,
-        });
       }
+      notifications.update({
+        id: notificationId,
+        color: "red",
+        title: "Error processing",
+        message: "There is a bug, please contact developer",
+        icon: <IconCross size="1rem" />,
+        autoClose: 2000,
+      });
     } catch (err) {
       console.log("Error", err);
+      notifications.update({
+        id: notificationId,
+        color: "red",
+        title: "Error processing",
+        message: "There is a bug, please contact developer",
+      });
     }
   }, 4000);
 

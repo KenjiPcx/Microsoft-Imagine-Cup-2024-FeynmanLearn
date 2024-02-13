@@ -164,49 +164,53 @@ function NewSessionConfigurationComponent() {
     setActive((current) => (current > 0 ? current - 1 : current));
 
   const handleStepOne = async () => {
-    console.log("Called", form.values);
     if (scopeVerified) {
       setActive((current) => (current < noOfSteps ? current + 1 : current));
       return;
     }
+
+    // Verify lesson scope api call
+    const notificationId = "lesson-verification-notification";
+    const data = {
+      lesson_concept: form.values.lessonConcept,
+      lesson_objectives: form.values.lessonObjectives,
+    };
+    setLoading(1);
+    notifications.show({
+      id: notificationId,
+      loading: true,
+      title: "Verifying lesson scope",
+      message: "Verifying lesson scope, it will take a few moments",
+      autoClose: false,
+      withCloseButton: false,
+    });
     try {
-      const data = {
-        lesson_concept: form.values.lessonConcept,
-        lesson_objectives: form.values.lessonObjectives,
-      };
-      console.log("data", data);
-      setLoading(1);
       const res = await axios.post<LessonVerificationResponse>(
         VERIFY_LESSON_SCOPE_ENDPOINT,
         data
       );
-      // const res = {
-      //   data: {
-      //     passed_verification: true,
-      //     feedback: "Success",
-      //     suggestion: "Lesson scope is feasible!",
-      //   },
-      // };
       setLoading(-1);
-      console.log(res.data);
       if (res.data.passed_verification) {
-        notifications.show({
+        notifications.update({
+          id: notificationId,
           title: "Success",
           message: "Lesson scope is feasible!",
           color: "green",
         });
         setActive((current) => (current < noOfSteps ? current + 1 : current));
         setScopeVerified(true);
-      } else {
-        notifications.show({
-          title: res.data.feedback || "Error",
-          message: res.data.suggestion,
-          color: "red",
-        });
+        return;
       }
+      notifications.update({
+        id: notificationId,
+        title: res.data.feedback || "Error",
+        message: res.data.suggestion,
+        color: "red",
+      });
     } catch (error) {
       console.error(error);
-      notifications.show({
+      notifications.update({
+        id: notificationId,
         title: "Error",
         message: "Failed to verify lesson scope. Please try again.",
         color: "red",
@@ -226,24 +230,23 @@ function NewSessionConfigurationComponent() {
       user_id: auth.getUserId(),
     };
 
+    const notificationId = "create-session-notification";
+    setLoading(4);
+    setActive((current) => (current < noOfSteps ? current + 1 : current));
+    notifications.show({
+      id: notificationId,
+      loading: true,
+      title: "Creating session",
+      message: "Creating session, it will take a few moments",
+      autoClose: false,
+      withCloseButton: false,
+    });
     try {
-      setLoading(4);
-      setActive((current) => (current < noOfSteps ? current + 1 : current));
-      const notificationId = "create-session-notification";
-      notifications.show({
-        id: notificationId,
-        loading: true,
-        title: "Creating session",
-        message: "Creating session, it will take a few moments",
-        autoClose: false,
-        withCloseButton: false,
-      });
       const res = await axios.post<CreateNewSessionResponse>(
         CREATE_SESSION_ENDPOINT,
         data
       );
       setLoading(-1);
-      console.log(res.data);
       if (res.data.success) {
         notifications.update({
           id: notificationId,
@@ -262,21 +265,21 @@ function NewSessionConfigurationComponent() {
           });
         }, 2000);
         return;
-      } else {
-        notifications.update({
-          id: notificationId,
-          color: "red",
-          title: "Error Creating Session",
-          message: `Failed to create session, please contact developer. ${res.data.error}`,
-          icon: <IconCross size="1rem" />,
-          autoClose: 2000,
-        });
-        prevStep();
-        return;
       }
+      notifications.update({
+        id: notificationId,
+        color: "red",
+        title: "Error Creating Session",
+        message: `Failed to create session, please contact developer. ${res.data.error}`,
+        icon: <IconCross size="1rem" />,
+        autoClose: 2000,
+      });
+      prevStep();
+      return;
     } catch (error) {
       console.error(error);
-      notifications.show({
+      notifications.update({
+        id: notificationId,
         title: "Error",
         message: `Failed to create session. Please try again. ${error}`,
         color: "red",
