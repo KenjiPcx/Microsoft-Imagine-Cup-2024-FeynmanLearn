@@ -266,6 +266,8 @@ function NewSessionConfigurationComponent() {
         }, 2000);
         return;
       }
+
+      // Handle failure, reset state or try again
       notifications.update({
         id: notificationId,
         color: "red",
@@ -284,6 +286,7 @@ function NewSessionConfigurationComponent() {
         message: `Failed to create session. Please try again. ${error}`,
         color: "red",
       });
+      prevStep();
       return;
     }
   };
