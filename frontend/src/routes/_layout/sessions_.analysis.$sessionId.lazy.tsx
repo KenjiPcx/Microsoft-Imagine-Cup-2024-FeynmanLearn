@@ -76,7 +76,11 @@ function PostSessionAnalysisComponent() {
             <Stack p={"md"} spacing={"xs"}>
               {haveKnowledgeGaps ? (
                 <>
-                  <Text>{knowledge_gaps}</Text>
+                  <Box>
+                    {knowledge_gaps.map((gaps, idx) => (
+                      <Text key={`knowledge-gaps-${idx}`}>{gaps}</Text>
+                    ))}
+                  </Box>
                   <Flex p={"md"} wrap={"wrap"} gap={"xl"} justify={"center"}>
                     {easier_topics.map((topic, key) => (
                       <Button
