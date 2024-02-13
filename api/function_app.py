@@ -54,6 +54,7 @@ connect_str = os.getenv("BLOB_CONN_STR")
 container_name = "feynmanlearn"
 blob_service_client = BlobServiceClient.from_connection_string(connect_str)
 
+
 @app.route(route="create_session")
 def create_session(req: func.HttpRequest) -> func.HttpResponse:
     logging.info("create_session HTTP trigger function processed a request.")
@@ -363,7 +364,9 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
 
         # Download image to blob storage
         blob_name = f"{user_id}/{session_id}.png"
-        blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+        blob_client = blob_service_client.get_blob_client(
+            container=container_name, blob=blob_name
+        )
         image = requests.get(image_url)
         blob_client.upload_blob(
             image.content,
@@ -621,6 +624,34 @@ def get_post_session_analysis(req: func.HttpRequest) -> func.HttpResponse:
             },
             "post_session_analysis": session_data["post_session_analysis"],
             "annotated_transcripts": session_data["session_transcripts"],
+        }
+        return func.HttpResponse(json.dumps(res), status_code=200)
+
+    except ValueError:
+        # Handle JSON parsing error
+        return value_error_response
+    except CosmosResourceNotFoundError:
+        return cosmos_404_error_response
+    except Exception:
+        return generic_server_error_response
+
+
+@app.route(route="check_post_session_analysis_exists")
+def check_post_session_analysis_exists(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info(
+        "check_post_session_analysis_exists HTTP trigger function processed a request."
+    )
+
+    try:
+        req_body = req.get_json()
+        session_id = req_body.get("session_id")
+        user_id = req_body.get("user_id")
+
+        session_data = database_handler.sessions_container.read_item(
+            item=session_id, partition_key=user_id
+        )
+        res = {
+            "exists": "post_session_analysis" in session_data,
         }
         return func.HttpResponse(json.dumps(res), status_code=200)
 

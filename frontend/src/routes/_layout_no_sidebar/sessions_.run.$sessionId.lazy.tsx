@@ -29,6 +29,7 @@ import { isRecognizingState } from "../../recoil";
 import { useRecoilState } from "recoil";
 import { playMessage, speechRecognizer } from "../../utils/speech";
 import {
+  CHECK_POST_SESSION_ANALYSIS_EXISTS,
   CREATE_POST_SESSION_ANALYSIS,
   SEND_MESSAGE_ENDPOINT,
 } from "../../backendEndpoints";
@@ -102,6 +103,7 @@ function SessionComponent() {
   const closeSession = async (termination_reason: string) => {
     console.log("Closing session");
     setPauseTimer(true);
+    setRecognizing(false);
     const session_duration = new Date().getTime() - startTime;
 
     const notificationId = "process-session";
@@ -142,17 +144,80 @@ function SessionComponent() {
         id: notificationId,
         color: "red",
         title: "Error",
-        message: "Error processing the session, please try again later",
+        message:
+          "Error processing the session, wait a minute, we will sort it out",
         icon: <IconCross size="1rem" />,
         autoClose: 2000,
       });
+
+      setTimeout(() => {
+        analyzeSessionFallback(notificationId);
+      }, 60000);
     } catch (err) {
       console.error("Error", err);
       notifications.update({
         id: notificationId,
         color: "red",
         title: "Error",
-        message: "Error processing the session, please try again later",
+        message:
+          "Error processing the session, wait a minute, we will sort it out",
+        autoClose: 2000,
+      });
+
+      setTimeout(() => {
+        analyzeSessionFallback(notificationId);
+      }, 60000);
+    }
+  };
+
+  const analyzeSessionFallback = async (notificationId: string) => {
+    const data = {
+      ...baseData,
+    };
+    notifications.show({
+      id: notificationId,
+      loading: true,
+      title: "Check if analysis succeeded",
+      message: "Checking if the session analysis has been completed",
+      autoClose: false,
+      withCloseButton: false,
+    });
+    try {
+      const res = await axios.post<{ exists: boolean }>(
+        CHECK_POST_SESSION_ANALYSIS_EXISTS,
+        data
+      );
+      if (res.data.exists) {
+        notifications.update({
+          id: notificationId,
+          title: "Analysis Completed",
+          message: "Redirecting to the analysis page",
+          icon: <IconCheck size="1rem" />,
+          color: "green",
+        });
+        setTimeout(() => {
+          navigate({
+            to: "/sessions/analysis/$sessionId",
+            params: { sessionId: session.session_data.id },
+          });
+        }, 3000);
+        return;
+      }
+      notifications.update({
+        id: notificationId,
+        title: "Analysis not completed",
+        message: "This is a bug, please contact the developer",
+        icon: <IconCross size="1rem" />,
+        color: "red",
+      });
+    } catch (err) {
+      console.error("Error", err);
+      notifications.update({
+        id: notificationId,
+        title: "Analysis not completed",
+        message: "This is a bug, please contact the developer",
+        icon: <IconCross size="1rem" />,
+        color: "red",
       });
     }
   };
@@ -211,6 +276,7 @@ function SessionComponent() {
         color: "red",
         title: "Error processing",
         message: "There is a bug, please contact developer",
+        autoClose: 2000,
       });
     }
   }, 4000);

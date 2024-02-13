@@ -285,6 +285,7 @@ function NewSessionConfigurationComponent() {
         title: "Error",
         message: `Failed to create session. Please try again. ${error}`,
         color: "red",
+        autoClose: 2000,
       });
       prevStep();
       return;
