@@ -276,6 +276,7 @@ function NewSessionConfigurationComponent() {
         icon: <IconCross size="1rem" />,
         autoClose: 2000,
       });
+      setLoading(-1);
       prevStep();
       return;
     } catch (error) {
@@ -287,6 +288,7 @@ function NewSessionConfigurationComponent() {
         color: "red",
         autoClose: 2000,
       });
+      setLoading(-1);
       prevStep();
       return;
     }
