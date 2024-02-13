@@ -29,6 +29,7 @@ import { isRecognizingState } from "../../recoil";
 import { useRecoilState } from "recoil";
 import { playMessage, speechRecognizer } from "../../utils/speech";
 import {
+  CHECK_POST_SESSION_ANALYSIS_EXISTS,
   CREATE_POST_SESSION_ANALYSIS,
   SEND_MESSAGE_ENDPOINT,
 } from "../../backendEndpoints";
@@ -69,6 +70,7 @@ function SessionComponent() {
   >("neutral");
   const [conceptUnderstood, setConceptUnderstood] = useState(false);
   const [questions, setQuestions] = useState<string[]>([]);
+  const [pauseTimer, setPauseTimer] = useState(false);
   const [
     chatHistoryOpened,
     { open: openChatHistory, close: closeChatHistory },
@@ -78,8 +80,6 @@ function SessionComponent() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const baseData = {
-    // user_id: "KenjiPcx",
-    // session_id: "fae5f009-7599-4740-9fbf-f79d7355071b",
     user_id: session.session_data.user_id,
     session_id: session.session_data.id,
   };
@@ -95,30 +95,33 @@ function SessionComponent() {
       labels: { confirm: "Exit Session", cancel: "Back" },
       confirmProps: { color: "blue" },
       onCancel: () => console.log("Cancel"),
-      onConfirm: async () => await closeSession("user_quit"),
+      onConfirm: async () => {
+        await closeSession("user_quit");
+      },
     });
 
   const closeSession = async (termination_reason: string) => {
     console.log("Closing session");
+    setPauseTimer(true);
+    setRecognizing(false);
     const session_duration = new Date().getTime() - startTime;
-    // return;
 
+    const notificationId = "process-session";
+    const data = {
+      ...baseData,
+      termination_reason,
+      session_duration,
+    };
+    notifications.show({
+      id: notificationId,
+      loading: true,
+      title: "Analyzing session",
+      message:
+        "Session is being processed, this may take a minute, feel free to grab a coffee, don't close this tab",
+      autoClose: false,
+      withCloseButton: false,
+    });
     try {
-      const notificationId = "process-session";
-      const data = {
-        ...baseData,
-        termination_reason,
-        session_duration,
-      };
-      notifications.show({
-        id: notificationId,
-        loading: true,
-        title: "Analyzing session",
-        message:
-          "Session is being processed, this may take a minute, feel free to grab a coffee, don't close this tab",
-        autoClose: false,
-        withCloseButton: false,
-      });
       const res = await axios.post(CREATE_POST_SESSION_ANALYSIS, data);
       if (res.status === 200) {
         notifications.update({
@@ -141,16 +144,80 @@ function SessionComponent() {
         id: notificationId,
         color: "red",
         title: "Error",
-        message: "Error processing the session, please try again later",
+        message:
+          "Error processing the session, wait a minute, we will sort it out",
         icon: <IconCross size="1rem" />,
         autoClose: 2000,
       });
+
+      setTimeout(() => {
+        analyzeSessionFallback(notificationId);
+      }, 60000);
     } catch (err) {
       console.error("Error", err);
-      notifications.show({
+      notifications.update({
+        id: notificationId,
         color: "red",
         title: "Error",
-        message: "Error processing the session, please try again later",
+        message:
+          "Error processing the session, wait a minute, we will sort it out",
+        autoClose: 2000,
+      });
+
+      setTimeout(() => {
+        analyzeSessionFallback(notificationId);
+      }, 60000);
+    }
+  };
+
+  const analyzeSessionFallback = async (notificationId: string) => {
+    const data = {
+      ...baseData,
+    };
+    notifications.show({
+      id: notificationId,
+      loading: true,
+      title: "Check if analysis succeeded",
+      message: "Checking if the session analysis has been completed",
+      autoClose: false,
+      withCloseButton: false,
+    });
+    try {
+      const res = await axios.post<{ exists: boolean }>(
+        CHECK_POST_SESSION_ANALYSIS_EXISTS,
+        data
+      );
+      if (res.data.exists) {
+        notifications.update({
+          id: notificationId,
+          title: "Analysis Completed",
+          message: "Redirecting to the analysis page",
+          icon: <IconCheck size="1rem" />,
+          color: "green",
+        });
+        setTimeout(() => {
+          navigate({
+            to: "/sessions/analysis/$sessionId",
+            params: { sessionId: session.session_data.id },
+          });
+        }, 3000);
+        return;
+      }
+      notifications.update({
+        id: notificationId,
+        title: "Analysis not completed",
+        message: "This is a bug, please contact the developer",
+        icon: <IconCross size="1rem" />,
+        color: "red",
+      });
+    } catch (err) {
+      console.error("Error", err);
+      notifications.update({
+        id: notificationId,
+        title: "Analysis not completed",
+        message: "This is a bug, please contact the developer",
+        icon: <IconCross size="1rem" />,
+        color: "red",
       });
     }
   };
@@ -166,21 +233,19 @@ function SessionComponent() {
       message: userMsg,
     };
 
+    setRecognizing(false);
+    handleUserMessage(userMsg);
+    const notificationId = "send-message";
+    notifications.show({
+      id: notificationId,
+      loading: true,
+      title: "Agent is thinking",
+      message:
+        "Agent is processing your lesson, give it a quick break, it should take a few seconds",
+      autoClose: false,
+      withCloseButton: false,
+    });
     try {
-      console.log(data);
-      // return;
-      setRecognizing(false);
-      handleUserMessage(userMsg);
-      const notificationId = "send-message";
-      notifications.show({
-        id: notificationId,
-        loading: true,
-        title: "Agent is thinking",
-        message:
-          "Agent is processing your lesson, give it a quick break, it should take a few seconds",
-        autoClose: false,
-        withCloseButton: false,
-      });
       const res = await axios.post<SendMessageResponse>(
         SEND_MESSAGE_ENDPOINT,
         data
@@ -195,18 +260,24 @@ function SessionComponent() {
           autoClose: 2000,
         });
         handleAssistantResponse(res.data);
-      } else {
-        notifications.update({
-          id: notificationId,
-          color: "red",
-          title: "Error processing",
-          message: "There is a bug, please contact developer",
-          icon: <IconCross size="1rem" />,
-          autoClose: 2000,
-        });
       }
+      notifications.update({
+        id: notificationId,
+        color: "red",
+        title: "Error processing",
+        message: "There is a bug, please contact developer",
+        icon: <IconCross size="1rem" />,
+        autoClose: 2000,
+      });
     } catch (err) {
       console.log("Error", err);
+      notifications.update({
+        id: notificationId,
+        color: "red",
+        title: "Error processing",
+        message: "There is a bug, please contact developer",
+        autoClose: 2000,
+      });
     }
   }, 4000);
 
@@ -334,8 +405,6 @@ function SessionComponent() {
     });
   }, [chatHistory]);
 
-  useEffect(() => {}, [conceptUnderstood]);
-
   return (
     <>
       <Navbar
@@ -425,6 +494,7 @@ function SessionComponent() {
           <Stack>
             <CountdownTimer
               minutes={10}
+              pauseTimer={pauseTimer}
               onTimeUp={async () => {
                 notifications.show({
                   title: "Time's up",
