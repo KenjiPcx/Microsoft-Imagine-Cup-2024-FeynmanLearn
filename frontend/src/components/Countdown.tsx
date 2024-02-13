@@ -8,10 +8,15 @@ export type Timer = {
 
 export interface CountdownTimerProps {
   minutes: number;
+  pauseTimer: boolean;
   onTimeUp: () => void;
 }
 
-const CountdownTimer = ({ minutes, onTimeUp }: CountdownTimerProps) => {
+const CountdownTimer = ({
+  minutes,
+  pauseTimer,
+  onTimeUp,
+}: CountdownTimerProps) => {
   const refTime = new Date().getTime() + minutes * 60000;
   const [timeLeft, setTimeLeft] = useState<Timer>(calculateTimeLeft(refTime));
 
@@ -31,11 +36,13 @@ const CountdownTimer = ({ minutes, onTimeUp }: CountdownTimerProps) => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const timeLeftTemp = calculateTimeLeft(refTime);
-      setTimeLeft(timeLeftTemp);
-      if (timeLeftTemp.minutes === 0 && timeLeftTemp.seconds === 0) {
-        onTimeUp();
-        clearInterval(interval);
+      if (!pauseTimer) {
+        const timeLeftTemp = calculateTimeLeft(refTime);
+        setTimeLeft(timeLeftTemp);
+        if (timeLeftTemp.minutes === 0 && timeLeftTemp.seconds === 0) {
+          onTimeUp();
+          clearInterval(interval);
+        }
       }
     }, 1000);
 

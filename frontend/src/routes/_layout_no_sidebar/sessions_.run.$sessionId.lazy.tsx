@@ -69,6 +69,7 @@ function SessionComponent() {
   >("neutral");
   const [conceptUnderstood, setConceptUnderstood] = useState(false);
   const [questions, setQuestions] = useState<string[]>([]);
+  const [pauseTimer, setPauseTimer] = useState(false);
   const [
     chatHistoryOpened,
     { open: openChatHistory, close: closeChatHistory },
@@ -95,11 +96,14 @@ function SessionComponent() {
       labels: { confirm: "Exit Session", cancel: "Back" },
       confirmProps: { color: "blue" },
       onCancel: () => console.log("Cancel"),
-      onConfirm: async () => await closeSession("user_quit"),
+      onConfirm: async () => {
+        await closeSession("user_quit");
+      },
     });
 
   const closeSession = async (termination_reason: string) => {
     console.log("Closing session");
+    setPauseTimer(true);
     const session_duration = new Date().getTime() - startTime;
     // return;
 
@@ -334,8 +338,6 @@ function SessionComponent() {
     });
   }, [chatHistory]);
 
-  useEffect(() => {}, [conceptUnderstood]);
-
   return (
     <>
       <Navbar
@@ -425,6 +427,7 @@ function SessionComponent() {
           <Stack>
             <CountdownTimer
               minutes={10}
+              pauseTimer={pauseTimer}
               onTimeUp={async () => {
                 notifications.show({
                   title: "Time's up",
