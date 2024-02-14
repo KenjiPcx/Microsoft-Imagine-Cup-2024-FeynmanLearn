@@ -324,9 +324,9 @@ function NewSessionConfigurationComponent() {
         } catch (error) {
           console.error(error);
         }
+        setLoading(-1);
+        prevStep();
       }, 60000);
-      setLoading(-1);
-      prevStep();
       return;
     }
   };
