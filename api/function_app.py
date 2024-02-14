@@ -63,6 +63,7 @@ def create_session(req: func.HttpRequest) -> func.HttpResponse:
         # Extract the request body
         req_body = req.get_json()
         user_id = req_body.get("user_id")
+        session_id = req_body.get("session_id")
         lesson_concept = req_body.get("lesson_concept")
         lesson_objectives = req_body.get("lesson_objectives")
         game_mode = req_body.get("game_mode")
@@ -87,7 +88,6 @@ def create_session(req: func.HttpRequest) -> func.HttpResponse:
         )
 
         # Send the first message to create a thread
-        session_id = str(uuid.uuid4())
         assistant = OpenAIAssistantRunnable.create_assistant(
             name=f"student-{session_id}",
             instructions=feynman_student_instructions_prompt,
@@ -669,6 +669,30 @@ def check_post_session_analysis_exists(req: func.HttpRequest) -> func.HttpRespon
         return value_error_response
     except CosmosResourceNotFoundError:
         return cosmos_404_error_response
+    except Exception:
+        return generic_server_error_response
+
+
+@app.route(route="check_session_exists")
+def check_session_exists(req: func.HttpRequest) -> func.HttpResponse:
+    logging.info("check_session_exists HTTP trigger function processed a request.")
+
+    try:
+        req_body = req.get_json()
+        user_id = req_body.get("user_id")
+        session_id = req_body.get("session_id")
+        session_data = database_handler.sessions_container.read_item(
+            item=session_id, partition_key=user_id
+        )
+        res = {"exists": True}
+        return func.HttpResponse(json.dumps(res), status_code=200)
+
+    except ValueError:
+        # Handle JSON parsing error
+        return value_error_response
+    except CosmosResourceNotFoundError:
+        res = {"exists": False}
+        return func.HttpResponse(json.dumps(res), status_code=404)
     except Exception:
         return generic_server_error_response
 

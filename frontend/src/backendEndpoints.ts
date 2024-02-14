@@ -10,3 +10,4 @@ export const CREATE_QUESTION_ANALYSIS = `${baseUrl}/analyze_question_response`;
 export const CREATE_POST_SESSION_ANALYSIS = `${baseUrl}/analyze_session`;
 export const GET_POST_SESSION_ANALYSIS_ENDPOINT = `${baseUrl}/get_post_session_analysis`;
 export const CHECK_POST_SESSION_ANALYSIS_EXISTS = `${baseUrl}/check_post_session_analysis_exists`
+export const CHECK_SESSION_EXISTS = `${baseUrl}/check_session_exists`;
