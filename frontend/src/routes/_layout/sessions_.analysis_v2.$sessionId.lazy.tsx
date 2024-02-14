@@ -35,10 +35,6 @@ import {
   getPostSessionAnalysis,
 } from "../../utils/sessionAnalysisService";
 import { useEffect, useState } from "react";
-import {
-  feedback,
-  questionFeedback,
-} from "../../mock_data/mockPostSessionAnalysis_v2";
 import { useDisclosure } from "@mantine/hooks";
 
 export const Route = createLazyFileRoute(
