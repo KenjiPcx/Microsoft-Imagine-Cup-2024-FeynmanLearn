@@ -33,6 +33,7 @@ import {
 import { useForm } from "@mantine/form";
 import axios from "axios";
 import {
+  CHECK_SESSION_EXISTS,
   CREATE_SESSION_ENDPOINT,
   VERIFY_LESSON_SCOPE_ENDPOINT,
 } from "../../backendEndpoints";
@@ -220,14 +221,20 @@ function NewSessionConfigurationComponent() {
   };
 
   const handleCreateSession = async () => {
+    const sessionId = crypto.randomUUID();
+    const baseData = {
+      session_id: sessionId as string,
+      user_id: auth.getUserId(),
+    };
+
     // Create session
     const data = {
+      ...baseData,
       lesson_concept: form.values.lessonConcept,
       lesson_objectives: form.values.lessonObjectives,
       game_mode: form.values.gameMode,
       difficulty: form.values.difficulty,
       student_persona: form.values.persona,
-      user_id: auth.getUserId(),
     };
 
     const notificationId = "create-session-notification";
@@ -281,13 +288,43 @@ function NewSessionConfigurationComponent() {
       return;
     } catch (error) {
       console.error(error);
+      // Handle failure fallback
       notifications.update({
         id: notificationId,
-        title: "Error",
-        message: `Failed to create session. This is commonly due to OpenAI api being too slow. Please try again another time. ${error}`,
-        color: "red",
-        autoClose: 2000,
+        title: "Slow response",
+        message: `Create session is taking longer than expected. Give me a minute and I will check again. ${error}`,
+        color: "yellow",
+        autoClose: 60000,
       });
+      setTimeout(async () => {
+        try {
+          const session = await axios.post<{ exists: boolean }>(
+            CHECK_SESSION_EXISTS,
+            baseData
+          );
+          if (session.data.exists) {
+            notifications.update({
+              id: notificationId,
+              color: "teal",
+              title: "Checked again. Session Created Successfully!",
+              message: "Redirecting to the analysis page",
+              icon: <IconCheck size="1rem" />,
+              autoClose: 2000,
+            });
+            setCreateSessionMsg("Session created successfully! Redirecting...");
+            // Redirect to new session id after 1s
+            setTimeout(() => {
+              navigate({
+                to: "/sessions/run/$sessionId",
+                params: { sessionId: sessionId },
+              });
+            }, 2000);
+            return;
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      }, 60000);
       setLoading(-1);
       prevStep();
       return;
