@@ -20,6 +20,7 @@ export default function SessionSummaryCard({
       radius="md"
       component={Link}
       to={"/sessions/analysis/$sessionId"}
+      preload={false}
       params={{
         sessionId: id,
       }}
@@ -32,7 +33,7 @@ export default function SessionSummaryCard({
           {label}
         </Text>
         <Text c="dimmed" size="xs" tt="uppercase" fw={700} mt="md">
-          {last_date_attempt}
+          {new Date(parseInt(last_date_attempt) * 1000).toUTCString()}
         </Text>
       </Group>
     </Card>

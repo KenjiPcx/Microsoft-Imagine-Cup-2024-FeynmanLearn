@@ -1,10 +1,10 @@
 // Here is where we select the sessions based on a user's history
 
 import { createLazyFileRoute } from "@tanstack/react-router";
-import { Box, Center, SimpleGrid, Stack } from "@mantine/core";
+import { Box, Center, ScrollArea, SimpleGrid, Stack } from "@mantine/core";
 import { Text } from "@mantine/core";
 import SessionSummaryCard from "../../components/SessionSummaryCard";
-import NewSessionButton from "../../components/NewSessionButton";
+import NewSessionButton from "../../components/layout/NewSessionButton";
 
 export const Route = createLazyFileRoute("/_layout/sessions")({
   component: SessionsComponent,
@@ -28,25 +28,27 @@ function SessionsComponent() {
           </Stack>
         </Center>
       ) : (
-        <SimpleGrid
-          cols={3}
-          spacing={"xl"}
-          breakpoints={[
-            { maxWidth: "md", cols: 3, spacing: "md" },
-            { maxWidth: "sm", cols: 2, spacing: "sm" },
-            { maxWidth: "xs", cols: 1, spacing: "sm" },
-          ]}
-        >
-          {sessionSummaries.map((session, key) => (
-            <SessionSummaryCard
-              key={key}
-              id={session.id}
-              label={session.lesson_concept}
-              image_url={session.image_url || ""}
-              last_date_attempt={session.last_date_attempt}
-            />
-          ))}
-        </SimpleGrid>
+        <ScrollArea h={"80vh"} offsetScrollbars>
+          <SimpleGrid
+            cols={3}
+            spacing={"xl"}
+            breakpoints={[
+              { maxWidth: "md", cols: 3, spacing: "md" },
+              { maxWidth: "sm", cols: 2, spacing: "sm" },
+              { maxWidth: "xs", cols: 1, spacing: "sm" },
+            ]}
+          >
+            {sessionSummaries.map((session, key) => (
+              <SessionSummaryCard
+                key={key}
+                id={session.id}
+                label={session.lesson_concept}
+                image_url={session.image_url || ""}
+                last_date_attempt={session.last_date_attempt}
+              />
+            ))}
+          </SimpleGrid>
+        </ScrollArea>
       )}
     </Box>
   );

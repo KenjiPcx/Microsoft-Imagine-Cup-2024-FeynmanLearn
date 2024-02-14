@@ -157,11 +157,11 @@ function SessionComponent() {
       console.error("Error", err);
       notifications.update({
         id: notificationId,
-        color: "red",
+        color: "yellow",
         title: "Error",
         message:
-          "Error processing the session, wait a minute, we will sort it out",
-        autoClose: 2000,
+          "Session is still being processed, wait a minute, we will sort it out",
+        autoClose: 60000,
       });
 
       setTimeout(() => {

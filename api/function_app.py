@@ -87,25 +87,33 @@ def create_session(req: func.HttpRequest) -> func.HttpResponse:
         )
 
         # Send the first message to create a thread
-        assistant = OpenAIAssistantRunnable(
-            assistant_id=feynman_assistant_id, as_agent=True
+        session_id = str(uuid.uuid4())
+        assistant = OpenAIAssistantRunnable.create_assistant(
+            name=f"student-{session_id}",
+            instructions=feynman_student_instructions_prompt,
+            tools=[],
+            model="gpt-4-turbo-preview",
         )
+        # assistant = OpenAIAssistantRunnable(
+        #     assistant_id=feynman_assistant_id, as_agent=True
+        # )
 
         start_msg = f"Tell me you're excited to learn about {lesson_concept} in a very brief way, and I'll proceed to teach"
         output = assistant.invoke(
             {
-                "instructions": feynman_student_instructions_prompt,
                 "content": start_msg,
             }
         )
-        assistant_output = output.return_values["output"]
+        assistant_output = output[0].content[0].text.value
         assistant_output = feynman_student_prompt_parser.parse(assistant_output)
-        thread_id = output.return_values["thread_id"]
+        thread_id = output[0].thread_id
+        assistant_id = output[0].assistant_id
 
         # Create the session data and store it in the database
         session_data = {
-            "id": str(uuid.uuid4()),
+            "id": session_id,
             "user_id": user_id,
+            "assistant_id": assistant_id,
             "lesson_concept": lesson_concept,
             "lesson_objectives": lesson_objectives,
             "game_mode": game_mode,
@@ -154,10 +162,11 @@ def send_message(req: func.HttpRequest) -> func.HttpResponse:
             session_id, partition_key=user_id
         )
         thread_id = session_data.get("thread_id")
+        assistant_id = session_data.get("assistant_id")
 
         # Get student agent response
         assistant = OpenAIAssistantRunnable(
-            assistant_id=feynman_assistant_id, as_agent=True
+            assistant_id=assistant_id, as_agent=True
         )
         output = assistant.invoke({"content": message, "thread_id": thread_id})
         assistant_res = output.return_values["output"]
@@ -333,7 +342,7 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
 
         post_session_analysis = {
             "overall_score": overall_score,
-            "session_passed": overall_score >= 0.5,
+            "session_passed": overall_score >= 50,
             "assessment_summary": output.general_assessment_summary,
             "general_assessment": output.general_assessment,
             "knowledge_gaps": output.knowledge_gaps,

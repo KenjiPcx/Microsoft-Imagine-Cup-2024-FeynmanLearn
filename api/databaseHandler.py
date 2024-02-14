@@ -19,7 +19,7 @@ class DatabaseHandler:
     def fetch_session_summaries_by_user(self, user_id: str) -> list:
         try:
             # Query session summaries for the given user_id
-            query = f"SELECT c.id, c.lesson_concept, c.image_url, c.last_date_attempt FROM c WHERE c.user_id = '{user_id}'"
+            query = f"SELECT c.id, c.lesson_concept, c.image_url, c.last_date_attempt FROM c WHERE c.user_id = '{user_id}' AND IS_DEFINED(c.last_date_attempt) ORDER BY c.last_date_attempt DESC"
             # query = f"SELECT c.id, c.concept, c.student_persona FROM c WHERE c.user_id = '{user_id}'" # For ventus testing purposes
             sessions = self.sessions_container.query_items(
                 query, enable_cross_partition_query=True
@@ -46,7 +46,7 @@ class DatabaseHandler:
 
     def get_transcript_by_question(self, user_id: str, question_id: int, session_id: str) -> list:
         try:
-            # Query transcripts of a specific question using user_id and question_id 
+            # Query transcripts of a specific question using user_id and question_id
             query = f"SELECT c.id, c.user_id, st AS session_transcript, c.student_persona FROM c JOIN st IN c.session_transcripts WHERE c.user_id='{user_id}' AND st.question_id={question_id} AND c.id='{session_id}'"
             sessions = list(
                 self.sessions_container.query_items(
@@ -60,7 +60,7 @@ class DatabaseHandler:
 
     def get_analysis_by_session(self, user_id: str, session_id: str) -> list:
         try:
-            # Query transcripts of a specific question using user_id and question_id 
+            # Query transcripts of a specific question using user_id and question_id
             query = f"SELECT * FROM c WHERE c.user_id='{user_id}' AND c.id='{session_id}'"
             sessions = list(
                 self.sessions_container.query_items(

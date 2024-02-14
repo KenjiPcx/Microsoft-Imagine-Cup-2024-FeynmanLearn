@@ -284,7 +284,7 @@ function NewSessionConfigurationComponent() {
       notifications.update({
         id: notificationId,
         title: "Error",
-        message: `Failed to create session. Please try again. ${error}`,
+        message: `Failed to create session. This is commonly due to OpenAI api being too slow. Please try again another time. ${error}`,
         color: "red",
         autoClose: 2000,
       });

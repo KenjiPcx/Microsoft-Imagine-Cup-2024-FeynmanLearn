@@ -37,7 +37,7 @@ function RootComponent() {
   return (
     <PFlex component={motion.div} className={classes.root} layout>
       <Outlet />
-      <TanStackRouterDevtools position="bottom-right" />
+      {/* <TanStackRouterDevtools position="bottom-right" /> */}
     </PFlex>
   );
 }
