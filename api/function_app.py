@@ -345,6 +345,7 @@ def analyze_session(req: func.HttpRequest) -> func.HttpResponse:
             "session_passed": overall_score >= 50,
             "assessment_summary": output.general_assessment_summary,
             "general_assessment": output.general_assessment,
+            "fact_check_results": output.fact_check_results,
             "knowledge_gaps": output.knowledge_gaps,
             "constructive_feedback": output.constructive_feedback,
             "easier_topics": output.easier_topics,

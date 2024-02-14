@@ -75,6 +75,7 @@ export type GetSessionAnalysisResponse = {
     assessment_summary: string;
     general_assessment: string;
     knowledge_gaps: string[];
+    fact_check_results: string[];
     constructive_feedback: string;
     easier_topics: string[];
     similar_topics: string[];
