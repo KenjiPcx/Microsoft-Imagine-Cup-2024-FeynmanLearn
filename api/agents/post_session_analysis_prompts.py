@@ -44,7 +44,10 @@ class AnalyzeTranscriptsResponse(BaseModel):
     )
     general_assessment: str = Field(description="general assessment of the user's performance in their explanation")
     general_assessment_summary: str = Field(description="sentence to summarize the user's performance")
-    knowledge_gaps: List[str] = Field(description="knowledge gaps relevant to the concept being explained, not the user's explanation skills")
+    fact_check_results: List[str] = Field(
+        description="list of misconceptions or wrong explanations in the user's explanation and what the correct explanation should be"
+    )
+    knowledge_gaps: List[str] = Field(description="knowledge gaps relevant to the concept being explained, not the user's explanation skills, it should contain what the user failed to include in their explanation that would've made the lesson better")
     constructive_feedback: str = Field(
         description="constructive feedback on what could be improved"
     )

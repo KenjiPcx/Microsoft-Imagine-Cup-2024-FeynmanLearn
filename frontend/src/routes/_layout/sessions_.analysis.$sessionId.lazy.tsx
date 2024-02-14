@@ -45,9 +45,11 @@ function PostSessionAnalysisComponent() {
     similar_topics,
     session_passed,
     knowledge_gaps,
+    fact_check_results,
     constructive_feedback,
   } = post_session_analysis;
   const haveKnowledgeGaps = knowledge_gaps.length > 0;
+  const haveFactCheckResults = fact_check_results.length > 0;
 
   return (
     <ScrollArea h={"80vh"} offsetScrollbars>
@@ -68,6 +70,26 @@ function PostSessionAnalysisComponent() {
             </Stack>
           </Paper>
         </Box>
+
+        <Box>
+          <Title order={2} color="blue">
+            Errors in the explanation
+          </Title>
+          <Paper radius={"lg"} p={"xs"} mt={"lg"}>
+            <Stack p={"md"} spacing={"xs"}>
+              {haveFactCheckResults ? (
+                <Box>
+                  {fact_check_results.map((res, idx) => (
+                    <Text key={`fact-check-res-${idx}`}>{res}</Text>
+                  ))}
+                </Box>
+              ) : (
+                "None found, great job! 😊"
+              )}
+            </Stack>
+          </Paper>
+        </Box>
+
         <Box>
           <Title order={2} color="blue">
             Knowledge Gaps
@@ -84,7 +106,7 @@ function PostSessionAnalysisComponent() {
                   <Flex p={"md"} wrap={"wrap"} gap={"xl"} justify={"center"}>
                     {easier_topics.map((topic, key) => (
                       <Button
-                        key={`similar-topic-${key}`}
+                        key={`easier-topic-${key}`}
                         component={Link}
                         to={"/sessions/new"}
                         search={{ topic: topic }}
