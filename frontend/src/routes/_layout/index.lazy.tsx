@@ -3,7 +3,7 @@ import { Button, Group, Stack, createStyles } from "@mantine/core";
 import { HeroTitle } from "../../components/Hero";
 import { useAuth } from "../../utils/auth";
 import { IconBrandGithub } from "@tabler/icons-react";
-import NewSessionButton from "../../components/NewSessionButton";
+import NewSessionButton from "../../components/layout/NewSessionButton";
 
 const useStyles = createStyles((theme) => ({
   controls: {

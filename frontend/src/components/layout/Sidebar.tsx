@@ -1,22 +1,29 @@
 import { Navbar, Stack, rem, Box, Badge, Menu } from "@mantine/core";
 import {
+  IconCertificate,
   IconHome,
+  IconInfoCircle,
   IconNewSection,
+  IconNoCreativeCommons,
   IconPhoto,
   IconSettings,
 } from "@tabler/icons-react";
 import { Link } from "@tanstack/react-router";
-import { NavbarLink } from "./NavbarLink";
-import { NavButton } from "./NavButton";
+import { NavbarLink } from "../NavbarLink";
+import { NavButton } from "../NavButton";
 
 interface NavbarMinimalProps {
   settingsOpened: boolean;
   toggleSettings: () => void;
+  creditsOpened: boolean;
+  toggleCredits: () => void;
 }
 
 export function NavbarMinimal({
   settingsOpened,
   toggleSettings,
+  creditsOpened,
+  toggleCredits,
 }: NavbarMinimalProps) {
   return (
     <Navbar w={"8rem"} p="xl" bg={"rgba(0, 0, 0, 0)"} withBorder={false}>
@@ -58,6 +65,13 @@ export function NavbarMinimal({
 
       <Navbar.Section mt={"auto"}>
         <Stack m="auto" w="min-content">
+          <NavbarLink
+            icon={IconCertificate}
+            tooltipLabel={"Credits"}
+            tooltipPosition="right"
+            active={creditsOpened}
+            onClick={toggleCredits}
+          />
           <NavbarLink
             icon={IconSettings}
             tooltipLabel={"Settings"}

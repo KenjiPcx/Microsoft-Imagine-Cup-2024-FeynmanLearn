@@ -1,5 +1,13 @@
-import { Box, Button, Modal, Stack, Text, createStyles, CloseButton } from "@mantine/core";
-import { useAuth } from "../utils/auth";
+import {
+  Box,
+  Button,
+  Modal,
+  Stack,
+  Text,
+  createStyles,
+  CloseButton,
+} from "@mantine/core";
+import { useAuth } from "../../utils/auth";
 
 interface SettingsModalProps {
   opened: boolean;
@@ -42,7 +50,8 @@ const useStyles = createStyles((theme) => ({
   },
 
   logoutButton: {
-    backgroundColor: "linear-gradient(135deg, theme.colors.red[6], theme.colors.cyan[6])",
+    backgroundColor:
+      "linear-gradient(135deg, theme.colors.red[6], theme.colors.cyan[6])",
     color: theme.white,
     "&:hover": {
       backgroundColor: "dark cyan",
@@ -93,7 +102,9 @@ const SettingsModal = ({ opened, closeSettings }: SettingsModalProps) => {
       <Stack>
         {auth.isAuthenticated && (
           <Box>
-            <Text className={classes.userDetails}>Logged in as {auth.authData.userDetails}</Text>
+            <Text className={classes.userDetails}>
+              Logged in as {auth.authData.userDetails}
+            </Text>
             <Button
               fullWidth
               className={classes.logoutButton}

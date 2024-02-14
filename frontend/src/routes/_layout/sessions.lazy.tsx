@@ -4,7 +4,7 @@ import { createLazyFileRoute } from "@tanstack/react-router";
 import { Box, Center, SimpleGrid, Stack } from "@mantine/core";
 import { Text } from "@mantine/core";
 import SessionSummaryCard from "../../components/SessionSummaryCard";
-import NewSessionButton from "../../components/NewSessionButton";
+import NewSessionButton from "../../components/layout/NewSessionButton";
 
 export const Route = createLazyFileRoute("/_layout/sessions")({
   component: SessionsComponent,
