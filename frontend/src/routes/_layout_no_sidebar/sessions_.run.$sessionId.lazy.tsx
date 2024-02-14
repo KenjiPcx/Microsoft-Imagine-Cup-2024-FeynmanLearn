@@ -260,6 +260,7 @@ function SessionComponent() {
           autoClose: 2000,
         });
         handleAssistantResponse(res.data);
+        return;
       }
       notifications.update({
         id: notificationId,
