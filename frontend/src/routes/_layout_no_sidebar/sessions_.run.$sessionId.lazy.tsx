@@ -35,7 +35,6 @@ import {
 } from "../../backendEndpoints";
 import { SessionErrorComponent } from "../../components/SessionErrorComponent";
 import { useDisclosure } from "@mantine/hooks";
-import { mockChatHistory } from "../../mock_data/mockChatHistoryData";
 import { notifications } from "@mantine/notifications";
 import { modals } from "@mantine/modals";
 import CountdownTimer from "../../components/Countdown";

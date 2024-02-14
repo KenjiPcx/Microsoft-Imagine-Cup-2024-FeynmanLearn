@@ -18,7 +18,6 @@ import {
   Center,
 } from "@mantine/core";
 import { SessionErrorComponent } from "../../components/SessionErrorComponent";
-import { mockPostSessionAnalysis } from "../../mock_data/mockPostSessionAnalysis";
 import LineByLineFeedback from "../../components/post_session_analysis/LineByLineFeedback";
 import SessionMetadataCard from "../../components/post_session_analysis/SessionMetadata";
 import { getRandomColor } from "../../utils/style_helper";
