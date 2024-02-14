@@ -63,8 +63,8 @@ function PostSessionAnalysisComponent() {
         setAnalysisByQuestionData(analysis_data.analysis_by_question);
       } catch (error) {
         setIsLoading(false);
-        setPostSessionAnalysisData(feedback); // TODO: delete this once in production
-        setAnalysisByQuestionData(questionFeedback); // TODO: delete this once in production
+        // setPostSessionAnalysisData(feedback); // TODO: delete this once in production
+        // setAnalysisByQuestionData(questionFeedback); // TODO: delete this once in production
         setError(false); // TODO: set this to false once in production
       }
     };
