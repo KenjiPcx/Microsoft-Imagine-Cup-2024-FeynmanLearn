@@ -46,12 +46,16 @@ const CountdownTimer = ({
       }
     }, 1000);
 
+    if (pauseTimer) {
+      clearInterval(interval);
+    }
+
     return () => {
       if (interval) {
         clearInterval(interval);
       }
     };
-  }, []);
+  }, [pauseTimer]);
 
   return (
     <Box>
