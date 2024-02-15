@@ -5,13 +5,5 @@
   "azureFunctions.projectLanguage": "Python",
   "azureFunctions.projectRuntime": "~4",
   "debug.internalConsoleOptions": "neverOpen",
-  "azureFunctions.projectLanguageModel": 2,
-  "azureFunctions.preDeployTask": "publish (functions)",
-  "cssVariables.lookupFiles": [
-    "**/*.css",
-    "**/*.scss",
-    "**/*.sass",
-    "**/*.less",
-    "node_modules/@mantine/core/styles.css"
-  ]
+  "azureFunctions.projectLanguageModel": 2
 }
