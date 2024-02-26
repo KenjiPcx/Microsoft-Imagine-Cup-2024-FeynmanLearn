@@ -1,5 +1,8 @@
 # feynman-agent
 
+## Submission for the Microsoft Imagine Cup 2024
+Watch the pitch and demo here: https://youtu.be/EJ5iF3E4LP0
+
 ## What is it?
 
 The Feynman method of learning has been shown to be the most successful method for learning, here we are trying to digitalize this process for the sake of a more personal and efficient education
